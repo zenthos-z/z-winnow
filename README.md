@@ -119,28 +119,43 @@ key 注册表 `config/mcp_keys.yaml` mtime 热重载 —— 加 / 改 / 撤 key 
 
 ## 快速开始
 
-### 前置要求
+三档递进，按需停在任何一档。完整细节见 **[部署指南](./docs/deployment.md)**。
 
-- **Python 3.12+**（支持 3.12 / 3.13）+ **Poetry**
-- **群聊数据源 API**（真实入库需要；测试用 fixture 无需）：CipherTalk（`/v1/`，默认）或 WeFlow（`WINNOW_DATA_SOURCE=weflow`），默认均监听 `127.0.0.1:5031`
-- **LLM provider API key**：DeepSeek（默认）/ OpenAI 兼容端点 / Anthropic
-- **Docker**（可选，仅 MemOS 语义记忆需要：Redis + Qdrant + memos-api；`MEMOS_ENABLED=false` 时核心流水线零依赖）
-
-### 安装
+### 第 ① 档：零依赖体验（10 分钟，无需任何 API key / Docker / 数据源）
 
 ```bash
-git clone <repo-url> && cd z-winnow
+git clone https://github.com/zenthos-z/z-winnow.git && cd z-winnow
 poetry install --with dev
-pre-commit install
-cp .env.example .env   # 编辑 .env：API key / 模型 / 数据源 / ECS / MCP（每项均有注释）
+poetry run pytest tests/ -v --tb=short     # 全 mock 模式，应全绿
+poetry run winnow web                      # 打开 http://127.0.0.1:8100/ui/ 逛控制台
 ```
 
-### 配置
+想看带数据的完整效果？加载内置示例数据（完全虚构，见 [`examples/sample-data/`](./examples/sample-data/)）：
 
-所有配置项见 [`.env.example`](./.env.example)。默认 LLM 走 **DeepSeek**（`deepseek-v4-flash`），亦支持 OpenAI 兼容端点（Gemini / OpenRouter / SiliconFlow）与 Anthropic。`Settings` 类（`config/settings.py`）用 pydantic-settings 自动加载，优先级：`CLI 参数 > WINNOW_* 环境变量 > 标准环境变量 > .env > Field 默认值`。
+```bash
+poetry run python examples/sample-data/seed.py
+poetry run winnow web                       # 刷新即可浏览示例群的报告与数据
+```
+
+### 第 ② 档：接入真实 LLM 与数据源，产出你的群日报
+
+前置：**Python 3.12+ / Poetry**、**LLM API key**（DeepSeek 默认，或任意 OpenAI 兼容端点 / Anthropic）、**群聊数据源 API**（CipherTalk `/v1/` 默认或 WeFlow——本项目消费消息 API，**不含消息采集**，需自备）。
+
+```bash
+cp .env.example .env        # 编辑：API key / 模型 / 数据源（每项均有注释）
+poetry run winnow group add --chatroom-id 12345678@chatroom --display-name "我的群"
+poetry run winnow ingest --date 20260814 --group "我的群"
+# 或者用 Web UI（推荐，有 onboarding 向导）：poetry run winnow web
+```
+
+### 第 ③ 档：完整平台（长期记忆 + 定时调度 + 公网 MCP）
+
+- **MemOS 群记忆**（跨日议题演化）：Docker 起 Redis + Qdrant + Neo4j + memos-api 四件套 → [部署指南 §4](./docs/deployment.md#4-memos-语义记忆可选推荐)
+- **定时日报**：`poetry run winnow scheduler`（看板 + 向导，宕机自动补跑）→ [部署指南 §6](./docs/deployment.md#6-定时日报调度可选)
+- **MCP 接口**：本地 stdio 直连 Claude Desktop / Cursor（最简），或 key-based 多人公网服务 → **[MCP 指南](./docs/mcp.md)**
 
 > [!TIP]
-> Mock 模式：`WINNOW_REAL_LLM=false` 禁用 LLM 调用（测试自动启用），但**不替代数据源** —— 无数据源 API 时只能跑测试。
+> 配置优先级：`CLI 参数 > WINNOW_* 环境变量 > 标准环境变量 > .env > Field 默认值`（Web UI onboarding 向导写的 `data/config_overrides.json` 优先级最高）。Mock 模式：`WINNOW_REAL_LLM=false` 禁用 LLM 调用（测试自动启用），但**不替代数据源**——无数据源 API 时只能跑测试。
 
 ---
 
@@ -369,6 +384,6 @@ z-winnow/
 
 | 文档 | 说明 |
 |------|------|
-| [MCP 架构 Checkpoint](./docs/mcp-platform-checkpoint.md) | 平台化定位、MCP / ECS / 鉴权架构、分阶段推进、changelog |
+| [MCP 接口指南](./docs/mcp.md) | 平台化定位、MCP / ECS / 鉴权架构、分阶段推进、changelog |
 | [Web 前端架构](./docs/web-frontend-architecture.md) | 静态 HTML 前端架构、页面与 API 映射 |
 | [API 速查](./docs/api-cheatsheet.md) | 端点速查表 |

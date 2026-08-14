@@ -325,9 +325,9 @@ flowchart TB
 
 > **关于「L4」的澄清**（避免与历史命名混淆）：
 > - **代码里的 "Layer 4"** 指**日报 Markdown 文件输出**（`outputs/report_writer.py`、`state.py::report_file_path` 注释），Wave 12 起已从主流程移除，降级为 Phase H 手动 `export_markdown()` 触发，**不是反馈层**。
-> - **架构决策「砍 L4」**（见 `docs/mcp-platform-checkpoint.md` §3.2 / L371 / L381，**用户定调**）：L3 即核心知识层，不再单起 L4；`knowledge_map` 等未来表也建在 L3 内。
+> - **架构决策「砍 L4」**（见 `docs/mcp.md` §3.2 / L371 / L381，**用户定调**）：L3 即核心知识层，不再单起 L4；`knowledge_map` 等未来表也建在 L3 内。
 > - **反馈数据**当前不属于 L1/L2/L3 任一管道产物层——它由 `feedback_events` 表（主库内）+ ECS `feedback_inbox.db`（收件箱）承载，是**独立的反馈层（Feedback Zone）**，由 MCP/Web 反馈路径写入，经 regenerate 回流进 L3 新版本。本蓝图按此实际形态呈现，**未把它命名为 L4**，以与既定决策一致。
-> - 如需正式把反馈层命名为「L4」，需同步更新 `docs/mcp-platform-checkpoint.md` 的「砍 L4」决策记录。
+> - 如需正式把反馈层命名为「L4」，需同步更新 `docs/mcp.md` 的「砍 L4」决策记录。
 
 ### 3.4 外部基础设施拓扑（本地 ↔ ECS ↔ R2 数据驻留）
 
@@ -1524,7 +1524,7 @@ class _ApiKeyAuth(Middleware):
 ### 16.3 文档实践
 
 - **CLAUDE.md**：活的架构参考（随每个 Wave 保持更新）
-- **`docs/`**：Checkpoint 文档（`mcp-platform-checkpoint.md`）、架构细节、前端架构
+- **`docs/`**：Checkpoint 文档（`docs/mcp.md`）、架构细节、前端架构
 - **`.env.example`**：完整的配置参考，含说明
 - **本蓝图**：生成于 2026-07-24——全面架构参考
 
