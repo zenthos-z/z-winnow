@@ -159,4 +159,8 @@ exclude_lines = [
 # --- Bandit configuration ---
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", ".claude"]
-skips = ["B101"]  # assert used (ok in tests)
+# B101 assert（测试断言惯例）
+# B608 SQL 拼接：f-string 仅拼接表名/列名等内部常量骨架，所有值一律走 ? 参数绑定（见各 execute 调用）
+# B314 ET.fromstring：解析自有数据源（微信消息 XML）非外部不可信输入；如接入公网数据源需换 defusedxml
+# B104 绑定 0.0.0.0：MCP http 服务默认对外可达（容器/远程部署语义）；本地调试可显式 --host 127.0.0.1
+skips = ["B101", "B608", "B314", "B104"]
