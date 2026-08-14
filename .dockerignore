@@ -26,7 +26,8 @@ docs/
 plans/
 .github/
 .pre-commit-config.yaml
-.claude/
+.claude/*
+!.claude/skills/
 bandit-report/
 htmlcov/
 .coverage

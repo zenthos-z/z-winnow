@@ -16,8 +16,7 @@ config/*.key
 # MCP API key 注册表（含敏感 key，winnow mcp-key 生成）— 不入库；.example 模板入库
 config/mcp_keys.yaml
 
-# --- Docker 部署产物 ---
-requirements-deploy.txt
+# --- Docker 部署产物（requirements-deploy.txt 已入库，供镜像构建自包含）---
 
 # --- SQLite databases (3-layer storage with serverID provenance) ---
 *.db

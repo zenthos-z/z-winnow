@@ -8,13 +8,16 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
-    PIP_TRUSTED_HOST=mirrors.aliyun.com
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# pip 源可覆盖（如国内网络：--build-arg PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/）
+ARG PIP_INDEX_URL=https://pypi.org/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 
 WORKDIR /app
 
 # --- 运行时依赖（从 poetry.lock 精确导出，pip 装比 poetry install 快且稳）---
+# 重新生成：poetry export -f requirements.txt --only main --without-hashes > requirements-deploy.txt
 COPY requirements-deploy.txt ./
 RUN pip install -r requirements-deploy.txt
 
@@ -25,9 +28,7 @@ COPY config/ ./config/
 COPY schemas/ ./schemas/
 # 消费方接入文档（公开）—— MCP server 通过 GET /install、/feedback-format 对外提供，
 # 让消费方无需 GitHub（部分地区需代理）也能取到文档。
-# ecs-deploy.sh 把 .claude/skills/winnow-mcp/ rsync 到顶层 skill_public/（避开
-# .dockerignore 对 .claude/ 的排除），这里 COPY 进镜像 /app/skill。
-COPY skill_public/ /app/skill/
+COPY .claude/skills/winnow-mcp/ /app/skill/
 # templates/ 在 src/z_winnow/templates/（包内），已随 COPY src/ 包含
 
 # 装项目本身（生成 winnow CLI 入口；依赖已装，--no-deps）
