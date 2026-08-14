@@ -105,7 +105,7 @@ def db_with_version(tmp_path: Path) -> str:
 
     import asyncio
 
-    asyncio.get_event_loop().run_until_complete(_setup())
+    asyncio.run(_setup())
     return db_path
 
 
