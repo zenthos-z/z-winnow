@@ -30,8 +30,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 # P008: 超时 = 历史 P95 耗时 × 1.5 — subagent P95 ~60-80s → ×1.5 ≈ 120s.
 # L020: 区分派发超时 (harness 等待) 与执行超时 (agent/node 内部完成).
 #   - DEFAULT_SUBAGENT_TIMEOUT 是执行超时 (node 内部), 从 settings/env 读取
-#   - 派发超时由 Box0/harness 管理, 不在此处控制
-# A009: Box0 daemon 300s 硬超时, 子 agent 执行超时 120s < 300s 安全阈.
+#   - 派发超时由编排 harness 管理, 不在此处控制
+# A009: 外部调度器 300s 硬超时, 子 agent 执行超时 120s < 300s 安全阈.
 
 
 def _get_default_subagent_timeout() -> float:
@@ -64,7 +64,7 @@ def _get_default_subagent_timeout() -> float:
 
 DEFAULT_SUBAGENT_TIMEOUT: float = _get_default_subagent_timeout()
 """默认子 agent 执行超时 (秒). P008: 120s = subagent P95 ~60-80s × 1.5.
-L020: 此为执行超时, 非派发超时. A009: 120s < 300s Box0 硬杀阈值."""
+L020: 此为执行超时, 非派发超时. A009: 120s < 300s 调度器硬杀阈值."""
 
 # Error key for the errors list entry
 ERROR_KEY_NODE = "node"
