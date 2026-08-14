@@ -1327,9 +1327,7 @@ async def node_output_composer(state: OverallState) -> dict[str, Any]:
             from z_winnow.object_storage.r2 import upload_resources
 
             try:
-                _n_r2 = await upload_resources(
-                    _Path(_res_path), state.get("group_id", ""), date
-                )
+                _n_r2 = await upload_resources(_Path(_res_path), state.get("group_id", ""), date)
                 if _n_r2:
                     logger.info("output_composer: uploaded %d resources to R2", _n_r2)
             except Exception as _r2_exc:
@@ -1972,7 +1970,9 @@ async def export_markdown(date: str, group_id: str) -> Path:
         async with aiosqlite.connect(db_path) as db:
             await init_database_in_conn(db)
             # M4: 写 active 版本 content（回滚后导出/更新的是 active，非 latest）
-            target = await get_active_version(db, report_id) or await get_latest_version(db, report_id)
+            target = await get_active_version(db, report_id) or await get_latest_version(
+                db, report_id
+            )
             if target is not None:
                 updated = await update_version_content(db, target.version_id, content)
                 if updated:

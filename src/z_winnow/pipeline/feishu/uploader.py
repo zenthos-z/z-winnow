@@ -57,7 +57,10 @@ def _attachment_upload_timeout(file_path: Path) -> float:
         size = 0
     return min(
         _ATTACHMENT_TIMEOUT_CAP_S,
-        max(_ATTACHMENT_TIMEOUT_FLOOR_S, size / _ATTACHMENT_TIMEOUT_RATE_BPS + _ATTACHMENT_TIMEOUT_OVERHEAD_S),
+        max(
+            _ATTACHMENT_TIMEOUT_FLOOR_S,
+            size / _ATTACHMENT_TIMEOUT_RATE_BPS + _ATTACHMENT_TIMEOUT_OVERHEAD_S,
+        ),
     )
 
 
@@ -150,14 +153,17 @@ async def delete_existing_records_for_date(
         #   resources → "发布日期"
         tdef = schema.TABLE_CATALOG.get(kind)
         date_field = (tdef.fields[0]["name"]) if (tdef and tdef.fields) else "日期"
-        kind_filter = json.dumps({
-            "logic": "and",
-            "conditions": [[date_field, "==", f"ExactDate({norm_date})"]],
-        })
+        kind_filter = json.dumps(
+            {
+                "logic": "and",
+                "conditions": [[date_field, "==", f"ExactDate({norm_date})"]],
+            }
+        )
 
         try:
             list_res = await lark_cli.record_list(
-                base_token, table_id,
+                base_token,
+                table_id,
                 filter_json=kind_filter,
                 limit=200,
                 mock=mock,
@@ -173,12 +179,15 @@ async def delete_existing_records_for_date(
                 await lark_cli.record_delete(base_token, table_id, rec_ids, mock=mock)
                 logger.info(
                     "feishu overwrite: deleted %d records from %s (date=%s)",
-                    len(rec_ids), kind, norm_date,
+                    len(rec_ids),
+                    kind,
+                    norm_date,
                 )
             else:
                 logger.debug(
                     "feishu overwrite: no existing records in %s for date=%s",
-                    kind, norm_date,
+                    kind,
+                    norm_date,
                 )
         except lark_cli.LarkCliError as exc:
             errors.append(f"{kind} delete-existing: {exc}")

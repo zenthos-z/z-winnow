@@ -116,10 +116,7 @@ class BatchScheduler:
                         await self._run_single_item(db, item, cancel_flag)
 
             # 启动所有群的并行任务
-            tasks = [
-                asyncio.create_task(run_group(g, items))
-                for g, items in groups.items()
-            ]
+            tasks = [asyncio.create_task(run_group(g, items)) for g, items in groups.items()]
             self._running_tasks[batch_id] = asyncio.gather(*tasks)
 
             try:
@@ -209,7 +206,7 @@ class BatchScheduler:
 
         try:
             # 1. 预检：查询数据源 API 判断是否有数据
-            has_data, message_count = await self._check_data(db, group_id, date)
+            has_data, _message_count = await self._check_data(db, group_id, date)
 
             if not has_data:
                 # 2. API 确认无数据 → 跳过 + 登记空信号

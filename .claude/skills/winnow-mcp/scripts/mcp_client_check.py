@@ -12,6 +12,7 @@
   # 本仓库内: poetry run python .claude/skills/winnow-mcp/scripts/mcp_client_check.py
   # 自定义 endpoint: WINNOW_MCP_URL=https://host/mcp python mcp_client_check.py
 """
+
 from __future__ import annotations
 
 import os

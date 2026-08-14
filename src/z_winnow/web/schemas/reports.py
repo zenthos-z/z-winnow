@@ -115,8 +115,12 @@ class CoverRequest(BaseModel):
     """
 
     count: int | None = Field(default=None, description="生成张数（默认 settings.image_gen_count）")
-    ratio: str | None = Field(default=None, description="宽高比如 4:5（默认 settings.image_gen_ratio）")
-    size: str | None = Field(default=None, description="分辨率如 2K（默认 settings.image_gen_size）")
+    ratio: str | None = Field(
+        default=None, description="宽高比如 4:5（默认 settings.image_gen_ratio）"
+    )
+    size: str | None = Field(
+        default=None, description="分辨率如 2K（默认 settings.image_gen_size）"
+    )
 
 
 class ReportContentOut(BaseModel):

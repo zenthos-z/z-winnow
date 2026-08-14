@@ -201,7 +201,8 @@ class CipherTalkClient:
             if new_in_batch == 0:
                 logger.warning(
                     "get_sessions: page %d returned %d items, all duplicates — stopping",
-                    pages_fetched, len(batch),
+                    pages_fetched,
+                    len(batch),
                 )
                 break
             # hasMore 可能在 data.data 内层，也可能在 data 顶层（兼容两种格式）
@@ -215,7 +216,8 @@ class CipherTalkClient:
             offset += page_size
         logger.info(
             "get_sessions: fetched %d pages, %d total sessions",
-            pages_fetched, len(sessions),
+            pages_fetched,
+            len(sessions),
         )
         return sessions
 
@@ -593,7 +595,9 @@ class CipherTalkClient:
             has_data = len(messages) > 0
             logger.debug(
                 "check_messages_count (exists): chatroom=%s date=%s has_data=%s",
-                chatroom_id, date, has_data,
+                chatroom_id,
+                date,
+                has_data,
             )
             return (has_data, len(messages))
 
@@ -618,7 +622,10 @@ class CipherTalkClient:
         has_data = total > 0
         logger.debug(
             "check_messages_count (paginated): chatroom=%s date=%s has_data=%s count=%d",
-            chatroom_id, date, has_data, total,
+            chatroom_id,
+            date,
+            has_data,
+            total,
         )
         return (has_data, total)
 

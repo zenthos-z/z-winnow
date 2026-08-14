@@ -181,9 +181,7 @@ async def clear_sqlite(
             if counts["pipeline_runs"] > 0:
                 logger.info("  %s pipeline_runs: %d rows", action, counts["pipeline_runs"])
         else:
-            cursor = await db.execute(
-                f"DELETE FROM pipeline_runs WHERE {where_pr}", all_pr_params
-            )
+            cursor = await db.execute(f"DELETE FROM pipeline_runs WHERE {where_pr}", all_pr_params)
             counts["pipeline_runs"] = cursor.rowcount
             if cursor.rowcount > 0:
                 logger.info("  DELETED pipeline_runs: %d rows", cursor.rowcount)
@@ -276,13 +274,9 @@ async def clear_sqlite(
             row = await cursor.fetchone()
             counts["group_experiences"] = row[0] if row else 0
             if counts["group_experiences"] > 0:
-                logger.info(
-                    "  %s group_experiences: %d rows", action, counts["group_experiences"]
-                )
+                logger.info("  %s group_experiences: %d rows", action, counts["group_experiences"])
         else:
-            cursor = await db.execute(
-                f"DELETE FROM group_experiences WHERE {where_ge}", ge_params
-            )
+            cursor = await db.execute(f"DELETE FROM group_experiences WHERE {where_ge}", ge_params)
             counts["group_experiences"] = cursor.rowcount
             if cursor.rowcount > 0:
                 logger.info("  DELETED group_experiences: %d rows", cursor.rowcount)
@@ -475,9 +469,7 @@ async def clear_qdrant_collection(
         return False
 
 
-async def _recreate_empty_collection(
-    client, base_url: str, collection_name: str
-) -> bool:
+async def _recreate_empty_collection(client, base_url: str, collection_name: str) -> bool:
     """Recreate an empty Qdrant collection with the MemOS vector config.
 
     Non-fatal: returns True even on recreate failure (the DELETE already
@@ -501,7 +493,7 @@ async def _recreate_empty_collection(
             "  -> ⚠️ recreate Qdrant collection '%s' returned %d: %s "
             "— next pipeline run will 404 on vector_sync. Fix: bash start_all.sh "
             "or curl -X PUT %s -H 'Content-Type: application/json' "
-            "-d '{\"vectors\":{\"size\":%d,\"distance\":\"%s\"}}'",
+            '-d \'{"vectors":{"size":%d,"distance":"%s"}}\'',
             collection_name,
             resp.status_code,
             resp.text[:120],
@@ -514,7 +506,8 @@ async def _recreate_empty_collection(
         logger.warning(
             "  -> ⚠️ Qdrant unreachable during recreate (%s) — collection now MISSING, "
             "next pipeline run will 404 on vector_sync. Fix: run start_all.sh after "
-            "Qdrant is back up.", exc
+            "Qdrant is back up.",
+            exc,
         )
         return True
     except Exception as exc:

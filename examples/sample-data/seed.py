@@ -20,10 +20,10 @@ from pathlib import Path
 # 以脚本位置 bootstrap 项目包路径（examples/sample-data/ → 仓库根/src）
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-import aiosqlite  # noqa: E402
+import aiosqlite
 
-from z_winnow.config.settings import get_settings  # noqa: E402
-from z_winnow.pipeline.database import init_database  # noqa: E402
+from z_winnow.config.settings import get_settings
+from z_winnow.pipeline.database import init_database
 
 # ----------------------------------------------------------------------------
 # 虚构数据定义
@@ -40,41 +40,116 @@ DAYS = ["20260812", "20260813", "20260814"]
 # 三天消息流（完全虚构）。serverID 用 9000xxxxxx 段避免与真实数据碰撞。
 MESSAGES: dict[str, list[dict]] = {
     "20260812": [
-        ("9000000101", "林远舟", "text", "早上好，最近想在本地跑一个 7B 的模型做文档摘要，大家有推荐的长上下文方案吗"),
-        ("9000000102", "苏砚清", "text", "我上周试过 llama.cpp + ollama 两条路，ollama 上手快但量化选项少一些"),
-        ("9000000103", "程亦凡", "text", "看你要不要并发，单机自用 ollama 够了；要对外提供服务建议 vllm"),
+        (
+            "9000000101",
+            "林远舟",
+            "text",
+            "早上好，最近想在本地跑一个 7B 的模型做文档摘要，大家有推荐的长上下文方案吗",
+        ),
+        (
+            "9000000102",
+            "苏砚清",
+            "text",
+            "我上周试过 llama.cpp + ollama 两条路，ollama 上手快但量化选项少一些",
+        ),
+        (
+            "9000000103",
+            "程亦凡",
+            "text",
+            "看你要不要并发，单机自用 ollama 够了；要对外提供服务建议 vllm",
+        ),
         ("9000000104", "林远舟", "text", "主要是给团队内部用，大概 20 个人，并发不高"),
-        ("9000000105", "顾栖桐", "text", "那可以看看 LM Studio，图形界面配好后直接暴露 OpenAI 兼容接口"),
-        ("9000000106", "苏砚清", "link", "https://example.com/blog/local-llm-stack-2026 分享一篇文章：2026 年本地模型部署栈盘点"),
+        (
+            "9000000105",
+            "顾栖桐",
+            "text",
+            "那可以看看 LM Studio，图形界面配好后直接暴露 OpenAI 兼容接口",
+        ),
+        (
+            "9000000106",
+            "苏砚清",
+            "link",
+            "https://example.com/blog/local-llm-stack-2026 分享一篇文章：2026 年本地模型部署栈盘点",
+        ),
         ("9000000107", "程亦凡", "text", "这篇我读过，里面提到异构显卡调度那段写得不错"),
-        ("9000000108", "周听澜", "text", "提醒一下，显存不够的话 7B 跑 Q4 量化大概 6G 出头，留好余量"),
+        (
+            "9000000108",
+            "周听澜",
+            "text",
+            "提醒一下，显存不够的话 7B 跑 Q4 量化大概 6G 出头，留好余量",
+        ),
         ("9000000109", "林远舟", "text", "收到，我的是 16G 卡，应该没问题"),
-        ("9000000110", "顾栖桐", "text", "另外问下大家，Agent 框架现在用哪个比较多？我在 LangGraph 和别的之间纠结"),
+        (
+            "9000000110",
+            "顾栖桐",
+            "text",
+            "另外问下大家，Agent 框架现在用哪个比较多？我在 LangGraph 和别的之间纠结",
+        ),
         ("9000000111", "程亦凡", "text", "看复杂度。直线流水线用啥都行；有分支回环再上图编排"),
-        ("9000000112", "苏砚清", "text", "我们组上周把一个多步工具调用的任务迁到了图编排，可观测性确实好很多"),
+        (
+            "9000000112",
+            "苏砚清",
+            "text",
+            "我们组上周把一个多步工具调用的任务迁到了图编排，可观测性确实好很多",
+        ),
     ],
     "20260813": [
-        ("9000000201", "林远舟", "text", "昨天说的本地部署，昨晚跑通了 ollama + OpenWebUI，摘要效果比预期好"),
+        (
+            "9000000201",
+            "林远舟",
+            "text",
+            "昨天说的本地部署，昨晚跑通了 ollama + OpenWebUI，摘要效果比预期好",
+        ),
         ("9000000202", "苏砚清", "text", "恭喜。中文摘要记得在 prompt 里明确输出格式，不然容易碎"),
         ("9000000203", "林远舟", "text", "对，我加了「按要点分行」之后稳定多了"),
-        ("9000000204", "周听澜", "text", "RAG 时效性的问题大家踩过吗？知识库一周不更新，答案就开始一本正经地胡说"),
+        (
+            "9000000204",
+            "周听澜",
+            "text",
+            "RAG 时效性的问题大家踩过吗？知识库一周不更新，答案就开始一本正经地胡说",
+        ),
         ("9000000205", "程亦凡", "text", "踩过。我们的做法是给每条知识打时间戳，检索时按衰减加权"),
         ("9000000206", "顾栖桐", "text", "衰减权重怎么定的？纯线性还是半衰期"),
         ("9000000207", "程亦凡", "text", "半衰期，两周。调参试出来的，业务上勉强够用"),
         ("9000000208", "苏砚清", "file", "rag-decay-notes.pdf（虚构示例文件：检索衰减实验记录）"),
         ("9000000209", "周听澜", "text", "mark，晚上细看"),
-        ("9000000210", "顾栖桐", "text", "Agent 框架那个事我决定先拿 LangGraph 做个原型，图结构对我们场景合适"),
+        (
+            "9000000210",
+            "顾栖桐",
+            "text",
+            "Agent 框架那个事我决定先拿 LangGraph 做个原型，图结构对我们场景合适",
+        ),
         ("9000000211", "程亦凡", "text", "合理，先把状态机画清楚再动手写"),
     ],
     "20260814": [
-        ("9000000301", "林远舟", "text", "本地部署方案定了：ollama 跑 7B-Q4，前端 OpenWebUI，内网穿透走 tailscale"),
+        (
+            "9000000301",
+            "林远舟",
+            "text",
+            "本地部署方案定了：ollama 跑 7B-Q4，前端 OpenWebUI，内网穿透走 tailscale",
+        ),
         ("9000000302", "苏砚清", "text", "稳妥。记得给接口加个简单鉴权，内网也不裸奔"),
         ("9000000303", "林远舟", "text", "已经加了 API key 网关，谢谢提醒"),
-        ("9000000304", "顾栖桐", "text", "Agent 原型跑通了，图编排 + 工具调用大概 200 行，比想象中顺"),
+        (
+            "9000000304",
+            "顾栖桐",
+            "text",
+            "Agent 原型跑通了，图编排 + 工具调用大概 200 行，比想象中顺",
+        ),
         ("9000000305", "程亦凡", "text", "不错，下一步把每步的 trace 接上，调试体验会好一个量级"),
-        ("9000000306", "周听澜", "text", "团队知识库我想正式立项，把群里这些讨论沉淀下来，别散在聊天记录里"),
+        (
+            "9000000306",
+            "周听澜",
+            "text",
+            "团队知识库我想正式立项，把群里这些讨论沉淀下来，别散在聊天记录里",
+        ),
         ("9000000307", "苏砚清", "text", "支持。先定分类体系，再谈工具"),
-        ("9000000308", "林远舟", "link", "https://example.com/papers/knowledge-distillation-survey 荐一篇综述：面向团队场景的知识蒸馏"),
+        (
+            "9000000308",
+            "林远舟",
+            "link",
+            "https://example.com/papers/knowledge-distillation-survey 荐一篇综述：面向团队场景的知识蒸馏",
+        ),
         ("9000000309", "顾栖桐", "text", "这篇可以先放进知识库当第一批资料"),
         ("9000000310", "程亦凡", "text", "好，周五我们拉个会定分类"),
     ],
@@ -366,9 +441,7 @@ async def seed() -> None:
                 "highlights": ov["highlights"],
                 "notice": ov["notice"],
                 "trend": ov["trend"],
-                "active_members": sorted(
-                    {p for t in TOPICS[date8] for p in t["participants"]}
-                ),
+                "active_members": sorted({p for t in TOPICS[date8] for p in t["participants"]}),
             }
             (l3_dir / "daily.json").write_text(
                 json.dumps(daily, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -408,9 +481,11 @@ async def seed() -> None:
     print("✅ 示例数据已写入（完全虚构）：")
     print(f"   群组：{DISPLAY_NAME}（{GROUP_ID} / {CHATROOM_ID}）")
     print(f"   日期：{_iso(DAYS[0])} ~ {_iso(DAYS[-1])}（{len(DAYS)} 天）")
-    print(f"   消息 {sum(len(m) for m in MESSAGES.values())} 条 / 议题 "
-          f"{sum(len(t) for t in TOPICS.values())} 条 / 资源 "
-          f"{sum(len(r) for r in RESOURCES.values())} 条")
+    print(
+        f"   消息 {sum(len(m) for m in MESSAGES.values())} 条 / 议题 "
+        f"{sum(len(t) for t in TOPICS.values())} 条 / 资源 "
+        f"{sum(len(r) for r in RESOURCES.values())} 条"
+    )
     print()
     print("下一步：poetry run winnow web  →  http://127.0.0.1:8100/ui/")
     print("清除示例数据：poetry run python examples/sample-data/seed.py --clean")

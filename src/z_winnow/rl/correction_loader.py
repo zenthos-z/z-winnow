@@ -373,18 +373,14 @@ async def load_corrections(
             # M4+: date 模式 — 主源 = 针对该日报、已消费的原始反馈（跟着对应日报走）。
             # 与 feedback_hints（未消费反馈，走 get_unconsumed_feedback）职责互补不重叠。
             if date:
-                results = await _load_consumed_feedback_for_date(
-                    conn, group_id, date, limit
-                )
+                results = await _load_consumed_feedback_for_date(conn, group_id, date, limit)
 
             # 群级经验（group_experiences）：date 模式下作为补充（不独占），
             # 非 date 模式下仍为主源（向后兼容）。
             exp_limit = max(0, limit - len(results)) if date else limit
             if exp_limit > 0:
                 results.extend(
-                    await _load_from_experiences(
-                        conn, group_id, target_type, days, exp_limit
-                    )
+                    await _load_from_experiences(conn, group_id, target_type, days, exp_limit)
                 )
 
             # 非 date 模式 + 仍无经验 → fallback 群级 feedback_events 原始纠正

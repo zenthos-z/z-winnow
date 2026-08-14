@@ -88,8 +88,11 @@ async def correct_memory_for_feedback(
 
     # 幂等：已有 memos_node_id 则跳过
     if fb.get("memos_node_id"):
-        return {"cube_id": fb.get("memos_cube_id"), "node_id": fb.get("memos_node_id"),
-                "archived_id": fb.get("archived_memos_id")}
+        return {
+            "cube_id": fb.get("memos_cube_id"),
+            "node_id": fb.get("memos_node_id"),
+            "archived_id": fb.get("archived_memos_id"),
+        }
 
     if not fb.get("corrected_text"):
         return None  # rating/tag-only 无 corrected_text，不纠正记忆

@@ -236,13 +236,15 @@ class WeFlowClient(CipherTalkClient):
         for _ in range(5):  # 最多 5 次尝试（不同 limit 值）
             try:
                 resp = await self._request_with_retry(
-                    "GET", "/api/v1/sessions",
+                    "GET",
+                    "/api/v1/sessions",
                     params={"limit": limit, "offset": 0},
                 )
                 data: Any = resp.json()
             except Exception:
                 logger.warning(
-                    "WeFlow get_sessions: request failed (limit=%d)", limit,
+                    "WeFlow get_sessions: request failed (limit=%d)",
+                    limit,
                     exc_info=True,
                 )
                 break
@@ -281,12 +283,17 @@ class WeFlowClient(CipherTalkClient):
             if new_in_batch == 0:
                 break
         chatroom_count = sum(
-            1 for s in all_sessions if (s.get("sessionType") or "") == "group"
-            or "@chatroom" in (s.get("username") or "")
+            1
+            for s in all_sessions
+            if (s.get("sessionType") or "") == "group" or "@chatroom" in (s.get("username") or "")
         )
         logger.info(
             "WeFlow get_sessions: %d pages, %d total (count=%s, limit=%d), %d groups",
-            pages_fetched, len(all_sessions), total_count, limit, chatroom_count,
+            pages_fetched,
+            len(all_sessions),
+            total_count,
+            limit,
+            chatroom_count,
         )
         return all_sessions
 

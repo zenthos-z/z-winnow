@@ -137,9 +137,7 @@ async def get_source_check(
                     message_count=count,
                 )
             except Exception as exc:
-                logger.warning(
-                    "get_source_check: API check failed for %s/%s — %s", gid, d, exc
-                )
+                logger.warning("get_source_check: API check failed for %s/%s — %s", gid, d, exc)
                 results[idx] = DataPreviewItem(
                     group_id=gid,
                     date=f"{d[:4]}-{d[4:6]}-{d[6:]}",
@@ -147,10 +145,9 @@ async def get_source_check(
                     message_count=0,
                 )
 
-    await asyncio.gather(*[
-        _check_one(i, gid, cid, d)
-        for i, (gid, cid, d) in enumerate(tasks_input)
-    ])
+    await asyncio.gather(
+        *[_check_one(i, gid, cid, d) for i, (gid, cid, d) in enumerate(tasks_input)]
+    )
 
     items = [r for r in results if r is not None]
     return DataPreviewResponse(items=items)

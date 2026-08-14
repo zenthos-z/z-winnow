@@ -79,14 +79,7 @@ def _build_test_app(db_conn: aiosqlite.Connection) -> FastAPI:
     import importlib.util
     import sys
 
-    mod_path = (
-        Path(__file__).parent.parent
-        / "src"
-        / "z_winnow"
-        / "web"
-        / "routes"
-        / "reports.py"
-    )
+    mod_path = Path(__file__).parent.parent / "src" / "z_winnow" / "web" / "routes" / "reports.py"
     canon = "z_winnow.web.routes.reports"
     spec = importlib.util.spec_from_file_location(canon, str(mod_path.resolve()))
     if spec is None or spec.loader is None:

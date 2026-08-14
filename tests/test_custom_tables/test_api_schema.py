@@ -36,9 +36,7 @@ class TestApiSchemaBackwardCompat:
         )
         # Default value must be 1 (enabled)
         field = GroupOut.model_fields["engineering_enabled"]
-        assert field.default == 1, (
-            "engineering_enabled default should be 1 (enabled)"
-        )
+        assert field.default == 1, "engineering_enabled default should be 1 (enabled)"
 
     # ------------------------------------------------------------------
     # AC2: GroupOut has custom_tables
@@ -46,13 +44,9 @@ class TestApiSchemaBackwardCompat:
 
     def test_group_out_has_custom_tables(self) -> None:
         """AC2: GroupOut model has custom_tables field."""
-        assert "custom_tables" in GroupOut.model_fields, (
-            "GroupOut must have custom_tables field"
-        )
+        assert "custom_tables" in GroupOut.model_fields, "GroupOut must have custom_tables field"
         field = GroupOut.model_fields["custom_tables"]
-        assert field.default is None, (
-            "custom_tables default should be None"
-        )
+        assert field.default is None, "custom_tables default should be None"
 
     # ------------------------------------------------------------------
     # AC3: GroupCreate and GroupUpdate have custom_tables

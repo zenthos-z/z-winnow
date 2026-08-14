@@ -23,7 +23,6 @@ from z_winnow.graph.error_handling import NodeError
 from z_winnow.subagents.unified_reporter.models import UnifiedReporterOutput
 from z_winnow.subagents.unified_reporter.prompt import (
     SHORT_MESSAGES_APPENDIX,
-    SYSTEM_PROMPT,
     build_prompt,
     build_system_prompt,
 )

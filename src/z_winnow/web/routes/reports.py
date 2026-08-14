@@ -135,7 +135,9 @@ async def get_report_content_endpoint(
     if version is None:
         raise HTTPException(status_code=404, detail="Report version not found")
     content = await get_report_content(
-        db, version.group_id, version.date,
+        db,
+        version.group_id,
+        version.date,
         report_type=report_type,
         created_at=version.created_at,
         version_number=version.version_number,
@@ -234,9 +236,7 @@ async def list_report_versions_by_id(request: Request, report_id: str) -> list[R
 
 
 @router.post("/reports/{report_id}/versions/{version_id}/rollback")
-async def rollback_report_version(
-    request: Request, report_id: str, version_id: str
-) -> Any:
+async def rollback_report_version(request: Request, report_id: str, version_id: str) -> Any:
     """把某份日报的当前生效版本回滚到指定历史版本。
 
     【报告产出】版本回滚：目标版本重新成为 active，其后产出的较新版本失效；
@@ -306,7 +306,9 @@ async def push_report_to_feishu_endpoint(
     return AsyncTaskResponse(task_id=task_id, status_url=status_url)
 
 
-@router.post("/reports/{report_id}/feishu/records/delete", response_model=AsyncTaskResponse, status_code=202)
+@router.post(
+    "/reports/{report_id}/feishu/records/delete", response_model=AsyncTaskResponse, status_code=202
+)
 async def delete_feishu_records_endpoint(
     request: Request,
     report_id: str,

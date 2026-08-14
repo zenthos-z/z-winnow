@@ -15,6 +15,7 @@
   python mcp_demo_workflow.py --query "世界模型" --date 20260720
   python mcp_demo_workflow.py --group-id g_xxx --query "因子" --date 20260720 --skip-feedback
 """
+
 from __future__ import annotations
 
 import argparse
@@ -72,9 +73,19 @@ async def main() -> int:
 
         # ② 搜议题
         print(f"② search_topics(query={args.query!r})")
-        topics = _jload(await client.call_tool("search_topics", {
-            "query": args.query, "group_id": gid, "limit": 5,
-        })) or []
+        topics = (
+            _jload(
+                await client.call_tool(
+                    "search_topics",
+                    {
+                        "query": args.query,
+                        "group_id": gid,
+                        "limit": 5,
+                    },
+                )
+            )
+            or []
+        )
         if not topics:
             print("   无命中（换个关键词，或找提供方确认数据是否已更新）")
             sid = None
@@ -91,7 +102,9 @@ async def main() -> int:
             detail = topic.get("detail", {})
             timeline = topic.get("timeline", [])
             feedback = topic.get("feedback", [])
-            print(f"   议题: {detail.get('topic_name', '?')}   生命周期: {detail.get('lifecycle', '?')}")
+            print(
+                f"   议题: {detail.get('topic_name', '?')}   生命周期: {detail.get('lifecycle', '?')}"
+            )
             conclusion = detail.get("conclusion") or "（无结论）"
             print(f"   结论: {str(conclusion)[:80]}")
             print(f"   时间线: {len(timeline)} 条跨天记录   反馈: {len(feedback)} 条")
@@ -99,17 +112,28 @@ async def main() -> int:
 
         # ④ 看日报
         print(f"④ get_daily_report(group_id={gid}, date={args.date})")
-        report = _jload(await client.call_tool("get_daily_report", {
-            "group_id": gid, "date": args.date,
-        })) or {}
+        report = (
+            _jload(
+                await client.call_tool(
+                    "get_daily_report",
+                    {
+                        "group_id": gid,
+                        "date": args.date,
+                    },
+                )
+            )
+            or {}
+        )
         if report.get("error"):
             print(f"   {report['error']}（确认该日期已生成日报，或找提供方确认数据已更新）")
         else:
             content = report.get("content", {}) or {}
             ov = content.get("overview") or {}
             print(f"   版本: {report.get('version')}   overview: {str(ov)[:100]}")
-            print(f"   topics: {len(content.get('topics', []))} 条   "
-                  f"resources: {len(content.get('resources', []))} 条")
+            print(
+                f"   topics: {len(content.get('topics', []))} 条   "
+                f"resources: {len(content.get('resources', []))} 条"
+            )
         print()
 
         # ⑤ 提反馈（演示 supplement）
@@ -117,14 +141,19 @@ async def main() -> int:
             print("⑤ 跳过反馈（--skip-feedback）")
         elif sid:
             print(f"⑤ submit_feedback（对议题 {sid} 提一条 supplement 演示反馈）")
-            fb = _jload(await client.call_tool("submit_feedback", {
-                "group_id": gid,
-                "date": args.date,
-                "target_type": "topic",
-                "signal": "supplement",
-                "content": "（demo 演示反馈）该议题还可补充……",
-                "target_topic_id": sid,
-            }))
+            fb = _jload(
+                await client.call_tool(
+                    "submit_feedback",
+                    {
+                        "group_id": gid,
+                        "date": args.date,
+                        "target_type": "topic",
+                        "signal": "supplement",
+                        "content": "（demo 演示反馈）该议题还可补充……",
+                        "target_topic_id": sid,
+                    },
+                )
+            )
             print(f"   → {fb}")
             print("   反馈已提交，由平台择期处理（不会立即改变已读内容）")
         else:

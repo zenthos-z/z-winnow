@@ -25,12 +25,7 @@ from httpx import ASGITransport, AsyncClient
 # L070: Import data router directly to bypass pre-existing import errors
 # in other route modules (memos.py) under parallel build.
 _data_path = (
-    Path(__file__).resolve().parent.parent
-    / "src"
-    / "z_winnow"
-    / "web"
-    / "routes"
-    / "data.py"
+    Path(__file__).resolve().parent.parent / "src" / "z_winnow" / "web" / "routes" / "data.py"
 )
 _data_spec = importlib.util.spec_from_file_location("data_route_module", str(_data_path))
 assert _data_spec is not None, f"Could not find module spec for {_data_path}"

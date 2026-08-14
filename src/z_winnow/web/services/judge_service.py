@@ -42,7 +42,11 @@ async def _judge_coro(
     try:
         async with aiosqlite.connect(db_path) as db:
             l3 = await get_report_content(
-                db, group_id, date, report_type="daily", output_dir=settings.layer3_output_dir,
+                db,
+                group_id,
+                date,
+                report_type="daily",
+                output_dir=settings.layer3_output_dir,
             )
             if l3 and l3.data:
                 content = render_report("daily_report_v1", l3.data)
@@ -64,15 +68,12 @@ async def _judge_coro(
     try:
         async with aiosqlite.connect(db_path) as db:
             await db.execute(
-                "UPDATE report_versions SET judge_result = ? "
-                "WHERE group_id = ? AND date = ?",
+                "UPDATE report_versions SET judge_result = ? WHERE group_id = ? AND date = ?",
                 (json.dumps(result_dict, ensure_ascii=False), group_id, date),
             )
             await db.commit()
     except Exception:
-        logger.exception(
-            "_judge_coro: failed to persist judge_result for %s/%s", group_id, date
-        )
+        logger.exception("_judge_coro: failed to persist judge_result for %s/%s", group_id, date)
 
     return result_dict
 

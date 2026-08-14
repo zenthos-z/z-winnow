@@ -584,7 +584,9 @@ def default_tables_config() -> dict[str, dict[str, Any]]:
 # ============================================================
 
 
-def load_l3(l3_dir: Path, date: str, *, version_number: int | None = None) -> dict[str, dict[str, Any]]:
+def load_l3(
+    l3_dir: Path, date: str, *, version_number: int | None = None
+) -> dict[str, dict[str, Any]]:
     """Load the Layer-3 JSON files for a group/date.
 
     Returns a dict keyed by kind (``daily``/``resources``/``engineering``/

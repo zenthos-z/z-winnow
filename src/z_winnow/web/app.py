@@ -143,17 +143,38 @@ API_TAGS: list[dict[str, str]] = [
     {"name": "health", "description": "【系统总览】探活：确认后端服务是否活着、数据库是否连得上。"},
     {"name": "overview", "description": "【系统总览】首页大盘：群组数、报告数、消息数等汇总统计。"},
     {"name": "system", "description": "【系统总览】系统运行信息与配置（已脱敏，不含密钥）。"},
-    {"name": "groups", "description": "【群组配置】注册和管理要分析的微信群——生成日报前必须先在这里登记群。"},
-    {"name": "core-topics", "description": "【核心议题】管理每个群要长期追踪的话题，生成日报时会优先匹配。"},
+    {
+        "name": "groups",
+        "description": "【群组配置】注册和管理要分析的微信群——生成日报前必须先在这里登记群。",
+    },
+    {
+        "name": "core-topics",
+        "description": "【核心议题】管理每个群要长期追踪的话题，生成日报时会优先匹配。",
+    },
     {"name": "key-people", "description": "【关键人物】标记群里的重要成员，并统计他们的发言情况。"},
-    {"name": "runs", "description": "【数据抓取】发起和查看日报生成任务（即跑流水线：抓消息→解析→AI生成→落库）。"},
-    {"name": "data", "description": "【原始数据】浏览抓下来的三层原始数据（L1原文/L2上下文/L3总结），以及按消息溯源。"},
+    {
+        "name": "runs",
+        "description": "【数据抓取】发起和查看日报生成任务（即跑流水线：抓消息→解析→AI生成→落库）。",
+    },
+    {
+        "name": "data",
+        "description": "【原始数据】浏览抓下来的三层原始数据（L1原文/L2上下文/L3总结），以及按消息溯源。",
+    },
     {"name": "reports", "description": "【报告产出】查看/导出/重新生成/推送飞书 日报。"},
-    {"name": "memos", "description": "【长期记忆】MemOS 记忆的运维：健康检查、语义搜索、重建、清理、补刷同步队列。"},
+    {
+        "name": "memos",
+        "description": "【长期记忆】MemOS 记忆的运维：健康检查、语义搜索、重建、清理、补刷同步队列。",
+    },
     {"name": "judge", "description": "【质量评估】用 AI 给已生成的报告从 4 个维度打分。"},
-    {"name": "feedback", "description": "【用户反馈】记录和处理用户对报告的意见（点赞/点踩/纠错）。"},
+    {
+        "name": "feedback",
+        "description": "【用户反馈】记录和处理用户对报告的意见（点赞/点踩/纠错）。",
+    },
     {"name": "rl", "description": "【训练数据】把历史报告导出成强化学习训练用的数据集。"},
-    {"name": "scheduler", "description": "【定时调度】查看各群定时日报的调度状态（cron/下次触发/守护心跳），只读。"},
+    {
+        "name": "scheduler",
+        "description": "【定时调度】查看各群定时日报的调度状态（cron/下次触发/守护心跳），只读。",
+    },
 ]
 
 app = FastAPI(
@@ -251,13 +272,7 @@ async def serve_attachment(group_id: str, date: str, filename: str):
 
     from z_winnow.config.settings import get_settings
 
-    file_path = (
-        Path(get_settings().layer3_output_dir)
-        / group_id
-        / date
-        / "attachments"
-        / safe_name
-    )
+    file_path = Path(get_settings().layer3_output_dir) / group_id / date / "attachments" / safe_name
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Attachment not found")
     return FileResponse(str(file_path))

@@ -219,9 +219,7 @@ class TestBuildSystemPromptWithCustomTables:
 
     def test_task3_not_duplicated(self) -> None:
         """启用表注入 registry 片段，不再附加旧硬编码 Task 3。"""
-        result = build_system_prompt(
-            custom_tables={"engineering": {"enabled": True, "config": {}}}
-        )
+        result = build_system_prompt(custom_tables={"engineering": {"enabled": True, "config": {}}})
         assert "从聊天记录中识别技术工程问题" in result
         assert _TASK3_ENGINEERING_ANALYSIS.strip() not in result
 
@@ -301,9 +299,7 @@ class TestGraphNodeReadsCustomTables:
             }
 
             with (
-                patch(
-                    "z_winnow.config.settings.get_settings"
-                ) as mock_settings,
+                patch("z_winnow.config.settings.get_settings") as mock_settings,
                 patch(
                     "z_winnow.subagents.unified_reporter.generate_unified_report"
                 ) as mock_generate,
@@ -397,9 +393,7 @@ class TestGraphNodeReadsCustomTables:
             }
 
             with (
-                patch(
-                    "z_winnow.config.settings.get_settings"
-                ) as mock_settings,
+                patch("z_winnow.config.settings.get_settings") as mock_settings,
                 patch(
                     "z_winnow.subagents.unified_reporter.generate_unified_report"
                 ) as mock_generate,
@@ -523,9 +517,7 @@ class TestErrorPathFallback:
             }
 
             with (
-                patch(
-                    "z_winnow.config.settings.get_settings"
-                ) as mock_settings,
+                patch("z_winnow.config.settings.get_settings") as mock_settings,
                 patch(
                     "z_winnow.subagents.unified_reporter.generate_unified_report"
                 ) as mock_generate,

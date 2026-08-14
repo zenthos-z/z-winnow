@@ -485,9 +485,7 @@ class MemOSAdapter:
                 logger.exception("MemOS feedback_memory unexpected error")
                 return {"status": "error", "error": "unexpected"}
 
-    async def get_memory(
-        self, memory_id: str, group_id: str | None = None
-    ) -> MemoryResult | None:
+    async def get_memory(self, memory_id: str, group_id: str | None = None) -> MemoryResult | None:
         """Fetch a single memory by id via GET /product/get_memory/{id} (2.0+).
 
         Pairs with the node_id captured by add_structured_memory /

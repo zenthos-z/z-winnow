@@ -72,9 +72,13 @@ async def _seed_feedback(db, **overrides):
 
 async def test_experience_create_list_update_status(db):
     eid = await create_experience(
-        db, "g1", "议题 tp1：结论应为B",
-        topic_name="tp1", target_type="topic",
-        origin_feedback_id="fb-1", origin_version_id="g1-20260719-v2",
+        db,
+        "g1",
+        "议题 tp1：结论应为B",
+        topic_name="tp1",
+        target_type="topic",
+        origin_feedback_id="fb-1",
+        origin_version_id="g1-20260719-v2",
     )
     exps = await list_active_experiences(db, "g1")
     assert len(exps) == 1
@@ -136,7 +140,8 @@ async def test_correct_memory_is_idempotent(db):
     fb = await _seed_feedback(db)
     adapter = MockMemOSAdapter()
     await adapter.add_structured_memory(
-        cube_id="winnow:g1:topics", group_id="g1",
+        cube_id="winnow:g1:topics",
+        group_id="g1",
         items=[StructuredMemoryItem(memory="议题ID: tp1 议题: X 结论: A")],
     )
     first = await correct_memory_for_feedback(adapter, db, fb)
@@ -166,8 +171,10 @@ def test_cube_id_for_target_mappings():
 
 
 def test_derive_lesson_template():
-    assert derive_lesson({"target_type": "topic", "target_id": "tp1",
-                          "corrected_text": "X"}) == "议题 tp1：X"
+    assert (
+        derive_lesson({"target_type": "topic", "target_id": "tp1", "corrected_text": "X"})
+        == "议题 tp1：X"
+    )
     assert derive_lesson({"target_type": "report", "corrected_text": "Y"}) == "整体日报：Y"
 
 
@@ -183,7 +190,13 @@ async def test_update_feedback_provenance_partial(db):
     assert row["produced_version_id"] == "g1-20260719-v2"
     assert row["memos_node_id"] is None  # 其余未动
     # 再补 memos 字段
-    await update_feedback_provenance(db, "fb-1", memos_cube_id="winnow:g1:topics",
-                                     memos_node_id="n1", archived_memos_id="a1", status="active")
+    await update_feedback_provenance(
+        db,
+        "fb-1",
+        memos_cube_id="winnow:g1:topics",
+        memos_node_id="n1",
+        archived_memos_id="a1",
+        status="active",
+    )
     row = await get_feedback(db, "fb-1")
     assert row["memos_node_id"] == "n1" and row["archived_memos_id"] == "a1"

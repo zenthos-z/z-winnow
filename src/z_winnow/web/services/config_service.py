@@ -43,7 +43,15 @@ _FORBIDDEN_FIELDS = frozenset({"web_port", "web_host", "sqlite_db_path", "web_ap
 
 # Infra vars written to project .env for the memos-api container (compose-sourced).
 _INFRA_KEYS = frozenset(
-    {"QDRANT_URL", "QDRANT_HOST", "QDRANT_PORT", "REDIS_URL", "REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD"}
+    {
+        "QDRANT_URL",
+        "QDRANT_HOST",
+        "QDRANT_PORT",
+        "REDIS_URL",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_PASSWORD",
+    }
 )
 
 _write_lock = threading.Lock()
@@ -126,7 +134,12 @@ def apply_config_update(
 
     applied_fields = sorted(values.keys())
     if dry_run:
-        return {"ok": True, "applied_fields": applied_fields, "infra_written": [], "warnings": ["dry-run 未写入"]}
+        return {
+            "ok": True,
+            "applied_fields": applied_fields,
+            "infra_written": [],
+            "warnings": ["dry-run 未写入"],
+        }
 
     with _write_lock:
         _atomic_write_json(_OVERRIDE_PATH, candidate)
@@ -144,7 +157,12 @@ def apply_config_update(
             )
 
     logger.info("config override applied: fields=%s infra=%s", applied_fields, infra_written)
-    return {"ok": True, "applied_fields": applied_fields, "infra_written": infra_written, "warnings": warnings}
+    return {
+        "ok": True,
+        "applied_fields": applied_fields,
+        "infra_written": infra_written,
+        "warnings": warnings,
+    }
 
 
 def _format_validation_error(exc: ValidationError) -> str:
@@ -164,7 +182,14 @@ def _write_infra_env(infra: dict[str, str]) -> list[str]:
     written: list[str] = []
     for key, value in infra.items():
         needle = key + "="
-        idx = next((i for i, ln in enumerate(lines) if ln.startswith(needle) or ln.startswith("export " + needle)), None)
+        idx = next(
+            (
+                i
+                for i, ln in enumerate(lines)
+                if ln.startswith(needle) or ln.startswith("export " + needle)
+            ),
+            None,
+        )
         line = f"{key}={value}"
         if idx is None:
             lines.append(line)
@@ -279,7 +304,12 @@ async def _probe_llm(values: dict[str, Any]) -> str:
         or values.get("deepseek_base_url")
         or ""
     )
-    api_key = values.get("openai_api_key") or values.get("deepseek_api_key") or values.get("anthropic_api_key") or ""
+    api_key = (
+        values.get("openai_api_key")
+        or values.get("deepseek_api_key")
+        or values.get("anthropic_api_key")
+        or ""
+    )
     model = (
         values.get("orchestrator_model")
         or values.get("openai_model")

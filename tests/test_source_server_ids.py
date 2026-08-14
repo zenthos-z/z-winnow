@@ -43,6 +43,7 @@ def _all_records(result: UnifiedReporterOutput) -> list:
                 records.extend(items)
     return records
 
+
 # ============================================================
 # B1: Prompt template source_server_ids instructions
 # ============================================================
@@ -248,9 +249,7 @@ class TestStructuralAssertions:
         eng_issues = result.custom_tables["engineering"]["issues"]
         for i, issue in enumerate(eng_issues):
             assert isinstance(issue, dict), f"engineering issue[{i}] is not a dict"
-            assert "source_server_ids" in issue, (
-                f"engineering issue[{i}] missing source_server_ids"
-            )
+            assert "source_server_ids" in issue, f"engineering issue[{i}] missing source_server_ids"
             assert isinstance(issue["source_server_ids"], list), (
                 f"engineering issue[{i}] source_server_ids is not a list"
             )
@@ -352,9 +351,7 @@ class TestParseJsonWithValidation:
                 }
             ],
         }
-        with caplog.at_level(
-            logging.WARNING, logger="z_winnow.subagents.unified_reporter.agent"
-        ):
+        with caplog.at_level(logging.WARNING, logger="z_winnow.subagents.unified_reporter.agent"):
             result = parse_json_output(json.dumps(data))
 
         assert len(result.topics) == 1
@@ -370,9 +367,7 @@ class TestParseJsonWithValidation:
                 {"topic_id": "tp_test", "topic_name": "Test"},
             ],
         }
-        with caplog.at_level(
-            logging.WARNING, logger="z_winnow.subagents.unified_reporter.agent"
-        ):
+        with caplog.at_level(logging.WARNING, logger="z_winnow.subagents.unified_reporter.agent"):
             result = parse_json_output(json.dumps(data))
 
         # P014: Warning logged but output still returned (no crash)

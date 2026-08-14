@@ -30,7 +30,7 @@ async def test_db_ok_and_fail(tmp_path):
 async def test_check_environment_mock_mode_skips_docker(tmp_path, monkeypatch):
     # In mock mode (real_memos=False, real_llm=False) docker/containers/qdrant/memos/llm are skipped.
     async def fake_probe(values, targets=None):
-        return {t: "ok" for t in (targets or [])}
+        return dict.fromkeys(targets or [], "ok")
 
     monkeypatch.setattr("z_winnow.web.services.config_service.probe_connectivity", fake_probe)
     db = await _make_db(tmp_path)
@@ -50,7 +50,7 @@ async def test_check_environment_mock_mode_skips_docker(tmp_path, monkeypatch):
 async def test_check_environment_docker_down_blocks(tmp_path, monkeypatch):
     # real_memos=True + docker missing -> critical failures include docker + containers.
     async def fake_probe(values, targets=None):
-        return {t: "ok" for t in (targets or [])}
+        return dict.fromkeys(targets or [], "ok")
 
     monkeypatch.setattr("z_winnow.web.services.config_service.probe_connectivity", fake_probe)
     monkeypatch.setattr("shutil.which", lambda name: None)  # no docker binary
@@ -67,7 +67,7 @@ async def test_check_environment_docker_down_blocks(tmp_path, monkeypatch):
 
 async def test_check_environment_ciphertalk_fail_blocks(tmp_path, monkeypatch):
     async def fake_probe(values, targets=None):
-        return {t: "fail: connection refused" for t in (targets or [])}
+        return dict.fromkeys(targets or [], "fail: connection refused")
 
     monkeypatch.setattr("z_winnow.web.services.config_service.probe_connectivity", fake_probe)
     db = await _make_db(tmp_path)

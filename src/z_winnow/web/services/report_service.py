@@ -358,7 +358,9 @@ async def resolve_original_text_for_feedback(
         if target_type == "topic":
             topics = read_l3_json(root, gid, dt, "topics", version_number=vn) or {}
             for t in topics.get("topics", []) or []:
-                kid = (t.get("topic_id") or "") or ("topic_" + _djb2_base36(t.get("topic_name", "")))
+                kid = (t.get("topic_id") or "") or (
+                    "topic_" + _djb2_base36(t.get("topic_name", ""))
+                )
                 if kid == tid:
                     parts = [t.get("conclusion"), t.get("background")]
                     return " / ".join(p for p in parts if p)[:600] or None
@@ -367,7 +369,7 @@ async def resolve_original_text_for_feedback(
             res = read_l3_json(root, gid, dt, "resources", version_number=vn) or {}
             for r in res.get("resources", []) or []:
                 if (r.get("resource_title") or "") == tid:
-                    return f"{r.get('resource_title','')} — {r.get('summary','')}"[:600] or None
+                    return f"{r.get('resource_title', '')} — {r.get('summary', '')}"[:600] or None
             return None
         # 自定义表（engineering/world_models/...）：按 {kind}_id 匹配
         tbl = read_l3_json(root, gid, dt, target_type, version_number=vn) or {}
@@ -1093,9 +1095,7 @@ async def _finalize_regeneration(
                             group_id,
                             derive_lesson(fb),
                             topic_name=(
-                                fb.get("target_id")
-                                if fb.get("target_type") == "topic"
-                                else None
+                                fb.get("target_id") if fb.get("target_type") == "topic" else None
                             ),
                             target_type=fb.get("target_type"),
                             origin_feedback_id=fid,
@@ -1118,9 +1118,7 @@ async def _finalize_regeneration(
                 try:
                     await update_feedback_provenance(db, fid, produced_version_id=new_vid)
                 except Exception as exc:
-                    logger.warning(
-                        "regenerate finalize: provenance failed fb=%s — %s", fid, exc
-                    )
+                    logger.warning("regenerate finalize: provenance failed fb=%s — %s", fid, exc)
 
             # ④ 批量 mark_consumed（consumed_by = 新版本 id）
             await mark_consumed_batch(
@@ -1129,9 +1127,7 @@ async def _finalize_regeneration(
                 new_vid or "manual_regen",
             )
     except Exception:
-        logger.exception(
-            "regenerate finalize: failed for group=%s date=%s", group_id, date
-        )
+        logger.exception("regenerate finalize: failed for group=%s date=%s", group_id, date)
 
     return {
         "produced_version_id": new_vid,
@@ -1335,9 +1331,7 @@ async def regenerate_report(
                     _l1_rows = await get_raw_messages_by_date(
                         _pdb, resolved_date, group_id=resolved_group_id
                     )
-                    _fb_rows = await get_unconsumed_feedback(
-                        _pdb, resolved_group_id, resolved_date
-                    )
+                    _fb_rows = await get_unconsumed_feedback(_pdb, resolved_group_id, resolved_date)
                     _cur = await _pdb.execute(
                         "SELECT display_name FROM groups WHERE group_id = ?",
                         (resolved_group_id,),

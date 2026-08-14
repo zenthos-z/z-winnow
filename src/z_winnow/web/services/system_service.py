@@ -60,8 +60,10 @@ async def check_lark_cli() -> dict[str, Any]:
     # version: `lark-cli --version` → plain text
     try:
         proc = await asyncio.create_subprocess_exec(
-            bin_name, "--version",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+            bin_name,
+            "--version",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
         )
         o, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
         out["version"] = (o or b"").decode("utf-8", "replace").strip()
@@ -71,8 +73,11 @@ async def check_lark_cli() -> dict[str, Any]:
     # auth status: `lark-cli auth status` → JSON envelope
     try:
         proc = await asyncio.create_subprocess_exec(
-            bin_name, "auth", "status",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            bin_name,
+            "auth",
+            "status",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         o, _e = await asyncio.wait_for(proc.communicate(), timeout=15)
         data: Any = {}
@@ -89,7 +94,9 @@ async def check_lark_cli() -> dict[str, Any]:
         if not out["authed"]:
             out["note"] = "未授权用户身份。运行：lark-cli auth login --domain base,drive"
         elif not out["base_drive_ok"]:
-            out["note"] = "已授权但缺 base/drive 权限。重新运行：lark-cli auth login --domain base,drive"
+            out["note"] = (
+                "已授权但缺 base/drive 权限。重新运行：lark-cli auth login --domain base,drive"
+            )
     except Exception as exc:  # timeout / unexpected — never propagate
         out["note"] = f"auth status 探测失败：{exc}"
 

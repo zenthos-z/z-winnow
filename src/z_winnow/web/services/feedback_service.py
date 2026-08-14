@@ -246,7 +246,11 @@ async def get_feedback_provenance(
             if activated_id:
                 r = await adapter.get_memory(activated_id, group_id=group_id)
                 if r:
-                    activated_memory = {"memory": r.memory, "metadata": r.metadata, "score": r.score}
+                    activated_memory = {
+                        "memory": r.memory,
+                        "metadata": r.metadata,
+                        "score": r.score,
+                    }
             if archived_id:
                 r = await adapter.get_memory(archived_id, group_id=group_id)
                 if r:

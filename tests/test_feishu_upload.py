@@ -398,9 +398,7 @@ async def test_init_group_feishu_framework_persists(
 ) -> None:
     from z_winnow.web.services.group_service import init_group_feishu_framework
 
-    g = await init_group_feishu_framework(
-        temp_db, "g_test", base_target=""
-    )
+    g = await init_group_feishu_framework(temp_db, "g_test", base_target="")
     assert g.feishu_base_token
     assert g.feishu_framework_initialized == 1
     assert g.feishu_engineering_enabled == 1
@@ -513,9 +511,7 @@ async def test_upload_attaches_resource_files(
 # ============================================================
 
 
-async def test_auto_push_after_run_skips_when_feishu_disabled(
-    mock_lark: None, tmp_path
-) -> None:
+async def test_auto_push_after_run_skips_when_feishu_disabled(mock_lark: None, tmp_path) -> None:
     """feishu_enabled=0 → 返回 None，不排队任何后台上传任务。"""
     from z_winnow.pipeline.database import init_database_in_conn
     from z_winnow.web.services.report_service import auto_push_after_run
@@ -541,9 +537,7 @@ async def test_auto_push_after_run_skips_when_feishu_disabled(
     assert n == 0
 
 
-async def test_auto_push_after_run_normalizes_hyphenated_date(
-    mock_lark: None, tmp_path
-) -> None:
+async def test_auto_push_after_run_normalizes_hyphenated_date(mock_lark: None, tmp_path) -> None:
     """调用方传 YYYY-MM-DD，内部归一化到 YYYYMMDD，不报错（disabled 群返回 None）。"""
     from z_winnow.pipeline.database import init_database_in_conn
     from z_winnow.web.services.report_service import auto_push_after_run
@@ -563,9 +557,7 @@ async def test_auto_push_after_run_normalizes_hyphenated_date(
     assert await auto_push_after_run("g_test", "20260709", db_path=path) is None
 
 
-async def test_auto_push_after_run_unknown_group_no_raise(
-    mock_lark: None, tmp_path
-) -> None:
+async def test_auto_push_after_run_unknown_group_no_raise(mock_lark: None, tmp_path) -> None:
     """未知 group_id → 返回 None，绝不抛（保护管线调用方）。"""
     from z_winnow.pipeline.database import init_database_in_conn
     from z_winnow.web.services.report_service import auto_push_after_run
@@ -637,8 +629,7 @@ async def test_overview_surfaces_feishu_pushed_at(tmp_path) -> None:
     db = await aiosqlite.connect(path)
     await init_database_in_conn(db)
     await db.execute(
-        "INSERT INTO groups(group_id, display_name, chatroom_id, is_active) "
-        "VALUES (?, ?, ?, 1)",
+        "INSERT INTO groups(group_id, display_name, chatroom_id, is_active) VALUES (?, ?, ?, 1)",
         ("g_ov", "总览群", "room@ov"),
     )
     await db.execute(
@@ -697,4 +688,3 @@ def test_attachment_upload_timeout_scales_with_size(tmp_path) -> None:
 
     # 文件不存在 → 不崩，回退 floor
     assert _attachment_upload_timeout(tmp_path / "nope.pdf") == _ATTACHMENT_TIMEOUT_FLOOR_S
-

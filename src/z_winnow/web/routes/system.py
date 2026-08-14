@@ -95,7 +95,9 @@ async def update_system_config(request: Request, body: ConfigUpdateIn) -> Any:
                 else "未找到 deployments/restart-deps.sh：请手动 docker compose up -d --force-recreate"
             )
         else:
-            warnings.append("infra 已写入 .env，需手动 `docker compose up -d --force-recreate qdrant redis memos-api`")
+            warnings.append(
+                "infra 已写入 .env，需手动 `docker compose up -d --force-recreate qdrant redis memos-api`"
+            )
     out = ConfigUpdateOut(
         applied_fields=result.get("applied_fields", []),
         infra_written=result.get("infra_written", []),

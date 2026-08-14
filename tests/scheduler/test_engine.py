@@ -41,7 +41,9 @@ async def _setup_db(tmp_path):
 def _patch_pipeline(monkeypatch, *, has_data=True):
     """Patch orchestrate to write a report_versions row; auto_push to no-op."""
 
-    async def fake_orchestrate(*, group_name, date, report_types, api_base_url, api_token, source, run_id):
+    async def fake_orchestrate(
+        *, group_name, date, report_types, api_base_url, api_token, source, run_id
+    ):
         async with aiosqlite.connect(monkeypatch._sched_db) as db:  # type: ignore[attr-defined]
             await db.execute(
                 "INSERT INTO report_versions(version_id, report_id, group_id, date, version_number, "
@@ -65,7 +67,9 @@ def _patch_pipeline(monkeypatch, *, has_data=True):
 
 async def _has_report(db, gid, yyyymmdd):
     async with aiosqlite.connect(db) as c:
-        cur = await c.execute("SELECT 1 FROM report_versions WHERE group_id=? AND date=? LIMIT 1", (gid, yyyymmdd))
+        cur = await c.execute(
+            "SELECT 1 FROM report_versions WHERE group_id=? AND date=? LIMIT 1", (gid, yyyymmdd)
+        )
         return await cur.fetchone() is not None
 
 

@@ -302,9 +302,7 @@ class MemOSAdapterProtocol(Protocol):
         """
         ...
 
-    async def get_memory(
-        self, memory_id: str, group_id: str | None = None
-    ) -> MemoryResult | None:
+    async def get_memory(self, memory_id: str, group_id: str | None = None) -> MemoryResult | None:
         """Fetch a single memory by id (MemOS 2.0+).
 
         Maps to GET /product/get_memory/{id}. Pairs with node_id captured by

@@ -86,9 +86,7 @@ async def status(settings: Settings | None = None) -> dict:
     """
     settings = check_config(settings or get_settings())
     local = await _count_local(settings.db_path)
-    ecs_l3 = await _count_remote_db(
-        settings, "WINNOW_L3_SNAPSHOT_PATH", "/app/data/l3_snapshot.db"
-    )
+    ecs_l3 = await _count_remote_db(settings, "WINNOW_L3_SNAPSHOT_PATH", "/app/data/l3_snapshot.db")
     ecs_inbox = await _count_remote_db(
         settings, "WINNOW_FEEDBACK_INBOX_PATH", "/app/data/feedback_inbox.db"
     )

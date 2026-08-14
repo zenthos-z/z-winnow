@@ -672,15 +672,12 @@ def build_prompt(
             f"\n请基于以上聊天记录，一次性完成日报与议题分析、资源提取，"
             f"以及以下自定义表分析：{ct_list}。"
             f"\n每个自定义表都必须出现在 custom_tables 中——有内容输出正常数据，"
-            f"无内容必须输出 {{\"_empty\": true, ...}}（见系统提示词中的格式说明）。"
+            f'无内容必须输出 {{"_empty": true, ...}}（见系统提示词中的格式说明）。'
         )
     else:
-        task_instruction = (
-            "\n请基于以上聊天记录，一次性完成日报与议题分析、资源提取。"
-        )
+        task_instruction = "\n请基于以上聊天记录，一次性完成日报与议题分析、资源提取。"
     prompt_parts.append(
-        task_instruction
-        + "\n输出纯 JSON（不含 markdown code fence），议题统一放入 topics 列表。"
+        task_instruction + "\n输出纯 JSON（不含 markdown code fence），议题统一放入 topics 列表。"
         "\n每个 topic 必须包含 lifecycle 字段 (user_defined|sustained|emerging)、background、process、conclusion、description、trend、participants。"
         "\n每条记录的 source_server_ids 必须非空，引用实际消息的 server_id。"
     )

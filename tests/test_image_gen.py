@@ -62,7 +62,9 @@ class _FakeMsg:
 class _FakeModel:
     """假 LLM：ainvoke 返回固定内容。"""
 
-    def __init__(self, content: str = "【主题】测试主题\n【核心议题与观点】1. 话题A：采用方案X") -> None:
+    def __init__(
+        self, content: str = "【主题】测试主题\n【核心议题与观点】1. 话题A：采用方案X"
+    ) -> None:
         self._content = content
         self.calls = 0
 
@@ -153,7 +155,9 @@ async def test_call_dmx_api_no_image_data_raises(monkeypatch: pytest.MonkeyPatch
     from z_winnow.outputs.image_gen import ImageGenError, call_dmx_api
 
     def handler(req: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": "no image"}]}}]})
+        return httpx.Response(
+            200, json={"candidates": [{"content": {"parts": [{"text": "no image"}]}}]}
+        )
 
     with pytest.raises(ImageGenError):
         await call_dmx_api("p", _transport=httpx.MockTransport(handler))
@@ -268,7 +272,9 @@ async def test_generate_cover_real_writes_png(
     assert paths == [cover]
 
 
-async def test_generate_cover_missing_l3_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_generate_cover_missing_l3_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("WINNOW_LAYER3_OUTPUT_DIR", str(tmp_path / "empty"))
     _reset_settings()
     from z_winnow.outputs.image_gen import generate_cover

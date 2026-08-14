@@ -35,7 +35,9 @@ async def login(body: LoginIn) -> JSONResponse:
     expected = get_settings().web_api_key
     if not expected:
         # dev mode — no key configured; writes already pass through.
-        return JSONResponse({"ok": True, "dev": True, "detail": "dev 模式（未配置 web_api_key），无需登录"})
+        return JSONResponse(
+            {"ok": True, "dev": True, "detail": "dev 模式（未配置 web_api_key），无需登录"}
+        )
 
     if body.api_key != expected:
         raise HTTPException(status_code=401, detail="api_key 不正确")

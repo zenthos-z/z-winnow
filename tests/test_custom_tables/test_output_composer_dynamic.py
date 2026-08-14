@@ -59,6 +59,7 @@ def _assert_file_not_exists(path: Path, name: str) -> None:
 
 # ── AC1 ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_compose_accepts_custom_tables_config(tmp_path: Path) -> None:
     """AC1: compose_json accepts custom_tables_config parameter."""
@@ -80,6 +81,7 @@ async def test_compose_accepts_custom_tables_config(tmp_path: Path) -> None:
 
 
 # ── AC2 ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_mandatory_files_always_written(tmp_path: Path) -> None:
@@ -115,6 +117,7 @@ async def test_mandatory_files_always_written(tmp_path: Path) -> None:
 
 # ── AC3 ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_engineering_skipped_when_disabled(tmp_path: Path) -> None:
     """AC3: When custom_tables explicitly disables engineering,
@@ -141,6 +144,7 @@ async def test_engineering_skipped_when_disabled(tmp_path: Path) -> None:
 
 # ── AC4 ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_backward_compat_engineering_written(tmp_path: Path) -> None:
     """AC4: When custom_tables_config is empty dict, engineering.json is
@@ -165,6 +169,7 @@ async def test_backward_compat_engineering_written(tmp_path: Path) -> None:
 
 
 # ── AC5 ───────────────────────────────────────────────────────────
+
 
 def test_composed_data_has_custom_tables_field() -> None:
     """AC5: ComposedData includes custom_tables field."""
@@ -191,6 +196,7 @@ def test_composed_data_has_custom_tables_field() -> None:
 
 # ── AC6 ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_none_config_fallback(tmp_path: Path) -> None:
     """AC6: When custom_tables_config is None (not provided), all
@@ -213,6 +219,7 @@ async def test_none_config_fallback(tmp_path: Path) -> None:
 
 
 # ── AC7 ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_none_output_placeholder(tmp_path: Path) -> None:
@@ -255,6 +262,7 @@ async def test_none_output_placeholder(tmp_path: Path) -> None:
 
 
 # ── Edge cases ────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_custom_tables_config_with_unknown_table(tmp_path: Path) -> None:

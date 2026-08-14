@@ -126,7 +126,9 @@ def test_full_pipeline_engineering_enabled(custom_tables_enabled: dict[str, Any]
     tables_config["engineering"]["enabled"] = True
 
     kinds = active_kinds(tables_config, custom_tables_enabled)
-    assert "engineering" in kinds, f"engineering should be in active_kinds when enabled, got {kinds}"
+    assert "engineering" in kinds, (
+        f"engineering should be in active_kinds when enabled, got {kinds}"
+    )
 
     # Step 2: build_system_prompt with engineering enabled injects the YAML skill prompt
     prompt = build_system_prompt(
@@ -151,7 +153,9 @@ def test_full_pipeline_engineering_disabled(custom_tables_disabled: dict[str, An
     tables_config["engineering"]["enabled"] = False
 
     kinds = active_kinds(tables_config, custom_tables_disabled)
-    assert "engineering" not in kinds, f"engineering should NOT be in active_kinds when disabled, got {kinds}"
+    assert "engineering" not in kinds, (
+        f"engineering should NOT be in active_kinds when disabled, got {kinds}"
+    )
 
     # Verify mandatory kinds are still present
     assert "summary" in kinds
@@ -202,18 +206,24 @@ def test_feishu_active_kinds_reflects_custom_tables() -> None:
     tables_config = default_tables_config()
     custom_tables_enabled = {"engineering": {"enabled": True}}
     kinds = active_kinds(tables_config, custom_tables_enabled)
-    assert "engineering" in kinds, f"engineering should be enabled when custom_tables says so: {kinds}"
+    assert "engineering" in kinds, (
+        f"engineering should be enabled when custom_tables says so: {kinds}"
+    )
 
     # Case 2: engineering disabled in custom_tables (overrides tables_config)
     tables_config["engineering"]["enabled"] = True  # tables_config says True
     custom_tables_disabled = {"engineering": {"enabled": False}}  # custom_tables says False
     kinds = active_kinds(tables_config, custom_tables_disabled)
-    assert "engineering" not in kinds, f"custom_tables disabled should override tables_config: {kinds}"
+    assert "engineering" not in kinds, (
+        f"custom_tables disabled should override tables_config: {kinds}"
+    )
 
     # Case 3: custom_tables is None (backward compat, use tables_config only)
     tables_config["engineering"]["enabled"] = True
     kinds = active_kinds(tables_config, None)
-    assert "engineering" in kinds, "backward compat: should use tables_config when custom_tables is None"
+    assert "engineering" in kinds, (
+        "backward compat: should use tables_config when custom_tables is None"
+    )
 
     # Case 4: custom_tables is empty dict (no override, use tables_config)
     kinds = active_kinds(tables_config, {})
@@ -290,19 +300,27 @@ def test_real_sqlite_backward_compat() -> None:
             """)
 
             # Insert test group with legacy config (no feishu_tables blob)
-            await db.execute("""
+            await db.execute(
+                """
                 INSERT INTO groups (group_id, display_name, chatroom_id, engineering_enabled)
                 VALUES (?, ?, ?, ?)
-            """, ("test-group-legacy", "历史群", "legacy@chatroom", 1))
+            """,
+                ("test-group-legacy", "历史群", "legacy@chatroom", 1),
+            )
 
             # Insert test group with new blob config
-            blob = json.dumps({
-                "engineering": {"enabled": False, "table_id": "tbl_xyz"},
-            })
-            await db.execute("""
+            blob = json.dumps(
+                {
+                    "engineering": {"enabled": False, "table_id": "tbl_xyz"},
+                }
+            )
+            await db.execute(
+                """
                 INSERT INTO groups (group_id, display_name, chatroom_id, engineering_enabled, feishu_tables)
                 VALUES (?, ?, ?, ?, ?)
-            """, ("test-group-new", "新群", "new@chatroom", 0, blob))
+            """,
+                ("test-group-new", "新群", "new@chatroom", 0, blob),
+            )
 
             await db.commit()
 

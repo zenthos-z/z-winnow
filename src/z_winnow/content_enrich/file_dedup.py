@@ -129,10 +129,13 @@ def _collect_eligible(
         if msg_type == "appmsg":
             # Only type=6 (file) appmsg
             appmsg_type = _extract_xml_text(raw_content, "type")
-            if appmsg_type and appmsg_type.strip() not in ("6", "15"):
-                # type 15 is also file-like in some WeChat versions
-                if not _re_six.search(appmsg_type):
-                    continue
+            # type 15 is also file-like in some WeChat versions
+            if (
+                appmsg_type
+                and appmsg_type.strip() not in ("6", "15")
+                and not _re_six.search(appmsg_type)
+            ):
+                continue
             file_size = _extract_appmsg_file_size(raw_content)
         else:
             # Direct file message: <fileupload><length>
@@ -309,10 +312,10 @@ def _match_smb_file(
     best_diff = float("inf")
     for bn, fp, fsize in matching:
         diff = abs(fsize - target_size)
-        if diff <= target_size * 0.05 or diff < 1024:  # ±5% or within 1KB
-            if diff < best_diff:
-                best = (bn, fp, fsize)
-                best_diff = diff
+        # ±5% or within 1KB, 且优于当前最佳
+        if (diff <= target_size * 0.05 or diff < 1024) and diff < best_diff:
+            best = (bn, fp, fsize)
+            best_diff = diff
 
     if best is not None:
         return str(best[1])
@@ -385,7 +388,6 @@ def strip_hash_suffix(filename: str) -> tuple[str, str | None]:
     """
     name, ext = _split_filename_ext(filename)
     parts = name.rsplit("_", 1)
-    if len(parts) == 2 and len(parts[1]) == 8:
-        if re.fullmatch(r"[0-9a-fA-F]{8}", parts[1]):
-            return f"{parts[0]}{ext}", parts[1].lower()
+    if len(parts) == 2 and len(parts[1]) == 8 and re.fullmatch(r"[0-9a-fA-F]{8}", parts[1]):
+        return f"{parts[0]}{ext}", parts[1].lower()
     return filename, None

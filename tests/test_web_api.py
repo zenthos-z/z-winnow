@@ -360,9 +360,7 @@ def test_b4_no_sql_in_routes() -> None:
         "DELETE FROM",
         "CREATE TABLE",
     )
-    routes_dir = (
-        pathlib.Path(__file__).parent.parent / "src" / "z_winnow" / "web" / "routes"
-    )
+    routes_dir = pathlib.Path(__file__).parent.parent / "src" / "z_winnow" / "web" / "routes"
 
     # Allowlist: legitimate read-only queries that live inline in routes.
     # All use bound (?) parameters — no string interpolation — so they are
@@ -406,9 +404,7 @@ def test_b4_handlers_delegate_to_service() -> None:
     import ast
     import pathlib
 
-    routes_dir = (
-        pathlib.Path(__file__).parent.parent / "src" / "z_winnow" / "web" / "routes"
-    )
+    routes_dir = pathlib.Path(__file__).parent.parent / "src" / "z_winnow" / "web" / "routes"
 
     long_handlers: list[str] = []
     for py_file in routes_dir.glob("*.py"):

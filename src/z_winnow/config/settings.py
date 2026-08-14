@@ -477,9 +477,7 @@ class Settings(BaseSettings):
 
     wechat_file_storage_dir: str = Field(
         default="",
-        validation_alias=AliasChoices(
-            "WINNOW_WECHAT_FILE_STORAGE_DIR", "WECHAT_FILE_STORAGE_DIR"
-        ),
+        validation_alias=AliasChoices("WINNOW_WECHAT_FILE_STORAGE_DIR", "WECHAT_FILE_STORAGE_DIR"),
         description=(
             "WeChat local file storage root dir (e.g. SMB path to "
             "xwechat_files/wxid_xxx/msg/file).  Subdirectories are expected to be "
@@ -522,7 +520,9 @@ class Settings(BaseSettings):
     )
     scheduler_poll_interval_s: int = Field(
         default=60,
-        validation_alias=AliasChoices("WINNOW_SCHEDULER_POLL_INTERVAL_S", "SCHEDULER_POLL_INTERVAL_S"),
+        validation_alias=AliasChoices(
+            "WINNOW_SCHEDULER_POLL_INTERVAL_S", "SCHEDULER_POLL_INTERVAL_S"
+        ),
         description="Daemon poll cadence (seconds); the loop also aligns to minute boundaries.",
     )
     scheduler_backfill_days: int = Field(
@@ -542,12 +542,16 @@ class Settings(BaseSettings):
     )
     scheduler_embedded_in_web: bool = Field(
         default=False,
-        validation_alias=AliasChoices("WINNOW_SCHEDULER_EMBEDDED_IN_WEB", "SCHEDULER_EMBEDDED_IN_WEB"),
+        validation_alias=AliasChoices(
+            "WINNOW_SCHEDULER_EMBEDDED_IN_WEB", "SCHEDULER_EMBEDDED_IN_WEB"
+        ),
         description="If True, start the scheduler inside the web lifespan (default off — run standalone).",
     )
     scheduler_default_report_types: str = Field(
         default="daily",
-        validation_alias=AliasChoices("WINNOW_SCHEDULER_DEFAULT_REPORT_TYPES", "SCHEDULER_DEFAULT_REPORT_TYPES"),
+        validation_alias=AliasChoices(
+            "WINNOW_SCHEDULER_DEFAULT_REPORT_TYPES", "SCHEDULER_DEFAULT_REPORT_TYPES"
+        ),
         description="Comma-separated report types generated per scheduled run (default 'daily').",
     )
 
@@ -605,9 +609,7 @@ class Settings(BaseSettings):
     )
     supported_image_formats: str = Field(
         default="",
-        validation_alias=AliasChoices(
-            "WINNOW_SUPPORTED_IMAGE_FORMATS", "SUPPORTED_IMAGE_FORMATS"
-        ),
+        validation_alias=AliasChoices("WINNOW_SUPPORTED_IMAGE_FORMATS", "SUPPORTED_IMAGE_FORMATS"),
         description=(
             "Comma-separated list of supported image formats (empty = default: "
             "png, jpg, jpeg, gif, webp)"
@@ -636,9 +638,7 @@ class Settings(BaseSettings):
     )
     quick_img_model: str = Field(
         default="gemini-3.1-flash-image",
-        validation_alias=AliasChoices(
-            "WINNOW_QUICK_IMG_MODEL", "QUICK_IMG_MODEL", "DMX_MODEL_ID"
-        ),
+        validation_alias=AliasChoices("WINNOW_QUICK_IMG_MODEL", "QUICK_IMG_MODEL", "DMX_MODEL_ID"),
         description="DMX image generation model ID (Gemini native generateContent)",
     )
 

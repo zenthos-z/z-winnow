@@ -578,9 +578,7 @@ async def _analyze_via_vision_api(image_path: str) -> ImageDescription:
                 {"type": "text", "text": GIF_MULTI_FRAME_PROMPT}
             ]
             for _i, _fb64 in enumerate(gif_frames):
-                content_blocks.append(
-                    {"type": "image_url", "image_url": {"url": _fb64}}
-                )
+                content_blocks.append({"type": "image_url", "image_url": {"url": _fb64}})
             msg = HumanMessage(content=content_blocks)
             # skip the static-image block below — jump directly to model invoke
             _gif_mode = True

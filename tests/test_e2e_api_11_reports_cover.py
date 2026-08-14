@@ -178,9 +178,7 @@ class TestReportsCoverWorkflow:
         assert resp.content == FAKE_PNG
 
     @pytest.mark.asyncio
-    async def test_post_cover_404_when_report_missing(
-        self, client: httpx.AsyncClient
-    ) -> None:
+    async def test_post_cover_404_when_report_missing(self, client: httpx.AsyncClient) -> None:
         resp = await client.post("/api/v1/reports/nonexistent-report/cover")
         assert resp.status_code == 404, resp.text
 

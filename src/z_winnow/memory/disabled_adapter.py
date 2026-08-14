@@ -124,9 +124,7 @@ class DisabledAdapter:
         """Silently return disabled status — MemOS is disabled."""
         return {"status": "disabled"}
 
-    async def get_memory(
-        self, memory_id: str, group_id: str | None = None
-    ) -> MemoryResult | None:
+    async def get_memory(self, memory_id: str, group_id: str | None = None) -> MemoryResult | None:
         """Silently return None — MemOS is disabled."""
         return None
 

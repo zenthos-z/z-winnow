@@ -374,13 +374,15 @@ async def list_source_members(
             # Best display name: nickname > remark > groupNickname > displayName > wxid
             best_display = nickname or remark or group_nickname or raw_display or wxid
 
-            results.append({
-                "wxid": wxid,
-                "nickname": nickname,
-                "remark": remark,
-                "display_name": best_display,
-                "group_nickname": group_nickname,
-            })
+            results.append(
+                {
+                    "wxid": wxid,
+                    "nickname": nickname,
+                    "remark": remark,
+                    "display_name": best_display,
+                    "group_nickname": group_nickname,
+                }
+            )
 
         # Step 4: Sort — members with nickname first, then by display_name
         def _sort_key(m: dict[str, Any]) -> tuple[int, str]:

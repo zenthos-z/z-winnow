@@ -3,22 +3,20 @@
 CT-4: Model extension to support dynamic table slots.
 """
 
-import sys
 import importlib.util
+import typing
 
 import pytest
 from pydantic import ValidationError
 
 # Direct import of models.py to avoid dependency chain issues in isolated testing
 spec = importlib.util.spec_from_file_location(
-    "models",
-    "src/z_winnow/subagents/unified_reporter/models.py"
+    "models", "src/z_winnow/subagents/unified_reporter/models.py"
 )
 models = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(models)
 
-# Add Any to namespace for model_rebuild
-import typing
+
 models.UnifiedReporterOutput.model_rebuild(
     _types_namespace={
         "Topic": models.Topic,
@@ -40,16 +38,12 @@ class TestCustomTablesField:
         # Verify field exists in model fields
         assert "custom_tables" in UnifiedReporterOutput.model_fields
         # Verify field can be accessed on an instance
-        output = UnifiedReporterOutput(
-            overview="test overview",
-            trend_analysis="test trend"
-        )
+        output = UnifiedReporterOutput(overview="test overview", trend_analysis="test trend")
         assert hasattr(output, "custom_tables")
 
     def test_custom_tables_field_type(self):
         """AC2: custom_tables field type is dict[str, Any]."""
         from typing import Any, get_args, get_origin
-        import typing
 
         field_info = UnifiedReporterOutput.model_fields["custom_tables"]
         # Get the annotation and verify it's dict[str, Any]
@@ -63,10 +57,7 @@ class TestCustomTablesField:
 
     def test_custom_tables_default_empty_dict(self):
         """AC3: custom_tables defaults to empty dict (default_factory=dict)."""
-        output = UnifiedReporterOutput(
-            overview="test overview",
-            trend_analysis="test trend"
-        )
+        output = UnifiedReporterOutput(overview="test overview", trend_analysis="test trend")
         assert output.custom_tables == {}
         assert isinstance(output.custom_tables, dict)
 
@@ -96,7 +87,7 @@ class TestCustomTablesField:
             UnifiedReporterOutput(
                 overview="test overview",
                 trend_analysis="test trend",
-                unknown_field="should_be_rejected"
+                unknown_field="should_be_rejected",
             )
         # Verify error mentions extra field
         errors = exc_info.value.errors()
@@ -107,7 +98,7 @@ class TestCustomTablesField:
         output = UnifiedReporterOutput(
             overview="test overview",
             trend_analysis="test trend",
-            custom_tables={"table1": [{"col1": "val1"}]}
+            custom_tables={"table1": [{"col1": "val1"}]},
         )
         dumped = output.model_dump()
         assert "custom_tables" in dumped
@@ -124,29 +115,17 @@ class TestCustomTablesUsage:
                 {"issue": "bug1", "status": "fixed"},
                 {"issue": "bug2", "status": "open"},
             ],
-            "metrics_table": {
-                "total": 100,
-                "resolved": 80,
-                "pending": 20
-            }
+            "metrics_table": {"total": 100, "resolved": 80, "pending": 20},
         }
         output = UnifiedReporterOutput(
-            overview="test overview",
-            trend_analysis="test trend",
-            custom_tables=complex_data
+            overview="test overview", trend_analysis="test trend", custom_tables=complex_data
         )
         assert output.custom_tables == complex_data
 
     def test_custom_tables_default_factory_creates_new_dict(self):
         """Verify default_factory creates a new dict per instance."""
-        output1 = UnifiedReporterOutput(
-            overview="overview1",
-            trend_analysis="trend1"
-        )
-        output2 = UnifiedReporterOutput(
-            overview="overview2",
-            trend_analysis="trend2"
-        )
+        output1 = UnifiedReporterOutput(overview="overview1", trend_analysis="trend1")
+        output2 = UnifiedReporterOutput(overview="overview2", trend_analysis="trend2")
         # Each instance should have its own dict
         output1.custom_tables["key1"] = "value1"
         assert "key1" not in output2.custom_tables

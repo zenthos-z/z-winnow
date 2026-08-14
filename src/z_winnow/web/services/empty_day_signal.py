@@ -75,7 +75,11 @@ async def register_empty_day_signal(
                 "memory_type": "empty_day_signal",
                 "consecutive_empty_days": consecutive,
                 "last_activity_date": last_activity,
-                "signal_strength": "high" if consecutive > 7 else "medium" if consecutive > 3 else "low",
+                "signal_strength": "high"
+                if consecutive > 7
+                else "medium"
+                if consecutive > 3
+                else "low",
             },
         },
     )

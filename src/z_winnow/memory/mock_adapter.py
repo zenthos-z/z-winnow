@@ -642,9 +642,7 @@ class MockMemOSAdapter:
             "raw": {"add": [], "update": updated},
         }
 
-    async def get_memory(
-        self, memory_id: str, group_id: str | None = None
-    ) -> MemoryResult | None:
+    async def get_memory(self, memory_id: str, group_id: str | None = None) -> MemoryResult | None:
         """Mock single-memory fetch — scan the in-memory store by id."""
         for cube in self._store.values():
             for entries in cube.values():

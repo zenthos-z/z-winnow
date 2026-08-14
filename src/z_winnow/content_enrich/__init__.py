@@ -125,7 +125,8 @@ def _build_chat_context(
         md = builder.build()
         logger.info(
             "content_enrich: _build_chat_context — built %d chars, %d messages",
-            len(md), len(messages),
+            len(md),
+            len(messages),
         )
         return md
     except Exception:
@@ -242,17 +243,11 @@ async def node_content_enrich(state: dict[str, Any]) -> dict[str, Any]:
         try:
             _wc_dir = (settings.wechat_file_storage_dir or "").strip()
             if _wc_dir:
-                _corrected = await apply_file_content_hash_suffix(
-                    messages, _wc_dir
-                )
+                _corrected = await apply_file_content_hash_suffix(messages, _wc_dir)
                 if _corrected:
-                    logger.info(
-                        "content_enrich: file dedup — %d messages corrected", _corrected
-                    )
+                    logger.info("content_enrich: file dedup — %d messages corrected", _corrected)
         except Exception as _dedup_exc:
-            logger.warning(
-                "content_enrich: file dedup failed (non-blocking) — %s", _dedup_exc
-            )
+            logger.warning("content_enrich: file dedup failed (non-blocking) — %s", _dedup_exc)
 
     image_descriptions: dict[str, str] = {}
     link_previews: dict[str, dict[str, str]] = {}
@@ -331,8 +326,7 @@ async def node_content_enrich(state: dict[str, Any]) -> dict[str, Any]:
         except TimeoutError:
             image_analysis_failed = True
             logger.warning(
-                "content_enrich: image analysis timed out after %.0fs"
-                " (%d image messages degraded)",
+                "content_enrich: image analysis timed out after %.0fs (%d image messages degraded)",
                 timeout_s * 0.6,
                 _image_msg_count,
             )
@@ -444,28 +438,25 @@ async def node_content_enrich(state: dict[str, Any]) -> dict[str, Any]:
                     _Path(_db_path).parent.mkdir(parents=True, exist_ok=True)
                     async with _aiosqlite.connect(_db_path) as _db:
                         await _init_db(_db)
-                        context_count = await _insert_ctx(
-                            _db, _contexts, _date, group_id=_group_id
-                        )
+                        context_count = await _insert_ctx(_db, _contexts, _date, group_id=_group_id)
 
                     logger.info(
                         "content_enrich: L2 persist — wrote %d parsed contexts",
                         context_count,
                     )
             except Exception as _l2_exc:
-                logger.warning(
-                    "content_enrich: L2 persist failed (non-blocking) — %s", _l2_exc
-                )
+                logger.warning("content_enrich: L2 persist failed (non-blocking) — %s", _l2_exc)
 
     # ── 始终构建 chat_context_markdown ──
     # 无论 enrich 是否执行，只要 messages 存在就产出 markdown，
     # 确保 orchestrator / unified_reporter 始终能消费完整的聊天正文。
-    chat_context_md = _build_chat_context(
-        messages, image_descriptions, link_previews, state
-    )
+    chat_context_md = _build_chat_context(messages, image_descriptions, link_previews, state)
     logger.info(
         "content_enrich: node returning — phase=%s messages=%d img_desc=%d link_prev=%d md_chars=%d",
-        current_phase, len(messages), len(image_descriptions), len(link_previews),
+        current_phase,
+        len(messages),
+        len(image_descriptions),
+        len(link_previews),
         len(chat_context_md),
     )
     return {

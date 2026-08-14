@@ -330,7 +330,8 @@ async def list_cipher_talk_sessions(
             rooms.append(s)
     logger.info(
         "list_cipher_talk_sessions: %d total → %d chatrooms (sessionType/username filter)",
-        len(all_sessions), len(rooms),
+        len(all_sessions),
+        len(rooms),
     )
 
     # Local registered chatroom_id set

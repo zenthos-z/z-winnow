@@ -437,7 +437,9 @@ class TestB4ExportBareMarkdown:
             encoding="utf-8",
         )
         (l3_dir / "engineering.json").write_text(
-            json.dumps({"date": DATE, "engineering_issues": [], "group_summary": {}, "model_used": ""}),
+            json.dumps(
+                {"date": DATE, "engineering_issues": [], "group_summary": {}, "model_used": ""}
+            ),
             encoding="utf-8",
         )
         (l3_dir / "topics.json").write_text(
@@ -535,10 +537,9 @@ class TestAxisSchemaSingleSource:
             "compose_final_report self-loop must be removed (B2 dead code)"
         )
         # the degraded submodule (the other half of the removed self-loop) is gone
-        assert (
-            importlib.util.find_spec("z_winnow.subagents.output_composer.degraded")
-            is None
-        ), "degraded submodule must be removed (B2 dead code)"
+        assert importlib.util.find_spec("z_winnow.subagents.output_composer.degraded") is None, (
+            "degraded submodule must be removed (B2 dead code)"
+        )
         # the package itself still imports cleanly (L070)
         assert hasattr(composer, "compose_json") and hasattr(composer, "render_markdown")
 
@@ -639,9 +640,7 @@ class TestAxisDeadCodeAndFrontend:
         """
         import re
 
-        static_dir = (
-            Path(__file__).resolve().parent.parent / "src" / "z_winnow" / "web" / "static"
-        )
+        static_dir = Path(__file__).resolve().parent.parent / "src" / "z_winnow" / "web" / "static"
         index_html = (static_dir / "index.html").read_text(encoding="utf-8")
 
         targets = re.findall(r'href="([A-Za-z0-9_\-]+\.html)(?:\?[^"]*)?"', index_html)

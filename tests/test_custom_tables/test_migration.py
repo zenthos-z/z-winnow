@@ -31,9 +31,7 @@ class TestCustomTablesMigration:
             rows = await cursor.fetchall()
             col_names = {r[1] for r in rows}
 
-            assert "custom_tables" in col_names, (
-                "custom_tables column should exist in groups table"
-            )
+            assert "custom_tables" in col_names, "custom_tables column should exist in groups table"
 
     @pytest.mark.asyncio
     async def test_migration_idempotent(self) -> None:

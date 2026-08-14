@@ -30,9 +30,7 @@ class FeedbackCreate(BaseModel):
     target_version_id: str | None = Field(
         default=None, description="被反馈的日报版本 id（{report_id}-v{n}）"
     )
-    target_topic_id: str | None = Field(
-        default=None, description="议题级反馈时的被反馈议题 id"
-    )
+    target_topic_id: str | None = Field(default=None, description="议题级反馈时的被反馈议题 id")
     signal: SignalType
     severity: Severity = Severity.INFO
     rating: str | None = None

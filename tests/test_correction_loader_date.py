@@ -13,9 +13,19 @@ from z_winnow.rl.correction_loader import load_corrections
 _NOW_ISO = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 _FB_COLS = [
-    "feedback_id", "created_at", "group_id", "date", "target_type", "target_id",
-    "severity", "tags", "correction_mode", "original_text", "corrected_text",
-    "status", "consumed_at",
+    "feedback_id",
+    "created_at",
+    "group_id",
+    "date",
+    "target_type",
+    "target_id",
+    "severity",
+    "tags",
+    "correction_mode",
+    "original_text",
+    "corrected_text",
+    "status",
+    "consumed_at",
 ]
 
 
@@ -23,9 +33,7 @@ async def _insert_fb(conn, **kw):
     vals = [kw.get(c) for c in _FB_COLS]
     placeholders = ",".join(["?"] * len(_FB_COLS))
     collist = ",".join(_FB_COLS)
-    await conn.execute(
-        f"INSERT INTO feedback_events ({collist}) VALUES ({placeholders})", vals
-    )
+    await conn.execute(f"INSERT INTO feedback_events ({collist}) VALUES ({placeholders})", vals)
 
 
 @pytest.fixture
@@ -54,22 +62,65 @@ async def db_path(tmp_path, monkeypatch):
         );
         """
     )
-    await _insert_fb(conn, feedback_id="fb1", created_at=_NOW_ISO, group_id="g1",
-                     date="20260701", target_type="topic", target_id="t1", severity="error",
-                     tags='["fact_error"]', correction_mode="inline_edit", original_text="旧内容",
-                     corrected_text="新内容A", status="active", consumed_at=_NOW_ISO)
-    await _insert_fb(conn, feedback_id="fb2", created_at=_NOW_ISO, group_id="g1",
-                     date="20260701", target_type="topic", target_id="t2", severity="warning",
-                     correction_mode="free_text", original_text="X", corrected_text="Y未消费",
-                     status="active")
-    await _insert_fb(conn, feedback_id="fb3", created_at=_NOW_ISO, group_id="g1",
-                     date="20260702", target_type="topic", target_id="t3", severity="info",
-                     correction_mode="inline_edit", original_text="P", corrected_text="Q别日",
-                     status="active", consumed_at=_NOW_ISO)
-    await _insert_fb(conn, feedback_id="fb4", created_at=_NOW_ISO, group_id="g1",
-                     date="20260701", target_type="topic", target_id="t4",
-                     correction_mode="inline_edit", original_text="R", corrected_text="S已回滚",
-                     status="rolled_back", consumed_at=_NOW_ISO)
+    await _insert_fb(
+        conn,
+        feedback_id="fb1",
+        created_at=_NOW_ISO,
+        group_id="g1",
+        date="20260701",
+        target_type="topic",
+        target_id="t1",
+        severity="error",
+        tags='["fact_error"]',
+        correction_mode="inline_edit",
+        original_text="旧内容",
+        corrected_text="新内容A",
+        status="active",
+        consumed_at=_NOW_ISO,
+    )
+    await _insert_fb(
+        conn,
+        feedback_id="fb2",
+        created_at=_NOW_ISO,
+        group_id="g1",
+        date="20260701",
+        target_type="topic",
+        target_id="t2",
+        severity="warning",
+        correction_mode="free_text",
+        original_text="X",
+        corrected_text="Y未消费",
+        status="active",
+    )
+    await _insert_fb(
+        conn,
+        feedback_id="fb3",
+        created_at=_NOW_ISO,
+        group_id="g1",
+        date="20260702",
+        target_type="topic",
+        target_id="t3",
+        severity="info",
+        correction_mode="inline_edit",
+        original_text="P",
+        corrected_text="Q别日",
+        status="active",
+        consumed_at=_NOW_ISO,
+    )
+    await _insert_fb(
+        conn,
+        feedback_id="fb4",
+        created_at=_NOW_ISO,
+        group_id="g1",
+        date="20260701",
+        target_type="topic",
+        target_id="t4",
+        correction_mode="inline_edit",
+        original_text="R",
+        corrected_text="S已回滚",
+        status="rolled_back",
+        consumed_at=_NOW_ISO,
+    )
     await conn.execute(
         "INSERT INTO group_experiences (experience_id, group_id, topic_name, target_type, "
         "lesson, status, created_at) VALUES (?,?,?,?,?,?,?)",
