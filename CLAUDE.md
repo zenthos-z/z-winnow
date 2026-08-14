@@ -90,8 +90,8 @@ python -m poetry run winnow sync pull --dry-run                    # 只 merge �
 python -m poetry run winnow mcp-key list                          # 列注册 key（脱敏：前缀+member+权限）
 python -m poetry run winnow mcp-key add --member ID --name "名" --groups g1,g2  # 生成 key 绑成员+群权限
 python -m poetry run winnow mcp-key add --member admin --admin    # 生成管理员 key（全权，忽略 --groups）
-python -m poetry run winnow mcp-key revoke --key qrb_xxx          # 撤销 key
-python -m poetry run winnow mcp-key allow --key qrb_xxx --groups g3  # 追加可访问群组
+python -m poetry run winnow mcp-key revoke --key wn_xxx          # 撤销 key
+python -m poetry run winnow mcp-key allow --key wn_xxx --groups g3  # 追加可访问群组
 
 # MCP server 启动 + 配图
 python -m poetry run winnow mcp                                            # MCP server（stdio 默认，本地 Claude Desktop/Cursor 集成）

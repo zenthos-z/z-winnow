@@ -203,8 +203,8 @@ poetry run winnow r2 upload --dry-run                         # 只报告待传�
 poetry run winnow mcp-key list                                       # 列注册 key（脱敏）
 poetry run winnow mcp-key add --member ID --name "名" --groups g1,g2 # 生成 key 绑成员+群权限
 poetry run winnow mcp-key add --member admin --admin                 # 管理员 key（全权）
-poetry run winnow mcp-key revoke --key qrb_xxx                       # 撤销
-poetry run winnow mcp-key allow --key qrb_xxx --groups g3            # 追加可访问群组
+poetry run winnow mcp-key revoke --key wn_xxx                       # 撤销
+poetry run winnow mcp-key allow --key wn_xxx --groups g3            # 追加可访问群组
 ```
 
 **LLM-as-judge 质量评估**（4 维度打分）
