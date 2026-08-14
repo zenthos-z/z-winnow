@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # ============================================================
 # winnow MCP server 部署镜像（仅 MCP http，不含数据/密钥/MemOS）
-# 阶段二 ECS 常驻层 — docs/mcp-platform-checkpoint.md §4.3
+# 阶段二 常驻部署层 — docs/mcp.md
 # ============================================================
 FROM python:3.12-slim
 
