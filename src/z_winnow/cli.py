@@ -2448,7 +2448,7 @@ async def _cmd_mcp_key_list(args: argparse.Namespace) -> int:
 
 
 async def _cmd_mcp_key_add(args: argparse.Namespace) -> int:
-    """生成新 key（qrb_<token>）并绑定成员/群组权限，写 YAML。"""
+    """生成新 key（wn_<token>）并绑定成员/群组权限，写 YAML。"""
     import secrets
 
     from z_winnow.config.settings import get_settings
@@ -2456,7 +2456,7 @@ async def _cmd_mcp_key_add(args: argparse.Namespace) -> int:
 
     path = get_settings().mcp_keys_path
     keys = load_keys(path)
-    new_key = "qrb_" + secrets.token_urlsafe(24)
+    new_key = "wn_" + secrets.token_urlsafe(24)
     is_admin = bool(args.admin)
     groups = [] if is_admin else _split_groups(args.groups)
     keys[new_key] = {

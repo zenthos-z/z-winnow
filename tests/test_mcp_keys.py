@@ -47,13 +47,13 @@ def test_load_keys_parses(tmp_path):
     _write_yaml(
         p,
         {
-            "qrb_admin": {
+            "wn_admin": {
                 "member_id": "admin",
                 "display_name": "管理员",
                 "is_admin": True,
                 "allowed_groups": [],
             },
-            "qrb_zhang": {
+            "wn_zhang": {
                 "member_id": "zhang",
                 "display_name": "张三",
                 "is_admin": False,
@@ -62,8 +62,8 @@ def test_load_keys_parses(tmp_path):
         },
     )
     keys = load_keys(p)
-    assert set(keys.keys()) == {"qrb_admin", "qrb_zhang"}
-    assert keys["qrb_admin"]["is_admin"] is True
+    assert set(keys.keys()) == {"wn_admin", "wn_zhang"}
+    assert keys["wn_admin"]["is_admin"] is True
 
 
 def test_load_keys_missing_file_returns_empty(tmp_path):
@@ -78,13 +78,13 @@ def test_load_keys_malformed_returns_empty(tmp_path):
 
 def test_load_keys_mtime_cache_reload(tmp_path):
     p = tmp_path / "mcp_keys.yaml"
-    _write_yaml(p, {"qrb_a": {"member_id": "a", "is_admin": True, "allowed_groups": []}})
-    assert "qrb_a" in load_keys(p)
+    _write_yaml(p, {"wn_a": {"member_id": "a", "is_admin": True, "allowed_groups": []}})
+    assert "wn_a" in load_keys(p)
     # 改文件 → mtime 变 → 重读
-    _write_yaml(p, {"qrb_b": {"member_id": "b", "is_admin": False, "allowed_groups": ["g1"]}})
+    _write_yaml(p, {"wn_b": {"member_id": "b", "is_admin": False, "allowed_groups": ["g1"]}})
     keys = load_keys(p)
-    assert "qrb_a" not in keys
-    assert "qrb_b" in keys
+    assert "wn_a" not in keys
+    assert "wn_b" in keys
 
 
 # ============================================================
@@ -97,7 +97,7 @@ def test_resolve_member_admin(tmp_path):
     _write_yaml(
         p,
         {
-            "qrb_a": {
+            "wn_a": {
                 "member_id": "admin",
                 "display_name": "管理员",
                 "is_admin": True,
@@ -105,7 +105,7 @@ def test_resolve_member_admin(tmp_path):
             }
         },
     )
-    m = resolve_member("qrb_a", p)
+    m = resolve_member("wn_a", p)
     assert m.member_id == "admin"
     assert m.is_admin is True
     assert m.allowed_groups == set()
@@ -116,7 +116,7 @@ def test_resolve_member_with_groups(tmp_path):
     _write_yaml(
         p,
         {
-            "qrb_z": {
+            "wn_z": {
                 "member_id": "zhang",
                 "display_name": "张三",
                 "is_admin": False,
@@ -124,7 +124,7 @@ def test_resolve_member_with_groups(tmp_path):
             }
         },
     )
-    m = resolve_member("qrb_z", p)
+    m = resolve_member("wn_z", p)
     assert m.member_id == "zhang"
     assert m.is_admin is False
     assert m.allowed_groups == {"g1", "g2"}
@@ -132,9 +132,9 @@ def test_resolve_member_with_groups(tmp_path):
 
 def test_resolve_member_unknown_raises(tmp_path):
     p = tmp_path / "mcp_keys.yaml"
-    _write_yaml(p, {"qrb_a": {"member_id": "a", "is_admin": True, "allowed_groups": []}})
+    _write_yaml(p, {"wn_a": {"member_id": "a", "is_admin": True, "allowed_groups": []}})
     with pytest.raises(KeyError):
-        resolve_member("qrb_unknown", p)
+        resolve_member("wn_unknown", p)
 
 
 # ============================================================
@@ -147,7 +147,7 @@ def test_save_keys_atomic_and_reload(tmp_path):
     save_keys(
         p,
         {
-            "qrb_new": {
+            "wn_new": {
                 "member_id": "x",
                 "display_name": "X",
                 "is_admin": False,
@@ -156,5 +156,5 @@ def test_save_keys_atomic_and_reload(tmp_path):
         },
     )
     keys = load_keys(p)  # save 后缓存已刷新，能读到
-    assert "qrb_new" in keys
-    assert keys["qrb_new"]["member_id"] == "x"
+    assert "wn_new" in keys
+    assert keys["wn_new"]["member_id"] == "x"

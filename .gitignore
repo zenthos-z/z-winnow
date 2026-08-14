@@ -67,7 +67,6 @@ env/
 Thumbs.db
 
 # --- Claude Code cache (exclude internal state, keep agents/skills) ---
-# 用 .claude/* 而非 .claude/ —— 忽略整个目录会让下面的 !negation 失效（git 不下钻）
 .claude/*
 !.claude/agents/
 !.claude/skills/
@@ -139,4 +138,3 @@ DIAGNOSIS.md
 tools/
 
 # ECS 凭证（技能目录内的 SSH 密钥 + 阿里云 RAM）— 绝不入库
-.claude/skills/winnow-dev/ecs-secrets/

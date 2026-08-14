@@ -6,7 +6,7 @@ YAML 配置（默认 ``config/mcp_keys.yaml``，gitignored）。mtime 缓存热�
 YAML schema::
 
     keys:
-      qrb_<random>:           # API key（secrets.token_urlsafe 生成）
+      wn_<random>:           # API key（secrets.token_urlsafe 生成）
         member_id: admin      # 稳定成员标识（写入 feedback_events.reporter）
         display_name: 管理员  # 可读名
         is_admin: true        # true = 全权（所有群）；allowed_groups 忽略

@@ -33,7 +33,7 @@ async def test_mcp_key_add_writes_yaml(monkeypatch, tmp_path):
     assert len(keys) == 1
     key = next(iter(keys.keys()))
     entry = keys[key]
-    assert key.startswith("qrb_")
+    assert key.startswith("wn_")
     assert entry["member_id"] == "zhang"
     assert entry["display_name"] == "张三"
     assert entry["is_admin"] is False
@@ -94,7 +94,7 @@ async def test_mcp_key_revoke(monkeypatch, tmp_path):
 
 async def test_mcp_key_revoke_unknown_exit1(monkeypatch, tmp_path):
     _settings_yaml(monkeypatch, tmp_path)
-    rc = await cli._cmd_mcp_key_revoke(_parse("mcp-key", "revoke", "--key", "qrb_nope"))
+    rc = await cli._cmd_mcp_key_revoke(_parse("mcp-key", "revoke", "--key", "wn_nope"))
     assert rc == 1
 
 
