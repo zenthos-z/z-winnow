@@ -173,9 +173,10 @@ async def test_start_sync_success_progress_to_done(sync_settings, monkeypatch):
     res = await sync_service.start_sync()
     assert res["state"] == "syncing"
 
-    # 立即查应是 syncing（start_sync 同步置态，不依赖后台任务调度）
+    # 立即查：start_sync 同步置态 syncing；但后台 fake_push 全靠 sleep(0) 让出，
+    # 在慢速 CI 调度下可能抢在首次查询前跑完 → syncing/done 均为合法观测
     p = await sync_service.get_progress()
-    assert p["state"] == "syncing"
+    assert p["state"] in ("syncing", "done")
 
     # 轮询等后台收尾
     for _ in range(100):
