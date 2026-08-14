@@ -89,7 +89,7 @@ plans/.harness.prompt
 # Generated reports and outputs
 reports/
 reports_test/
-outputs/
+/outputs/
 
 # Coverage data
 .coverage
