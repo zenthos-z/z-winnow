@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>z-winnow System Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-border-light: #e2e8f0;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-text-dim: #94a3b8;
+      --c-accent-red: #dc2626;
+      --c-accent-blue: #2563eb;
+      --c-accent-green: #16a34a;
+      --c-accent-amber: #d97706;
+      --c-fill-gray: #f1f5f9;
+      --c-fill-blue: #eff6ff;
+      --c-fill-red: #fef2f2;
+      --c-fill-green: #f0fdf4;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    .diagram-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+    }
+
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+
+    .diagram-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+
+    .diagram-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== Section Headers ===== */
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--c-border-light);
+    }
+
+    /* ===== Row Layout ===== */
+    .pipeline-row {
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      margin-bottom: 24px;
+    }
+
+    .pipeline-row > div {
+      background: var(--c-canvas);
+      padding: 16px;
+    }
+
+    .row-header {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      background: var(--c-fill-gray) !important;
+    }
+
+    .row-header .step-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-dim);
+    }
+
+    .row-header .step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+
+    .row-header .step-file {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+    }
+
+    .cell-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .cell-content {
+      font-size: 12px;
+      color: var(--c-text-main);
+      line-height: 1.6;
+    }
+
+    .cell-content code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--c-fill-gray);
+      padding: 1px 4px;
+      border: 1px solid var(--c-border-light);
+    }
+
+    /* ===== Storage Layer Grid ===== */
+    .storage-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      margin-bottom: 24px;
+    }
+
+    .storage-grid > div {
+      background: var(--c-canvas);
+      padding: 16px;
+    }
+
+    .layer-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-dim);
+      margin-bottom: 4px;
+    }
+
+    .layer-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 2px;
+    }
+
+    .layer-table {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-accent-blue);
+      margin-bottom: 8px;
+    }
+
+    .layer-desc {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.5;
+    }
+
+    .layer-stats {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--c-border-light);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      line-height: 1.8;
+    }
+
+    .layer-stats .val {
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+
+    /* ===== Issue Cards ===== */
+    .issue-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .issue-card {
+      border: 1px solid var(--c-accent-red);
+      padding: 16px;
+      background: var(--c-fill-red);
+    }
+
+    .issue-card .issue-id {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-accent-red);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .issue-card .issue-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 6px;
+    }
+
+    .issue-card .issue-desc {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .issue-card .issue-sql {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-main);
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 8px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ===== Subagent Grid ===== */
+    .subagent-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--c-border);
+      border: 1px solid var(--c-border);
+      margin-bottom: 24px;
+    }
+
+    .subagent-grid > div {
+      background: var(--c-canvas);
+      padding: 16px;
+    }
+
+    .agent-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--c-text-main);
+      margin-bottom: 2px;
+    }
+
+    .agent-role {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-bottom: 8px;
+    }
+
+    .agent-field {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-dim);
+      line-height: 1.8;
+    }
+
+    .agent-field span {
+      color: var(--c-text-sub);
+    }
+
+    /* ===== Badge ===== */
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 1px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+      margin-right: 4px;
+    }
+
+    .badge-ok {
+      border-color: var(--c-accent-green);
+      color: var(--c-accent-green);
+    }
+
+    .badge-warn {
+      border-color: var(--c-accent-amber);
+      color: var(--c-accent-amber);
+    }
+
+    .badge-err {
+      border-color: var(--c-accent-red);
+      color: var(--c-accent-red);
+    }
+
+    .badge-solid {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+
+    /* ===== Config Table ===== */
+    .config-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-bottom: 24px;
+    }
+
+    .config-table th {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--c-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--c-border);
+      background: var(--c-fill-gray);
+    }
+
+    .config-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--c-border-light);
+      color: var(--c-text-main);
+    }
+
+    .config-table td:first-child {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-accent-blue);
+    }
+
+    .config-table td:nth-child(2) {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-sub);
+    }
+
+    /* ===== Arrow between rows ===== */
+    .arrow-down {
+      text-align: center;
+      padding: 8px 0;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--c-text-dim);
+    }
+
+    /* ===== Footer ===== */
+    .diagram-footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--c-border);
+      font-size: 10px;
+      color: var(--c-text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ===== Full-width card ===== */
+    .full-card {
+      border: 1px solid var(--c-border);
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .flow-step {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-main);
+      background: var(--c-canvas);
+    }
+
+    .flow-arrow {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--c-text-dim);
+    }
+
+    .flow-step.active {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+
+      <!-- Header -->
+      <div class="diagram-header">
+        <div class="diagram-title">z-winnow — System Architecture & Data Pipeline</div>
+        <div class="diagram-subtitle">LangGraph Multi-Agent WeChat Daily Report System / v0.1.0 / Wave 7 P0 Iteration 1</div>
+      </div>
+
+      <!-- ===== SECTION 1: Pipeline ===== -->
+      <div class="section-label">Pipeline — Data Flow (6 Steps)</div>
+
+      <!-- Step 1: Fetch -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 01</span>
+          <span class="step-name">Fetch</span>
+          <span class="step-file">pipeline/weflow_client.py</span>
+        </div>
+        <div>
+          <div class="cell-label">Input</div>
+          <div class="cell-content">
+            WeFlow API <code>GET /api/v1/messages</code><br>
+            Params: <code>talker</code>, <code>start</code>/<code>end</code>, <code>media=1</code>, <code>image=1</code>
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Processing</div>
+          <div class="cell-content">
+            Type mapping <code>0:text, 1:image, 4:file, 49:appmsg</code><br>
+            Filter system (type=80)<br>
+            appmsg XML parse → readable text<br>
+            file/link/reply XML parse
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Output</div>
+          <div class="cell-content">
+            Cleaned message list with fields:<br>
+            <code>server_id</code>, <code>sender</code>, <code>msg_type</code>, <code>content</code>, <code>media_url</code>, <code>media_local_path</code>, <code>raw_content</code>
+            <br><br>
+            <span class="badge badge-warn">ISSUE: media_local_path always empty</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">▼</div>
+
+      <!-- Step 2: Ingest -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 02</span>
+          <span class="step-name">Ingest</span>
+          <span class="step-file">pipeline/ingest.py</span>
+        </div>
+        <div>
+          <div class="cell-label">Input</div>
+          <div class="cell-content">
+            Cleaned message list<br>
+            Target date <code>YYYYMMDD</code>
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Processing</div>
+          <div class="cell-content">
+            Prompt injection check <code>sandbox.py</code><br>
+            <code>INSERT OR REPLACE</code> by serverID<br>
+            Sanitize flag + pattern logging
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Output</div>
+          <div class="cell-content">
+            → <code>raw_messages</code> table<br>
+            Returns: <code>{total, new, updated, sanitized, skipped}</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">▼</div>
+
+      <!-- Step 3: Context Assembly -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 03</span>
+          <span class="step-name">Context Assembly</span>
+          <span class="step-file">pipeline/context.py</span>
+        </div>
+        <div>
+          <div class="cell-label">Input</div>
+          <div class="cell-content">
+            Raw messages from <code>raw_messages</code><br>
+            Optional: image descriptions dict
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Processing</div>
+          <div class="cell-content">
+            Sort by timestamp<br>
+            Format: <code>[HH:MM] sender: content</code><br>
+            Chunk at 128k tokens<br>
+            Inject role-boundary prompt<br>
+            XML wrap each message
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Output</div>
+          <div class="cell-content">
+            → <code>parsed_contexts</code> table<br>
+            Context ID: <code>{date}-{seq}</code><br>
+            <span class="badge badge-err">ISSUE: only 1 row exists</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">▼</div>
+
+      <!-- Step 4: Content Enrich -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 04</span>
+          <span class="step-name">Content Enrich</span>
+          <span class="step-file">content_enrich/</span>
+        </div>
+        <div>
+          <div class="cell-label">Image Analysis</div>
+          <div class="cell-content">
+            <code>image_analyzer.py</code><br>
+            Vision API (base64 → multimodal LLM)<br>
+            or MCP mode (HTTP endpoint)<br>
+            Output: summary, description, ocr_text, type
+            <br><br>
+            <span class="badge badge-err">NEVER CALLED — media_local_path empty</span>
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">XML Parsers</div>
+          <div class="cell-content">
+            <code>xml_parsers.py</code><br>
+            <code>parse_quote()</code> type=25 → refermsg<br>
+            <code>parse_file()</code> type=4 → fileupload<br>
+            <code>parse_link()</code> type=7 → appmsg
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Card Parser</div>
+          <div class="cell-content">
+            <code>card_parser.py</code><br>
+            <code>try_parse_appmsg()</code> type=49<br>
+            Subtypes: article/file/sticker/<br>
+            miniprogram/music/transfer
+            <br><br>
+            <span class="badge badge-warn">PDF misclassified as [音乐]</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">▼</div>
+
+      <!-- Step 5: Graph Execution -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 05</span>
+          <span class="step-name">Graph Execution</span>
+          <span class="step-file">graph/builder.py</span>
+        </div>
+        <div>
+          <div class="cell-label">LangGraph Nodes</div>
+          <div class="cell-content">
+            <code>data_fetch</code> → load messages + history<br>
+            <code>orchestrator</code> → DeepAgent task plan<br>
+            <code>fanout</code> → Send API 3-way parallel<br>
+            <code>aggregate</code> → merge results<br>
+            <code>persist</code> → Layer 2+3 storage
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Subagents (Fan-out)</div>
+          <div class="cell-content">
+            <code>daily_reporter</code> — structured daily report<br>
+            <code>resource_extractor</code> — links/papers/tools<br>
+            <code>engineering_analyzer</code> — issue tracking<br>
+            <code>output_composer</code> — Jinja2 rendering
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Error Handling</div>
+          <div class="cell-content">
+            <code>error_handling.py</code><br>
+            Retry: exponential backoff (max 2)<br>
+            Quality: score 0-1, threshold 0.5<br>
+            Recovery: graceful degradation<br>
+            Timeout: <code>GRAPH_NODE_TIMEOUT</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow-down">▼</div>
+
+      <!-- Step 6: Output -->
+      <div class="pipeline-row">
+        <div class="row-header">
+          <span class="step-num">STEP 06</span>
+          <span class="step-name">Output</span>
+          <span class="step-file">outputs/</span>
+        </div>
+        <div>
+          <div class="cell-label">Markdown Reports</div>
+          <div class="cell-content">
+            <code>reports/daily/{date}.md</code><br>
+            <code>reports/weekly/{range}.md</code><br>
+            Atomic write via tempfile + os.replace
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">Layer 3 JSON</div>
+          <div class="cell-content">
+            <code>data/processed/{date}/</code><br>
+            daily.json, resources.json,<br>
+            engineering.json, topics.json
+          </div>
+        </div>
+        <div>
+          <div class="cell-label">External Channels</div>
+          <div class="cell-content">
+            Feishu Bitable upload<br>
+            Image generation (Gemini API)<br>
+            Web panel (FastAPI :8100)<br>
+            RL data export (JSONL)
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 2: Storage Layers ===== -->
+      <div class="section-label">Storage — Four-Layer Architecture (SQLite)</div>
+
+      <div class="storage-grid">
+        <div>
+          <div class="layer-num">LAYER 1</div>
+          <div class="layer-name">Raw Messages</div>
+          <div class="layer-table">raw_messages</div>
+          <div class="layer-desc">
+            WeFlow API 原始消息，serverID 主键去重。含 raw_json 完整备份、sanitized 标记。
+          </div>
+          <div class="layer-stats">
+            Rows: <span class="val">337</span><br>
+            Mock: <span class="val">247 (73%)</span><br>
+            Real: <span class="val">90 (27%)</span><br>
+            Dates: <span class="val">11</span>
+          </div>
+        </div>
+        <div>
+          <div class="layer-num">LAYER 2</div>
+          <div class="layer-name">Parsed Contexts</div>
+          <div class="layer-table">parsed_contexts</div>
+          <div class="layer-desc">
+            按天组装的结构化上下文块。server_ids JSON 溯源到 Layer 1。含 token 计数。
+          </div>
+          <div class="layer-stats">
+            Rows: <span class="val" style="color: var(--c-accent-red);">1</span><br>
+            Expected: <span class="val">11+ dates</span><br>
+            Coverage: <span class="val" style="color: var(--c-accent-red);">~9%</span>
+          </div>
+        </div>
+        <div>
+          <div class="layer-num">LAYER 3</div>
+          <div class="layer-name">Topic Summaries</div>
+          <div class="layer-table">topic_summaries</div>
+          <div class="layer-desc">
+            LLM 提取的议题/资源/工程问题。source_server_ids 关联 Layer 1，context_ids 关联 Layer 2。
+          </div>
+          <div class="layer-stats">
+            Rows: <span class="val" style="color: var(--c-accent-red);">0</span><br>
+            JSON files: <span class="val">data/processed/</span><br>
+            Coverage: <span class="val" style="color: var(--c-accent-red);">0%</span>
+          </div>
+        </div>
+        <div>
+          <div class="layer-num">LAYER 4</div>
+          <div class="layer-name">Reports</div>
+          <div class="layer-table">reports/</div>
+          <div class="layer-desc">
+            Markdown 日报/周报输出。Jinja2 模板渲染，原子写入。
+          </div>
+          <div class="layer-stats">
+            Daily: <span class="val">reports/daily/</span><br>
+            Weekly: <span class="val">reports/weekly/</span><br>
+            Processed: <span class="val">data/processed/</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 3: Subagents ===== -->
+      <div class="section-label">Subagents — LangGraph Fan-out (Send API)</div>
+
+      <div class="subagent-grid">
+        <div>
+          <div class="agent-name">daily_reporter</div>
+          <div class="agent-role">结构化日报生成</div>
+          <div class="agent-field">
+            <span>Input:</span> DailyReporterInput<br>
+            <span>Output:</span> DailyReporterOutput<br>
+            <span>Schema:</span> daily_report_v1.json<br>
+            <span>Model:</span> claude-sonnet-4
+          </div>
+        </div>
+        <div>
+          <div class="agent-name">resource_extractor</div>
+          <div class="agent-role">共享资源提取</div>
+          <div class="agent-field">
+            <span>Input:</span> ResourceExtractorInput<br>
+            <span>Output:</span> ResourceExtractorOutput<br>
+            <span>Types:</span> link/paper/repo/article/doc<br>
+            <span>Model:</span> claude-sonnet-4
+          </div>
+        </div>
+        <div>
+          <div class="agent-name">engineering_analyzer</div>
+          <div class="agent-role">工程问题 + 议题追踪</div>
+          <div class="agent-field">
+            <span>Input:</span> EngineeringAnalyzerInput<br>
+            <span>Output:</span> EngineeringAnalyzerOutput<br>
+            <span>Tracker:</span> topic_tracker_v1.json<br>
+            <span>Model:</span> claude-sonnet-4
+          </div>
+        </div>
+        <div>
+          <div class="agent-name">output_composer</div>
+          <div class="agent-role">结果汇聚 + 质量检查</div>
+          <div class="agent-field">
+            <span>Input:</span> OutputComposerInput<br>
+            <span>Output:</span> OutputComposerOutput<br>
+            <span>Templates:</span> 7 Jinja2 templates<br>
+            <span>Quality:</span> score 0-1, threshold 0.5
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 4: Config ===== -->
+      <div class="section-label">Configuration — Key Environment Variables</div>
+
+      <table class="config-table">
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Default</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ANTHROPIC_API_KEY</td>
+            <td>—</td>
+            <td>Claude API key (required)</td>
+            <td><span class="badge badge-ok">configured</span></td>
+          </tr>
+          <tr>
+            <td>WEFLOW_BASE_URL</td>
+            <td>http://127.0.0.1:5031</td>
+            <td>WeFlow API endpoint</td>
+            <td><span class="badge badge-ok">default</span></td>
+          </tr>
+          <tr>
+            <td>WEFLOW_MOCK_MODE</td>
+            <td>false</td>
+            <td>Use MockWeFlowClient (synthetic data)</td>
+            <td><span class="badge badge-warn">check this</span></td>
+          </tr>
+          <tr>
+            <td>VISION_MODEL</td>
+            <td>—</td>
+            <td>Multimodal model for image analysis</td>
+            <td><span class="badge badge-err">NOT SET — images not analyzed</span></td>
+          </tr>
+          <tr>
+            <td>SQLITE_DB_PATH</td>
+            <td>data/winnow.db</td>
+            <td>SQLite database path</td>
+            <td><span class="badge badge-ok">default</span></td>
+          </tr>
+          <tr>
+            <td>GRAPH_NODE_TIMEOUT</td>
+            <td>300</td>
+            <td>LangGraph node timeout (seconds)</td>
+            <td><span class="badge badge-ok">default</span></td>
+          </tr>
+          <tr>
+            <td>LANGSMITH_TRACING_V2</td>
+            <td>false</td>
+            <td>Enable LangSmith LLM tracing</td>
+            <td><span class="badge badge-warn">optional</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ===== SECTION 5: Known Issues ===== -->
+      <div class="section-label">Known Issues — P0 Iteration 1 Blockers</div>
+
+      <div class="issue-grid">
+        <div class="issue-card">
+          <div class="issue-id">ISSUE-01 · Critical</div>
+          <div class="issue-title">73% 数据为 Mock 假数据</div>
+          <div class="issue-desc">
+            337 条消息中 247 条来自 MockWeFlowClient。9 天数据 100% 为假数据，仅 20260429 有完整真实数据 (49 条)。
+          </div>
+          <div class="issue-sql">-- 判定: mock = serverID LIKE '%msg_%'
+SELECT date, COUNT(*),
+  SUM(CASE WHEN serverID LIKE '%msg_%'
+       THEN 1 ELSE 0 END) as mock
+FROM raw_messages
+GROUP BY date;</div>
+        </div>
+
+        <div class="issue-card">
+          <div class="issue-id">ISSUE-02 · Critical</div>
+          <div class="issue-title">图片分析管道从未触发</div>
+          <div class="issue-desc">
+            image_analyzer.py 已实现 Vision API + MCP 双模式，但 analyze_images_batch() 依赖 media_local_path，该字段在所有 49 条 image 消息中为空。
+          </div>
+          <div class="issue-sql">-- 判定: media_local_path 全部为空
+SELECT serverID,
+  json_extract(raw_json,'$.mediaLocalPath')
+FROM raw_messages
+WHERE msg_type = 'image' LIMIT 5;</div>
+        </div>
+
+        <div class="issue-card">
+          <div class="issue-id">ISSUE-03 · Medium</div>
+          <div class="issue-title">PDF 被标记为 [音乐]</div>
+          <div class="issue-desc">
+            type=other 的消息中 content=[音乐] 网络环境配置说明.pdf。当前代码无添加 [音乐] 前缀的逻辑，问题来自上游或旧数据格式。
+          </div>
+          <div class="issue-sql">-- 查看异常消息
+SELECT serverID, content, msg_type
+FROM raw_messages
+WHERE content LIKE '%音乐%';</div>
+        </div>
+
+        <div class="issue-card">
+          <div class="issue-id">ISSUE-04 · Low</div>
+          <div class="issue-title">Layer 2/3 数据覆盖不足</div>
+          <div class="issue-desc">
+            parsed_contexts 仅 1 行，topic_summaries 为 0 行。Layer 2/3 需 graph 运行才生成，仅 ingest 不触发。
+          </div>
+          <div class="issue-sql">-- 覆盖率检查
+SELECT 'raw' as layer, COUNT(*) as cnt
+FROM raw_messages
+UNION ALL SELECT 'ctx', COUNT(*)
+FROM parsed_contexts
+UNION ALL SELECT 'topic', COUNT(*)
+FROM topic_summaries;</div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 6: Data Flow Summary ===== -->
+      <div class="section-label">End-to-End Data Flow</div>
+
+      <div class="full-card">
+        <div class="flow-steps">
+          <div class="flow-step">WeFlow API</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">weflow_client.fetch()</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">L1 raw_messages</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">context.assemble()</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active" style="opacity: 0.4;">L2 parsed_contexts</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">graph.execute()</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active" style="opacity: 0.4;">L3 topic_summaries</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">output_composer</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">L4 reports/</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="diagram-footer">
+        <span>z-winnow v0.1.0 · Generated 2026-05-03</span>
+        <span>Wave 7 · P0 Iteration 1 · 247/337 mock · VISION_MODEL not set</span>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+# CI workflow — z-winnow
+# Runs on push to main and pull requests. Ensures lint, type-check,
+# tests, and security scan pass before merge.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # manual trigger from GitHub UI
+
+env:
+  PYTHON_VERSION: "3.12"
+  # No real API keys in CI — all integration tests are skipped via mock
+  ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""
+  DEEPSEEK_API_KEY: ""
+  WEFLOW_API_KEY: ""
+  WEFLOW_TOKEN: ""
+  LANGSMITH_API_KEY: ""
+  MEM0_API_KEY: ""
+
+jobs:
+  # ==========================================================================
+  # Job 1: Lint + Format + Type Check
+  # ==========================================================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-ansi
+
+      - name: Ruff check (lint + format)
+        run: |
+          poetry run ruff check .
+          poetry run ruff format --check .
+
+      - name: MyPy (type check)
+        # Mypy errors are acceptable at this stage (basic mode, not strict).
+        # This step warns but does not block CI.
+        continue-on-error: true
+        run: |
+          poetry run mypy src/
+
+  # ==========================================================================
+  # Job 2: Tests (mock only, no API keys required)
+  # ==========================================================================
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-ansi
+
+      - name: Run tests
+        run: |
+          poetry run pytest tests/ -v --tb=short
+
+  # ==========================================================================
+  # Job 3: Security scan (Bandit)
+  # ==========================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Bandit
+        run: |
+          pip install bandit>=1.7
+
+      - name: Run Bandit
+        run: |
+          bandit -r src/ -ll --configfile pyproject.toml

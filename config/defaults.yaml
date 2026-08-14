@@ -1,0 +1,86 @@
+# ============================================================
+# defaults.yaml — Default configuration values for z-winnow
+# ============================================================
+#
+# This file defines all baseline defaults for the application.
+# Values here are the lowest-priority layer in the configuration hierarchy:
+#
+#   Priority (low → high):
+#     1. config/defaults.yaml  (this file)
+#     2. .env file             (user overrides via WINNOW_* / standard env vars)
+#     3. CLI arguments          (runtime overrides)
+#
+# Sensitive values (API keys, tokens) have empty-string defaults here
+# and MUST be set via environment variables or .env file.
+#
+# All field names, defaults, and descriptions match those defined in
+# src/z_winnow/config/settings.py (pydantic-settings BaseSettings).
+
+# ================================================================
+# API Keys — set via environment variables, NOT here
+# ================================================================
+# Environment variable naming:
+#   WINNOW_* prefix has HIGHEST priority (project-scoped naming)
+#   Standard names used as FALLBACK
+#   Both forms are supported; WINNOW_* overrides standard when both set
+api_keys:
+  anthropic_api_key: ""       # ANTHROPIC_API_KEY / WINNOW_ANTHROPIC_API_KEY
+  deepseek_api_key: ""        # DEEPSEEK_API_KEY / WINNOW_DEEPSEEK_API_KEY
+  openai_api_key: ""          # OPENAI_API_KEY / WINNOW_OPENAI_API_KEY
+  langsmith_api_key: ""       # LANGSMITH_API_KEY / WINNOW_LANGSMITH_API_KEY
+  mem0_api_key: ""            # MEM0_API_KEY / WINNOW_MEM0_API_KEY (reserved)
+
+# ================================================================
+# Model Configuration
+# ================================================================
+models:
+  anthropic_model: "claude-sonnet-4-20250514"     # ANTHROPIC_MODEL / WINNOW_ANTHROPIC_MODEL
+  deepseek_model: "deepseek-chat"                  # DEEPSEEK_MODEL / WINNOW_DEEPSEEK_MODEL
+  orchestrator_model: "claude-sonnet-4-20250514"   # ORCHESTRATOR_MODEL / WINNOW_ORCHESTRATOR_MODEL
+
+  # Per-subagent model overrides (empty = inherit from orchestrator_model)
+  subagent_models:
+    daily_reporter: ""        # DAILY_REPORTER_MODEL / WINNOW_DAILY_REPORTER_MODEL
+    resource_extractor: ""    # RESOURCE_EXTRACTOR_MODEL / WINNOW_RESOURCE_EXTRACTOR_MODEL
+    engineering_analyzer: ""  # ENGINEERING_ANALYZER_MODEL / WINNOW_ENGINEERING_ANALYZER_MODEL
+    output_composer: ""       # OUTPUT_COMPOSER_MODEL / WINNOW_OUTPUT_COMPOSER_MODEL
+
+# ================================================================
+# Database
+# ================================================================
+database:
+  url: "sqlite:///data/winnow.db"         # DATABASE_URL / WINNOW_DATABASE_URL
+  sqlite_db_path: "data/winnow.db"        # SQLITE_DB_PATH / WINNOW_SQLITE_DB_PATH
+
+# ================================================================
+# LangSmith Tracing (optional observability)
+# ================================================================
+langsmith:
+  project: "z-winnow"              # LANGSMITH_PROJECT / WINNOW_LANGSMITH_PROJECT
+  tracing_v2: true                            # LANGSMITH_TRACING_V2 / WINNOW_LANGSMITH_TRACING_V2
+
+# ================================================================
+# Operational Limits
+# ================================================================
+limits:
+  max_context_tokens: 128000                  # MAX_CONTEXT_TOKENS / WINNOW_MAX_CONTEXT_TOKENS
+  subagent_timeout_seconds: 600               # SUBAGENT_TIMEOUT_SECONDS / WINNOW_SUBAGENT_TIMEOUT_SECONDS (increased for deepseek-v4-pro)
+
+# ================================================================
+# Logging
+# ================================================================
+logging:
+  level: "INFO"                               # LOG_LEVEL / WINNOW_LOG_LEVEL (DEBUG|INFO|WARNING|ERROR)
+
+# ================================================================
+# Storage Paths (relative to project root)
+# ================================================================
+paths:
+  memory_dir: "memory"                        # MEMORY_DIR / WINNOW_MEMORY_DIR
+  reports_dir: "reports"                      # REPORTS_DIR / WINNOW_REPORTS_DIR
+
+# ================================================================
+# mem0 (reserved for future memory integration)
+# ================================================================
+mem0:
+  org_id: ""                                  # MEM0_ORG_ID / WINNOW_MEM0_ORG_ID (reserved)

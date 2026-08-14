@@ -1,0 +1,24 @@
+# MCP API key 注册表（key → 成员 + 群组权限白名单）
+# 这是模板。实际文件 config/mcp_keys.yaml 是 gitignored（含敏感 key）。
+#
+# 生成 key（写 config/mcp_keys.yaml，本地 + sync push 推 ECS）:
+#   winnow mcp-key add --member admin --name 管理员 --admin
+#   winnow mcp-key add --member zhang_san --name 张三 --groups <group_id>
+#   winnow mcp-key list                 # 列 key（脱敏）
+#   winnow mcp-key revoke --key qrb_xxx  # 撤销
+#   winnow mcp-key allow --key qrb_xxx --groups <gid1>,<gid2>  # 追加群
+#
+# Schema:
+keys:
+  qrb_example_key_replace_me:       # API key（qrb_ + secrets.token_urlsafe 生成）
+    member_id: admin                # 成员标识（写入 feedback_events.reporter）
+    display_name: 管理员            # 可读名
+    is_admin: true                  # true = 全权（所有群），allowed_groups 忽略
+    allowed_groups: []              # is_admin=false 时可访问的 group_id 列表
+  # 非管理员示例（只能看 allowed_groups 内的群）:
+  # qrb_another_key_replace_me:
+  #   member_id: zhang_san
+  #   display_name: 张三
+  #   is_admin: false
+  #   allowed_groups:
+  #     - "17b82727-d75e-42b0-8f3f-becab58e12ea"

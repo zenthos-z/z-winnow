@@ -1,0 +1,87 @@
+id: world_models
+name: 世界大模型动态
+description: 从群聊中提取世界大模型/世界模型相关动态，按四大流派（生成/推理/结构/仿真）的机制/公式分类并追踪进展
+
+skill_id: world_models_extractor
+
+output_schema:
+  type: object
+  properties:
+    items:
+      type: array
+      items:
+        type: object
+        properties:
+          datetime:
+            type: string
+            description: 日期时间
+          school:
+            type: string
+            description: "生成派 | 推理派 | 结构派 | 仿真派 | 跨流派（按公式/机制判定，不按强弱点）"
+          model_or_system:
+            type: string
+            description: 涉及的模型/系统名称（如 Sora/JEPA/NeRF/Isaac Sim/特斯拉FSD），无具体模型填「通用概念」
+          topic:
+            type: string
+            description: 核心要点（一句话）
+          progress:
+            type: string
+            description: 进展/内容详述
+          signal:
+            type: string
+            description: "突破进展 | 评测对比 | 观点质疑 | 趋势预测 | 应用案例"
+          significance:
+            type: string
+            description: 意义/影响（强弱点等当下评价放这里，不作为分类依据）
+          source_members:
+            type: string
+            description: 信息来源成员
+          source_server_ids:
+            type: array
+            items:
+              type: string
+            description: 关联消息的 serverId 列表（必填）
+        required:
+          - school
+          - topic
+          - source_server_ids
+    school_summary:
+      type: object
+      additionalProperties:
+        type: string
+      description: "按流派的当日摘要 {school: summary}"
+  required:
+    - items
+
+feishu_fields:
+  - field_name: "日期时间"
+    type: 4
+  - field_name: "流派"
+    type: 1
+  - field_name: "模型/系统"
+    type: 1
+  - field_name: "核心要点"
+    type: 1
+  - field_name: "进展详述"
+    type: 1
+  - field_name: "信号类型"
+    type: 1
+  - field_name: "意义/影响"
+    type: 1
+  - field_name: "信息来源"
+    type: 1
+
+frontend_component: table
+enabled_by_default: false
+mandatory: false
+records_key: items
+summary_key: school_summary
+markdown_columns:
+  datetime: 时间
+  school: 流派
+  model_or_system: 模型/系统
+  topic: 核心要点
+  progress: 进展
+  signal: 信号
+  significance: 意义
+  source_members: 来源

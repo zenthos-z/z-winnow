@@ -1,0 +1,27 @@
+{# resource_extraction.j2 — 资源提取 Markdown 模板 #}
+{# 对齐 UnifiedReporterOutput.resources 项：{time_range, resource_type, resource_title, summary, content, shared_by, source_server_ids} #}
+{%- set type_labels = {
+    "link": "链接",
+    "paper": "论文",
+    "article": "文章",
+    "repo": "开源项目",
+    "site": "网站",
+    "doc": "知识文档",
+    "image": "图片",
+    "file": "文件",
+    "other": "其他"
+} -%}
+# 群资源 · {{ date }}
+
+## 资源汇总表
+
+| 时间段 | 资源标题 | 资源类型 | 资源简介 | 具体内容 | 分享人 |
+| --- | --- | --- | --- | --- | --- |
+{%- for r in resources %}
+| {{ r.time_range }} | {{ r.resource_title | default(r.title | default('(无标题)')) }} | {{ r.type_label | default(type_labels.get(r.resource_type, r.resource_type)) }} | {{ r.summary }} | {% if r.content == "手动上传" %}手动上传{% else %}{{ r.content }}{% endif %} | {{ r.shared_by | default('') }} |
+{%- else %}
+| (本日无资源) |
+{%- endfor %}
+
+---
+*资源整理时间：{{ generation_time | default(date) }}*

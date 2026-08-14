@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>前后端架构差距分析</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --c-warn: #d97706;
+      --c-ok: #059669;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 32px;
+      min-height: 100vh;
+    }
+    .diagram-container { max-width: 1200px; margin: 0 auto; }
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .diagram-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+    .diagram-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+
+    /* === CURRENT ARCHITECTURE === */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .arch-layer {
+      border: 1px solid var(--c-border);
+      padding: 16px 20px;
+      position: relative;
+    }
+    .arch-layer + .arch-layer { border-top: none; }
+    .layer-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .layer-title .tech-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .layer-body {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--c-text-sub);
+      line-height: 1.6;
+    }
+    .tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+      white-space: nowrap;
+    }
+    .tag-fill {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+    .tag-warn {
+      border-color: var(--c-warn);
+      color: var(--c-warn);
+    }
+    .tag-danger {
+      border-color: var(--c-accent);
+      color: var(--c-accent);
+    }
+
+    /* Arrow connector */
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 28px;
+      position: relative;
+    }
+    .arrow-row svg { display: block; }
+
+    /* Problem highlight */
+    .problem-box {
+      border: 1px solid var(--c-accent);
+      background: #fef2f2;
+      padding: 14px 18px;
+      margin-top: 8px;
+    }
+    .problem-box .problem-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-accent);
+      margin-bottom: 4px;
+    }
+    .problem-box .problem-desc {
+      font-size: 12px;
+      color: #7f1d1d;
+      line-height: 1.5;
+    }
+
+    /* Module boxes inside layers */
+    .module-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .module-box {
+      border: 1px solid var(--c-border);
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-main);
+      background: var(--c-canvas);
+    }
+
+    /* === PROBLEMS SECTION === */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .problem-card {
+      border: 1px solid var(--c-border);
+      padding: 16px;
+    }
+    .problem-card.severity-high { border-left: 3px solid var(--c-accent); }
+    .problem-card.severity-mid { border-left: 3px solid var(--c-warn); }
+    .problem-card.severity-low { border-left: 3px solid var(--c-border); }
+    .problem-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-bottom: 4px;
+    }
+    .problem-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 6px;
+    }
+    .problem-detail {
+      font-size: 12px;
+      color: var(--c-text-sub);
+      line-height: 1.5;
+    }
+    .severity-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .severity-badge.high {
+      border: 1px solid var(--c-accent);
+      color: var(--c-accent);
+    }
+    .severity-badge.mid {
+      border: 1px solid var(--c-warn);
+      color: var(--c-warn);
+    }
+    .severity-badge.low {
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+
+    /* === PROPOSED SOLUTION === */
+    .solution-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .solution-layer {
+      border: 1px solid var(--c-border);
+      padding: 16px 20px;
+      position: relative;
+    }
+    .solution-layer + .solution-layer { border-top: none; }
+    .solution-layer.new-layer {
+      background: #f0fdf4;
+      border-color: var(--c-ok);
+    }
+    .solution-layer.new-layer + .solution-layer { border-top-color: var(--c-ok); }
+    .new-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      background: var(--c-ok);
+      color: white;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .solution-flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .flow-step {
+      border: 1px solid var(--c-border);
+      padding: 12px;
+      text-align: center;
+    }
+    .flow-step.active {
+      border-color: var(--c-ok);
+      background: #f0fdf4;
+    }
+    .flow-step-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .flow-step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--c-border);
+    }
+
+    /* Before/After comparison */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 40px 1fr;
+      gap: 0;
+      align-items: stretch;
+    }
+    .compare-side {
+      border: 1px solid var(--c-border);
+      padding: 16px;
+    }
+    .compare-side.before { background: #fef2f2; border-color: #fca5a5; }
+    .compare-side.after { background: #f0fdf4; border-color: #86efac; }
+    .compare-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .compare-label.before-label { color: var(--c-accent); }
+    .compare-label.after-label { color: var(--c-ok); }
+    .compare-item {
+      font-size: 12px;
+      color: var(--c-text-main);
+      line-height: 1.6;
+      margin-bottom: 4px;
+    }
+    .compare-arrow-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--c-border);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--c-text-sub);
+    }
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--c-border);
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+
+    <!-- ============================================================ -->
+    <!-- DIAGRAM 1: CURRENT ARCHITECTURE                              -->
+    <!-- ============================================================ -->
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div>
+          <div class="diagram-title">当前系统架构 — 数据流全貌</div>
+          <div class="diagram-subtitle">z-winnow / 现状分析 / 2026-05-27</div>
+        </div>
+      </div>
+
+      <div class="arch-grid">
+        <!-- Layer: Frontend -->
+        <div class="arch-layer">
+          <div class="layer-title">
+            前端展示层
+            <span class="tech-tags">
+              <span class="tag">FastAPI</span>
+              <span class="tag">Jinja2</span>
+              <span class="tag">HTMX 2.x</span>
+              <span class="tag">Alpine.js 3.x</span>
+              <span class="tag">Tailwind CSS</span>
+            </span>
+          </div>
+          <div class="layer-body">22 页面模板 + 17 组件 · 100% 服务端渲染 · CDN 加载，无构建流程</div>
+          <div class="module-row">
+            <div class="module-box">overview.py</div>
+            <div class="module-box">groups.py</div>
+            <div class="module-box">reports.py</div>
+            <div class="module-box">runs.py</div>
+            <div class="module-box">run_control.py</div>
+            <div class="module-box">data_explorer.py</div>
+            <div class="module-box">feedback.py</div>
+            <div class="module-box">settings.py</div>
+            <div class="module-box">rl_dataset.py</div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="arrow-row">
+          <svg width="800" height="28"><line x1="0" y1="4" x2="800" y2="4" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6 3"/></svg>
+        </div>
+
+        <!-- Layer: Coupling Zone -->
+        <div class="arch-layer" style="background:#fff7ed; border-color:#fbbf24;">
+          <div class="layer-title">
+            <span style="color:var(--c-warn);">⚠ 耦合区 — 无抽象层</span>
+            <span class="tech-tags">
+              <span class="tag tag-warn">内嵌 SQL</span>
+              <span class="tag tag-warn">直接读文件</span>
+              <span class="tag tag-warn">重复代码</span>
+            </span>
+          </div>
+          <div class="layer-body">
+            每个路由函数直接执行 SQL 查询 SQLite + 直接读取 data/processed/*.json 文件<br>
+            10+ 文件中重复查询相同表，无统一数据访问接口
+          </div>
+          <div class="problem-box" style="margin-top:10px;">
+            <div class="problem-title">数据访问模式碎片化</div>
+            <div class="problem-desc">
+              Pattern A: 直接 SQL → <code>app.state.db_conn.execute("SELECT ...")</code><br>
+              Pattern B: 直接文件读取 → <code>open(f"data/processed/{group_id}/{date}/daily.json")</code><br>
+              Pattern C: Storage 类 → 仅覆盖 groups/members/core_topics<br>
+              Pattern D: 后台任务 → 自开 <code>aiosqlite.connect()</code> 绕过连接管理
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="arrow-row">
+          <svg width="800" height="28"><line x1="0" y1="4" x2="800" y2="4" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6 3"/></svg>
+        </div>
+
+        <!-- Layer: SQLite -->
+        <div class="arch-layer">
+          <div class="layer-title">
+            SQLite 存储层 (11+ 表)
+            <span class="tech-tags">
+              <span class="tag">aiosqlite</span>
+              <span class="tag">data/winnow.db</span>
+            </span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px;">
+            <div>
+              <div style="font-size:11px; font-weight:600; color:var(--c-text-main); margin-bottom:4px;">三层核心</div>
+              <div class="tag">raw_messages (L1)</div>
+              <div class="tag">parsed_contexts (L2)</div>
+              <div class="tag">topic_summaries (L3)</div>
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:600; color:var(--c-text-main); margin-bottom:4px;">运行追踪</div>
+              <div class="tag tag-danger">pipeline_runs</div>
+              <div class="tag tag-danger">runs</div>
+              <div style="font-size:10px; color:var(--c-accent); margin-top:2px;">↑ 两套独立表！</div>
+            </div>
+            <div>
+              <div style="font-size:11px; font-weight:600; color:var(--c-text-main); margin-bottom:4px;">辅助表</div>
+              <div class="tag">groups</div>
+              <div class="tag">group_members</div>
+              <div class="tag">core_topics</div>
+              <div class="tag">feedback_events</div>
+              <div class="tag">memos_sync_queue</div>
+              <div class="tag">report_versions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="arrow-row">
+          <svg width="800" height="28"><line x1="0" y1="4" x2="800" y2="4" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6 3"/></svg>
+        </div>
+
+        <!-- Layer: File System -->
+        <div class="arch-layer">
+          <div class="layer-title">
+            文件系统 L3 JSON
+          </div>
+          <div class="module-row">
+            <div class="module-box">data/processed/<br>{group_id}/{date}/</div>
+            <div class="module-box">daily.json</div>
+            <div class="module-box">resources.json</div>
+            <div class="module-box">engineering.json</div>
+            <div class="module-box">topics.json</div>
+          </div>
+          <div class="module-row" style="margin-top:6px;">
+            <div class="module-box">reports/daily/*.md</div>
+            <div class="module-box">reports/weekly/*.md</div>
+            <div class="module-box">data/rl/*.jsonl</div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="arrow-row">
+          <svg width="800" height="28"><line x1="0" y1="4" x2="800" y2="4" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6 3"/></svg>
+        </div>
+
+        <!-- Layer: Pipeline -->
+        <div class="arch-layer">
+          <div class="layer-title">
+            LangGraph 数据管线
+            <span class="tech-tags">
+              <span class="tag">StateGraph</span>
+              <span class="tag">deepagents</span>
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px;">
+            <div class="module-box" style="background:#f1f5f9;">data_fetch</div>
+            <span style="color:var(--c-border);">→</span>
+            <div class="module-box" style="background:#f1f5f9;">content_enrich</div>
+            <span style="color:var(--c-border);">→</span>
+            <div class="module-box" style="background:#f1f5f9;">orchestrator</div>
+            <span style="color:var(--c-border);">→</span>
+            <div class="module-box" style="background:#f1f5f9;">unified_reporter</div>
+            <span style="color:var(--c-border);">→</span>
+            <div class="module-box" style="background:#f1f5f9;">output_composer</div>
+            <span style="color:var(--c-border);">→</span>
+            <div class="module-box">END (daily)</div>
+            <span style="color:var(--c-text-sub); font-size:11px;">|</span>
+            <div class="module-box">write_weekly → END</div>
+          </div>
+        </div>
+
+        <!-- Arrow -->
+        <div class="arrow-row">
+          <svg width="800" height="28"><line x1="0" y1="4" x2="800" y2="4" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6 3"/></svg>
+        </div>
+
+        <!-- Layer: MemOS -->
+        <div class="arch-layer">
+          <div class="layer-title">
+            MemOS 长期记忆
+            <span class="tech-tags">
+              <span class="tag">Redis 6379</span>
+              <span class="tag">Qdrant 6333</span>
+              <span class="tag">memos-api 8000</span>
+            </span>
+          </div>
+          <div class="layer-body">议题快照写入 · 反馈生命周期 · 语义搜索</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DIAGRAM 2: CORE PROBLEMS                                     -->
+    <!-- ============================================================ -->
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div>
+          <div class="diagram-title">核心问题清单</div>
+          <div class="diagram-subtitle">6 个已识别问题 · 按严重度排序</div>
+        </div>
+      </div>
+
+      <div class="problem-grid">
+        <div class="problem-card severity-high">
+          <div class="problem-num">#1</div>
+          <div class="problem-name">无 API 抽象层 <span class="severity-badge high">HIGH</span></div>
+          <div class="problem-detail">
+            路由函数直接写 SQL 查 SQLite，10+ 文件重复查询相同表。<br>
+            <code>pipeline_runs</code> 在 4 个文件中用几乎相同的 SQL 查询。<br>
+            前端完全耦合在数据库 schema 和文件路径上。
+          </div>
+        </div>
+
+        <div class="problem-card severity-high">
+          <div class="problem-num">#2</div>
+          <div class="problem-name">两套运行记录表 <span class="severity-badge high">HIGH</span></div>
+          <div class="problem-detail">
+            <code>runs</code> 表 (run_control.py) 和 <code>pipeline_runs</code> 表 (graph 节点) 各自独立。<br>
+            "运行控制"页面和"运行列表"页面显示不同数据。<br>
+            后台任务写入 runs，管线节点写入 pipeline_runs。
+          </div>
+        </div>
+
+        <div class="problem-card severity-mid">
+          <div class="problem-num">#3</div>
+          <div class="problem-name">混合数据源 <span class="severity-badge mid">MID</span></div>
+          <div class="problem-detail">
+            报告列表需合并 pipeline_runs + 文件系统 JSON + markdown 文件。<br>
+            同一概念的报告，数据可能来自 3 个不同位置。<br>
+            优先级逻辑复杂，难以推理。
+          </div>
+        </div>
+
+        <div class="problem-card severity-mid">
+          <div class="problem-num">#4</div>
+          <div class="problem-name">Storage 层不完整 <span class="severity-badge mid">MID</span></div>
+          <div class="problem-detail">
+            现有 Storage 类只覆盖 groups/members/core_topics。<br>
+            其余（pipeline_runs, feedback, reports）全部裸 SQL。<br>
+            扩展 Storage 是最直接的改进路径。
+          </div>
+        </div>
+
+        <div class="problem-card severity-mid">
+          <div class="problem-num">#5</div>
+          <div class="problem-name">后台任务绕过连接管理 <span class="severity-badge mid">MID</span></div>
+          <div class="problem-detail">
+            每个后台 task 自开 <code>aiosqlite.connect()</code>。<br>
+            无连接池、无事务协调。<br>
+            多群并行时可能 SQLITE_BUSY。
+          </div>
+        </div>
+
+        <div class="problem-card severity-low">
+          <div class="problem-num">#6</div>
+          <div class="problem-name">模板引擎重复初始化 <span class="severity-badge low">LOW</span></div>
+          <div class="problem-detail">
+            4 个模块仍自建 Jinja2 Environment，未用共享 _render.py。<br>
+            辅助函数 (_format_ts, _status_chip) 在多个文件重复定义。
+          </div>
+        </div>
+      </div>
+
+      <!-- Impact summary -->
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--c-border);">
+        <div class="section-label">影响总结</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:8px;">
+          <div>
+            <div style="font-size:12px; font-weight:600; color:var(--c-accent);">后端改动 → 前端断裂</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:4px;">管线改了字段/路径，前端全部要手动追踪修改</div>
+          </div>
+          <div>
+            <div style="font-size:12px; font-weight:600; color:var(--c-warn);">无法独立演进</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:4px;">前端被锁死在 Jinja2 + HTMX，无法换框架</div>
+          </div>
+          <div>
+            <div style="font-size:12px; font-weight:600; color:var(--c-text-sub);">代码膨胀</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:4px;">9 个页面模块共 ~4000 行，大量 SQL 模板重复</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DIAGRAM 3: PROPOSED SOLUTION                                  -->
+    <!-- ============================================================ -->
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div>
+          <div class="diagram-title">建议方案：Repository + Service 中间层</div>
+          <div class="diagram-subtitle">在 Web Routes 和 Storage 之间插入两个抽象层</div>
+        </div>
+      </div>
+
+      <!-- Target Architecture -->
+      <div class="solution-grid">
+        <div class="solution-layer">
+          <div class="layer-title">
+            Web Routes (薄层)
+            <span class="new-badge">改造</span>
+          </div>
+          <div class="layer-body">
+            只做：参数校验 → 调用 Service → 返回 JSON / HTML<br>
+            不再出现任何 SQL 或文件路径
+          </div>
+          <div class="module-row">
+            <div class="module-box" style="opacity:0.5; text-decoration:line-through;">SQL 查询</div>
+            <div class="module-box" style="opacity:0.5; text-decoration:line-through;">文件读取</div>
+            <div class="module-box" style="border-color:var(--c-ok);">service.list_reports()</div>
+            <div class="module-box" style="border-color:var(--c-ok);">service.run_pipeline()</div>
+          </div>
+        </div>
+
+        <div class="solution-layer new-layer">
+          <div class="layer-title">
+            Service Layer (业务逻辑)
+            <span class="new-badge">新增</span>
+          </div>
+          <div class="layer-body">
+            ReportService · RunService · GroupService · FeedbackService · DataService<br>
+            处理业务逻辑：合并数据源、格式转换、管线触发、状态聚合
+          </div>
+          <div class="module-row">
+            <div class="module-box">ReportService</div>
+            <div class="module-box">RunService</div>
+            <div class="module-box">GroupService</div>
+            <div class="module-box">FeedbackService</div>
+            <div class="module-box">DataService</div>
+          </div>
+        </div>
+
+        <div class="solution-layer new-layer">
+          <div class="layer-title">
+            Repository Layer (数据访问)
+            <span class="new-badge">新增</span>
+          </div>
+          <div class="layer-body">
+            统一 SQL + 文件读取，返回 Pydantic 模型<br>
+            合并 runs / pipeline_runs 为单一数据源
+          </div>
+          <div class="module-row">
+            <div class="module-box">RunRepo</div>
+            <div class="module-box">ReportRepo</div>
+            <div class="module-box">GroupRepo</div>
+            <div class="module-box">FeedbackRepo</div>
+            <div class="module-box">DataExplorerRepo</div>
+          </div>
+        </div>
+
+        <div class="solution-layer">
+          <div class="layer-title">
+            SQLite + 文件系统 + MemOS (不变)
+          </div>
+          <div class="layer-body">底层存储无需任何改动</div>
+        </div>
+      </div>
+
+      <!-- Data flow example -->
+      <div style="margin-top:28px; padding-top:16px; border-top:1px solid var(--c-border);">
+        <div class="section-label">示例：获取日报列表的数据流</div>
+        <div class="solution-flow">
+          <div class="flow-step">
+            <div class="flow-step-label">Route</div>
+            <div class="flow-step-name">GET /reports</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-label">Service</div>
+            <div class="flow-step-name">ReportService<br>.list_reports()</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step active">
+            <div class="flow-step-label">Repository</div>
+            <div class="flow-step-name">ReportRepo<br>.query_runs()<br>.read_json()</div>
+          </div>
+        </div>
+        <div style="margin-top:12px; font-size:12px; color:var(--c-text-sub);">
+          Route 不再感知 SQL 或文件路径，只关心 Service 返回的 Pydantic 模型
+        </div>
+      </div>
+
+      <!-- Before / After comparison -->
+      <div style="margin-top:28px; padding-top:16px; border-top:1px solid var(--c-border);">
+        <div class="section-label">改造前后对比</div>
+        <div class="compare-grid">
+          <div class="compare-side before">
+            <div class="compare-label before-label">BEFORE — 现状</div>
+            <div class="compare-item">❌ 路由函数内嵌 SQL（200-500 行/函数）</div>
+            <div class="compare-item">❌ 直接读取文件系统 JSON</div>
+            <div class="compare-item">❌ 两套 run 表，数据不一致</div>
+            <div class="compare-item">❌ 改管线 = 手动追踪修改所有页面</div>
+            <div class="compare-item">❌ 无法换前端框架</div>
+            <div class="compare-item">❌ 后台任务自开 DB 连接</div>
+          </div>
+          <div class="compare-arrow-col">
+            <svg width="24" height="24"><path d="M4 12 L20 12 M14 6 L20 12 L14 18" stroke="#059669" stroke-width="2" fill="none"/></svg>
+          </div>
+          <div class="compare-side after">
+            <div class="compare-label after-label">AFTER — 目标</div>
+            <div class="compare-item">✓ 路由函数 < 30 行，只调 Service</div>
+            <div class="compare-item">✓ Repository 统一文件/DB 访问</div>
+            <div class="compare-item">✓ 合并为单一 run 数据源</div>
+            <div class="compare-item">✓ 改管线只改 Repository 映射</div>
+            <div class="compare-item">✓ Service 层同时支持 JSON + HTML</div>
+            <div class="compare-item">✓ 连接池统一管理</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Implementation phases -->
+      <div style="margin-top:28px; padding-top:16px; border-top:1px solid var(--c-border);">
+        <div class="section-label">建议实施顺序</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:8px;">
+          <div style="border:1px solid var(--c-border); padding:12px;">
+            <div style="font-size:12px; font-weight:600; color:var(--c-ok);">Phase 1 — 止血</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:6px;">
+              · 合并 runs / pipeline_runs<br>
+              · 统一 DB 连接管理<br>
+              · 消除后台任务自开连接
+            </div>
+          </div>
+          <div style="border:1px solid var(--c-ok); padding:12px; background:#f0fdf4;">
+            <div style="font-size:12px; font-weight:600; color:var(--c-ok);">Phase 2 — Repository 层</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:6px;">
+              · 创建 Pydantic 数据模型<br>
+              · 按 domain 拆分 Repository<br>
+              · 替换所有内嵌 SQL
+            </div>
+          </div>
+          <div style="border:1px solid var(--c-ok); padding:12px; background:#f0fdf4;">
+            <div style="font-size:12px; font-weight:600; color:var(--c-ok);">Phase 3 — Service 层</div>
+            <div style="font-size:12px; color:var(--c-text-sub); margin-top:6px;">
+              · 创建 Service 类封装业务逻辑<br>
+              · 路由函数改调 Service<br>
+              · 前端可自由选择 JSON API 或 HTML
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:#fef2f2; border-color:#fca5a5;"></div>
+          现有问题
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:#f0fdf4; border-color:#86efac;"></div>
+          新增层
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch" style="background:#fff7ed; border-color:#fbbf24;"></div>
+          耦合区
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

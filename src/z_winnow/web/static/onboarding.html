@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>初始化引导 · 群日报管理系统</title>
+<style>
+/* ════════════════════════════════════════════════════════════════
+ * design-systems/lovable/tokens.css - verbatim :root contract
+ * 与 settings.html / index.html 共用同一套 token，保证视觉同源
+ * ════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#f7f4ed;
+  --surface:#f7f4ed;
+  --surface-warm:var(--surface);
+  --fg:#1c1c1c;
+  --fg-2:rgba(28,28,28,0.83);
+  --muted:#5f5f5d;
+  --meta:rgba(28,28,28,0.4);
+  --border:#eceae4;
+  --border-soft:var(--border);
+  --accent:#ff4d8d;
+  --accent-on:#ffffff;
+  --accent-hover:color-mix(in oklab,var(--accent),black 8%);
+  --accent-active:color-mix(in oklab,var(--accent),black 14%);
+  --success:#16a34a;
+  --warn:#eab308;
+  --danger:#dc2626;
+  --font-display:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Monaco,Consolas,monospace;
+  --text-xs:12px; --text-sm:14px; --text-base:16px; --text-lg:18px;
+  --text-xl:20px; --text-2xl:36px; --text-3xl:48px; --text-4xl:60px;
+  --leading-body:1.5; --leading-tight:1.10; --tracking-display:-0.025em;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --section-y-desktop:128px; --section-y-tablet:80px; --section-y-phone:64px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:16px; --radius-pill:9999px;
+  --elev-flat:none;
+  --elev-ring:0 0 0 1px var(--border);
+  --elev-raised:0 4px 12px rgba(0,0,0,0.1);
+  --focus-ring:0 0 0 2px rgba(59,130,246,0.5);
+  --motion-fast:150ms; --motion-base:200ms; --ease-standard:cubic-bezier(0.2,0,0,1);
+  --container-max:1080px;
+  --container-gutter-desktop:24px; --container-gutter-tablet:16px; --container-gutter-phone:12px;
+
+  /* shared with dashboard / settings */
+  --on-dark:#fcfbf8;
+  --row-hover:rgba(28,28,28,0.035);
+  --shadow-inset-dark:rgba(255,255,255,0.2) 0 0.5px 0 0 inset, rgba(0,0,0,0.2) 0 0 0 0.5px inset, rgba(0,0,0,0.05) 0 1px 2px 0;
+}
+
+/* ── reset ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh;
+}
+button{font-family:inherit;color:inherit}
+a{color:var(--fg);text-decoration:none}
+img,svg{display:block}
+.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+.meta{color:var(--meta)}
+.sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── shell ─────────────────────────────────────────────── */
+.shell{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-gutter-desktop)}
+
+/* ── topbar（与仪表盘 / 设置一致）────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in oklab,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .row{display:flex;align-items:center;gap:var(--space-4);height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-0.01em}
+.brand .mark{
+  width:26px;height:26px;border-radius:var(--radius-sm);background:var(--accent);
+  display:grid;place-items:center;color:var(--accent-on);box-shadow:var(--shadow-inset-dark);
+}
+.brand .mark svg{width:15px;height:15px}
+.brand b{font-size:var(--text-base)}
+.brand .sub{color:var(--meta);font-size:var(--text-sm);font-weight:400;margin-left:2px}
+.topbar .spacer{flex:1}
+.tb-link{font-size:var(--text-sm);color:var(--fg-2);padding:8px 10px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:6px}
+.tb-link:hover{background:rgba(28,28,28,0.04);color:var(--fg)}
+.tb-link.active{color:var(--fg);font-weight:500}
+.tb-link svg{width:16px;height:16px}
+.admin{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface)}
+.admin .ava{width:24px;height:24px;border-radius:var(--radius-pill);background:var(--fg);color:var(--on-dark);display:grid;place-items:center;font-size:11px;font-weight:600}
+.admin span{font-size:var(--text-sm)}
+
+/* ── hero ──────────────────────────────────────────────── */
+.wiz-hero{padding:var(--space-2) 0 var(--space-6)}
+.eyebrow{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.08em;text-transform:uppercase;color:var(--meta)}
+.wiz-hero h1{font-size:clamp(26px,3.6vw,38px);line-height:var(--leading-tight);letter-spacing:var(--tracking-display);font-weight:600;margin:10px 0 0;display:inline-flex;align-items:center;gap:12px}
+.wiz-hero .lede{font-size:var(--text-sm);color:var(--muted);margin:10px 0 0;max-width:68ch;line-height:1.55}
+
+/* ── stepper ───────────────────────────────────────────── */
+.stepper{display:flex;list-style:none;margin:var(--space-6) 0 var(--space-6);padding:var(--space-2) 0 0}
+.stepper li{
+  position:relative;flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  background:none;border:none;cursor:pointer;padding:0;
+}
+.stepper li:not(:first-child)::before{
+  content:"";position:absolute;top:14px;left:calc(-50% + 17px);right:calc(50% + 17px);
+  height:2px;background:var(--border);transition:background var(--motion-base) var(--ease-standard);
+}
+.stepper li.s-done:not(:first-child)::before{background:var(--fg)}
+.node{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
+  border:1px solid var(--border);background:var(--surface);color:var(--meta);
+  position:relative;z-index:1;
+  transition:background var(--motion-fast) var(--ease-standard),color var(--motion-fast),border-color var(--motion-fast);
+}
+.node svg{width:14px;height:14px}
+.stepper li.s-active .node{background:var(--fg);color:var(--on-dark);border-color:var(--fg);box-shadow:var(--shadow-inset-dark)}
+.stepper li.s-done .node{background:var(--fg);color:var(--on-dark);border-color:var(--fg)}
+.s-lbl{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);letter-spacing:0.02em;line-height:1.3}
+.stepper li.s-active .s-lbl,.stepper li.s-done .s-lbl{color:var(--fg)}
+
+/* ── step panels ───────────────────────────────────────── */
+.steps{position:relative;min-height:280px}
+.step{display:none}
+.step.active{display:block;animation:stepIn var(--motion-base) var(--ease-standard)}
+@keyframes stepIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sec-mini{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.06em;text-transform:uppercase;color:var(--meta);margin:var(--space-6) 0 var(--space-3);display:flex;align-items:center;gap:8px}
+.sec-mini .opt{color:var(--meta);text-transform:none;letter-spacing:0;font-weight:400;font-family:var(--font-body)}
+
+/* ── buttons ───────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:var(--text-sm);line-height:1.5;font-weight:400;
+  padding:8px 14px;border-radius:var(--radius-sm);border:1px solid transparent;
+  background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap;
+  transition:opacity var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+.btn svg{width:15px;height:15px;flex:none}
+.btn:active{opacity:0.8}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn:disabled{cursor:default;opacity:0.45}
+.btn-primary{background:var(--fg);color:var(--on-dark);border-color:var(--fg);box-shadow:var(--shadow-inset-dark)}
+.btn-primary:hover{background:color-mix(in oklab,var(--fg),white 9%)}
+.btn-ghost{background:transparent;border-color:rgba(28,28,28,0.4);color:var(--fg)}
+.btn-ghost:hover{background:rgba(28,28,28,0.04)}
+.btn-cream{background:var(--surface);border-color:var(--border)}
+.btn-cream:hover{background:rgba(28,28,28,0.035)}
+.btn-sm{padding:5px 10px;font-size:var(--text-xs)}
+.btn-sm svg{width:13px;height:13px}
+
+/* ── form ──────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4) var(--space-6);align-items:start}
+.form-grid .span2{grid-column:1 / -1}
+.field{display:flex;flex-direction:column;gap:6px}
+.field > label{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.04em;text-transform:uppercase;color:var(--meta);display:inline-flex;align-items:center;gap:6px}
+.field > label .req{color:var(--accent);text-transform:none;letter-spacing:0}
+.field > label .opt{color:var(--meta);text-transform:none;letter-spacing:0;font-weight:400}
+.field .hint{font-size:var(--text-xs);color:var(--meta);display:inline-flex;align-items:center;gap:6px;line-height:1.45}
+.field input,.field select{
+  background:var(--surface);color:var(--fg);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:9px 12px;font-family:inherit;font-size:var(--text-sm);width:100%;
+  transition:box-shadow var(--motion-fast) var(--ease-standard),border-color var(--motion-fast) var(--ease-standard);
+}
+.field input.mono,.field select.mono{font-family:var(--font-mono);font-size:var(--text-xs)}
+.field input:focus,.field select:focus{outline:none;box-shadow:var(--focus-ring);border-color:transparent}
+.field input::placeholder{color:var(--meta)}
+.field input[readonly]{background:rgba(28,28,28,0.035);color:var(--fg-2);cursor:default}
+.field select{
+  appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235f5f5d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:34px;cursor:pointer;
+}
+.input-row{display:flex;gap:6px;align-items:stretch}
+.input-row input{flex:1;min-width:0}
+.input-row .btn{flex:none}
+
+/* ── switch ────────────────────────────────────────────── */
+.toggle-block{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:16px 18px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface)}
+.toggle-block + .toggle-block{margin-top:var(--space-3)}
+.toggle-block .tb-t{font-size:var(--text-base);font-weight:600;letter-spacing:-0.01em}
+.toggle-block .tb-d{font-size:var(--text-xs);color:var(--muted);margin-top:4px;max-width:54ch;line-height:1.5}
+.switch{display:inline-flex;align-items:center;cursor:pointer;user-select:none;flex:none}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .track{width:42px;height:24px;border-radius:var(--radius-pill);background:rgba(28,28,28,0.18);position:relative;transition:background var(--motion-fast) var(--ease-standard)}
+.switch .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.25);transition:left var(--motion-fast) var(--ease-standard)}
+.switch input:checked + .track{background:var(--fg)}
+.switch input:checked + .track .knob{left:21px}
+.switch input:focus-visible + .track{box-shadow:var(--focus-ring)}
+
+/* ── env detection cards ───────────────────────────────── */
+.env-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)}
+.env-card{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:16px 18px}
+.env-top{display:flex;align-items:center;gap:10px}
+.env-ic{width:30px;height:30px;border-radius:var(--radius-sm);background:rgba(28,28,28,0.05);display:grid;place-items:center;color:var(--fg-2);flex:none}
+.env-ic svg{width:16px;height:16px}
+.env-name{font-weight:600;font-size:var(--text-base);letter-spacing:-0.01em}
+.env-top .stpill{margin-left:auto}
+.env-detail{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--muted);margin-top:10px;line-height:1.5}
+.env-sub{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.env-sub-row{display:flex;align-items:center;gap:8px;font-size:var(--text-xs);color:var(--muted)}
+.env-sub-row .sdot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--meta)}
+.env-sub-row .sdot.ok{background:var(--success)}
+.env-sub-row .sm{font-family:var(--font-mono);color:var(--meta);margin-left:auto}
+.stpill{font-family:var(--font-mono);font-size:var(--text-xs);padding:2px 9px;border-radius:var(--radius-pill);border:1px solid var(--border);letter-spacing:0.04em;white-space:nowrap}
+.stpill.ok{color:var(--success);border-color:color-mix(in oklab,var(--success),white 55%);background:color-mix(in oklab,var(--success),white 90%)}
+.stpill.off{color:var(--meta)}
+.t-result{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:var(--text-xs);margin-top:5px;line-height:1.4}
+.t-result:empty{display:none}
+.t-result.ok{color:var(--success)}
+.t-result.off{color:var(--danger)}
+
+/* ── group selector ────────────────────────────────────── */
+.grp-list{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden;max-height:300px;overflow-y:auto}
+.grp-toolbar{display:flex;gap:8px;align-items:center;margin:8px 0 10px}
+.grp-search{flex:1;font-family:var(--font-mono);font-size:var(--text-sm);padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--fg)}
+.grp-search:focus{outline:none;border-color:var(--fg)}
+.grp-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.grp-row:last-child{border-bottom:none}
+.grp-row:hover{background:var(--row-hover)}
+.grp-row input{position:absolute;opacity:0;width:0;height:0;margin:0}
+.grp-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--meta);background:var(--surface);display:grid;place-items:center;flex:none;transition:background var(--motion-fast),border-color var(--motion-fast)}
+.grp-row input:checked + .grp-box{background:var(--fg);border-color:var(--fg)}
+.grp-row input:checked + .grp-box::after{content:"";width:9px;height:5px;border-left:2px solid var(--on-dark);border-bottom:2px solid var(--on-dark);transform:rotate(-45deg) translate(1px,-1px)}
+.grp-name{font-weight:600;font-size:var(--text-sm);letter-spacing:-0.005em}
+.grp-meta{margin-left:auto;display:flex;gap:14px;align-items:center;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta)}
+.grp-meta .gm{font-variant-numeric:tabular-nums}
+.grp-meta .gid{color:var(--meta)}
+
+/* ── summary ───────────────────────────────────────────── */
+.summary{display:grid;grid-template-columns:auto 1fr;gap:9px 24px;font-size:var(--text-sm);border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:18px 20px}
+.summary .k{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);letter-spacing:0.03em;align-self:center}
+.summary .v{color:var(--fg);font-variant-numeric:tabular-nums}
+.summary .v.warn{color:var(--warn)}
+.summary .sep{grid-column:1 / -1;height:1px;background:var(--border);margin:5px 0}
+
+/* ── action rows ───────────────────────────────────────── */
+.cfg-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ── .env preview（单一深色高光块）────────────────────── */
+.env-out{margin-top:var(--space-5);animation:stepIn var(--motion-base) var(--ease-standard)}
+.env-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.env-head .eh-t{font-size:var(--text-sm);font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.env-head .eh-t svg{width:15px;height:15px;color:var(--accent)}
+.env-pre{
+  margin:0;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;
+  background:#1c1c1c;color:#e9e6df;border:1px solid #1c1c1c;border-radius:var(--radius-md);
+  padding:16px 18px;overflow:auto;max-height:440px;white-space:pre;
+  box-shadow:var(--shadow-inset-dark);
+}
+.env-c{color:#8a857c}
+.env-k{color:#e9e6df}
+.env-e{color:#8a857c}
+.env-v{color:#9fd0a8}
+.env-ph{color:#ff7bab}
+
+/* ── wizard footer ─────────────────────────────────────── */
+.wiz-foot{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-8);padding:var(--space-4) 0;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--bg);box-shadow:0 -6px 14px -10px rgba(0,0,0,.18);z-index:20}
+.wiz-foot .progress{margin-left:auto;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);font-variant-numeric:tabular-nums}
+
+/* page footer */
+.foot{padding:var(--space-6) 0 var(--space-8);color:var(--meta);font-size:var(--text-xs);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* ── toast ─────────────────────────────────────────────── */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--fg);color:var(--on-dark);font-size:var(--text-sm);padding:10px 16px;border-radius:var(--radius-sm);box-shadow:var(--shadow-inset-dark),0 8px 24px rgba(0,0,0,0.18);display:inline-flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:opacity var(--motion-base),transform var(--motion-base);max-width:min(90vw,420px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast svg{width:16px;height:16px;color:var(--accent);flex:none}
+.toast.warn svg{color:var(--warn)}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(252,251,248,0.3);border-top-color:var(--on-dark);animation:spin .7s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── responsive ────────────────────────────────────────── */
+@media (max-width:1024px){ .shell{padding:0 var(--container-gutter-tablet)} }
+@media (max-width:860px){
+  .env-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  .shell{padding:0 var(--container-gutter-phone)}
+  .stepper{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:var(--space-2)}
+  .stepper li{flex:0 0 auto;min-width:88px}
+  .stepper li:not(:first-child)::before{display:none}
+  .summary{grid-template-columns:1fr;gap:3px 0;padding:16px}
+  .summary .k{margin-top:8px}
+  .summary .k:first-child,.summary .sep + .k{margin-top:0}
+}
+@media (max-width:420px){
+  .topbar .row{height:54px}
+  .brand .sub,.tb-link span,.admin span:not(.ava){display:none}
+  .grp-meta .gid{display:none}
+  .wiz-foot .progress{display:none}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;animation:none !important} }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR（与仪表盘 / 设置同源）────────────────────────── -->
+<header class="topbar">
+  <div class="shell">
+    <div class="row">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+        </span>
+        <b>群日报</b><span class="sub">管理系统</span>
+      </div>
+      <div class="spacer"></div>
+      <a class="tb-link" href="index.html" title="仪表盘">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"/></svg>
+        <span>仪表盘</span>
+      </a>
+      <a class="tb-link" href="settings.html" title="系统设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </a>
+      <div class="admin">
+        <span class="ava">管</span><span>管理员</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ── LOGIN GATE（仅 web_api_key 已配置时显示）────────── -->
+  <div id="login-gate" hidden style="margin-top:var(--space-6);padding:16px 18px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface)">
+    <div class="sec-mini" style="margin:0 0 10px">管理员登录</div>
+    <div class="input-row">
+      <input class="mono" id="login-key" type="password" placeholder="web_api_key（管理员密钥）" autocomplete="off" style="flex:1" />
+      <button class="btn btn-primary btn-sm" type="button" onclick="doLogin()">登录</button>
+    </div>
+    <span class="hint" style="font-size:var(--text-xs);color:var(--meta)">保存配置需要鉴权；登录后写操作自动带 cookie。</span>
+  </div>
+
+  <!-- ── STEPPER ──────────────────────────────────────────── -->
+  <ol class="stepper" id="stepper" aria-label="初始化步骤">
+    <li class="s-active" data-s="1" onclick="goStep(1)"><span class="node">1</span><span class="s-lbl">环境检测</span></li>
+    <li data-s="2" onclick="goStep(2)"><span class="node">2</span><span class="s-lbl">模型供应商</span></li>
+    <li data-s="3" onclick="goStep(3)"><span class="node">3</span><span class="s-lbl">数据源</span></li>
+    <li data-s="4" onclick="goStep(4)"><span class="node">4</span><span class="s-lbl">记忆与增强</span></li>
+    <li data-s="5" onclick="goStep(5)"><span class="node">5</span><span class="s-lbl">运行与存储</span></li>
+    <li data-s="6" onclick="goStep(6)"><span class="node">6</span><span class="s-lbl">校验生成</span></li>
+  </ol>
+
+  <!-- ── HERO（当前步骤标题 + 说明，随步骤切换）────────── -->
+  <section class="wiz-hero">
+    <div class="eyebrow">初始化 / 部署引导</div>
+    <h1 id="hero-title">初始化 winnow</h1>
+    <p class="lede" id="hero-lede">首次部署向导 · 一步步完成系统初始化。下面是自动检测到的环境状态。</p>
+  </section>
+
+  <!-- ── STEPS ────────────────────────────────────────────── -->
+  <div class="steps">
+
+    <!-- STEP 1 · 环境检测 -->
+    <div class="step active" data-step="1">
+      <div class="env-grid">
+        <div class="env-card">
+          <div class="env-top">
+            <span class="env-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></span>
+            <span class="env-name">SQLite 数据库</span>
+            <span class="stpill off" id="det-sqlite-pill">检测中…</span>
+          </div>
+          <div class="env-detail" id="det-sqlite-detail">读取本地数据库状态…</div>
+        </div>
+        <div class="env-card">
+          <div class="env-top">
+            <span class="env-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg></span>
+            <span class="env-name">主语言模型</span>
+            <span class="stpill off" id="det-llm-pill">检测中…</span>
+          </div>
+          <div class="env-detail" id="det-llm-detail">读取已配置模型…</div>
+        </div>
+        <div class="env-card">
+          <div class="env-top">
+            <span class="env-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+            <span class="env-name">CipherTalk 数据源</span>
+            <span class="stpill off" id="det-ct-pill">检测中…</span>
+          </div>
+          <div class="env-detail" id="det-ct-detail">探测 CipherTalk 可达性…</div>
+        </div>
+        <div class="env-card">
+          <div class="env-top">
+            <span class="env-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></span>
+            <span class="env-name">MemOS 记忆</span>
+            <span class="stpill off" id="det-memos-pill">检测中…</span>
+          </div>
+          <div class="env-sub" id="det-memos-sub">
+            <div class="env-sub-row"><span class="sdot"></span>memos-api<span class="sm">127.0.0.1:8000</span></div>
+            <div class="env-sub-row"><span class="sdot"></span>Qdrant<span class="sm">127.0.0.1:6333</span></div>
+            <div class="env-sub-row"><span class="sdot"></span>Redis<span class="sm">127.0.0.1:6379</span></div>
+          </div>
+        </div>
+        <div class="env-card">
+          <div class="env-top">
+            <span class="env-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>
+            <span class="env-name">飞书工具链 (lark-cli)</span>
+            <span class="stpill off" id="det-lark-pill">检测中…</span>
+          </div>
+          <div class="env-detail" id="det-lark-detail">检测 lark-cli 是否安装并授权（推飞书多维表格用）…</div>
+        </div>
+      </div>
+      <div class="cfg-actions" style="margin-top:var(--space-5)">
+        <button class="btn btn-ghost" onclick="redoDetect(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>
+          重新检测
+        </button>
+        <span class="hint" id="det-hint" style="font-size:var(--text-xs);color:var(--meta);margin-left:8px">正在检测依赖…</span>
+      </div>
+    </div>
+
+    <!-- STEP 2 · 模型供应商 -->
+    <div class="step" data-step="2" hidden>
+      <div class="form-grid">
+        <div class="field span2">
+          <label for="p2-provider">供应商</label>
+          <select id="p2-provider" onchange="onProviderChange()">
+            <option value="openai">OpenAI</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="anthropic">Anthropic（Claude · 价高排末位）</option>
+            <option value="compatible">OpenAI 兼容端点</option>
+          </select>
+          <span class="hint">官方端点地址只读；选择「OpenAI 兼容端点」可自填 Base URL（DeepSeek、Moonshot、Together 等）。</span>
+        </div>
+        <div class="field span2">
+          <label for="p2-baseurl">API 地址</label>
+          <input class="mono" id="p2-baseurl" type="text" readonly placeholder="https://api.deepseek.com/v1" />
+          <span class="hint" id="p2-baseurl-hint">官方端点，通常无需修改。</span>
+        </div>
+        <div class="field span2">
+          <label for="p2-apikey">API Key <span class="req">掩码</span></label>
+          <div class="input-row">
+            <input class="mono" id="p2-apikey" type="password" placeholder="sk-...（留空则复用 .env 已配的 key）" autocomplete="off" />
+            <button class="btn btn-cream btn-sm" type="button" onclick="testLLM(this)">测试连接</button>
+          </div>
+          <span class="t-result" id="p2-test-out"></span>
+          <span class="hint">密钥掩码、不回填真实值；点「测试连接」用当前 base/model + key（或已配 key）探测。DeepSeek/OpenAI/Gemini/兼容端点可测；Anthropic 原生端点不兼容，需走代理。</span>
+        </div>
+        <div class="field span2">
+          <label for="p2-model">默认模型</label>
+          <input class="mono" id="p2-model" list="p2-models" placeholder="模型名，如 gpt-5.4-mini" />
+          <datalist id="p2-models"></datalist>
+          <span class="hint">兼容端点可手动输入供应商支持的模型标识。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 · CipherTalk 数据源 -->
+    <div class="step" data-step="3" hidden>
+      <div class="form-grid">
+        <div class="field span2">
+          <label for="p3-url">CipherTalk API URL</label>
+          <input class="mono" id="p3-url" type="text" placeholder="https://api.ciphertalk.com/v1" />
+        </div>
+        <div class="field span2">
+          <label for="p3-token">API Token <span class="req">掩码</span></label>
+          <div class="input-row">
+            <input class="mono" id="p3-token" type="password" placeholder="ct-..." autocomplete="off" />
+            <button class="btn btn-cream btn-sm" type="button" onclick="testCipher(this)">测试连接</button>
+          </div>
+          <span class="t-result" id="p3-test-out"></span>
+          <span class="hint">填写后点「测试连接」探测 CipherTalk 可达性；连通后下方自动列出可接入的群。</span>
+        </div>
+      </div>
+      <div class="sec-mini">会话列表 · 勾选要接入的群<span class="opt"> · 自动从 CipherTalk 拉取真实群名</span></div>
+      <div class="grp-toolbar">
+        <input class="grp-search" id="grp-search" type="search" placeholder="搜索群名 / chatroom id…" oninput="filterGroups()" />
+        <button class="btn btn-cream btn-sm" type="button" onclick="registerGroups(this)">登记选中</button>
+        <button class="btn btn-cream btn-sm" type="button" onclick="loadGroups(this)">刷新列表</button>
+      </div>
+      <div class="grp-list" id="grp-list">
+        <div class="grp-row" style="cursor:default;color:var(--meta)"><span class="gm">正在从 CipherTalk 拉取…</span></div>
+      </div>
+    </div>
+
+    <!-- STEP 4 · 记忆与内容增强 -->
+    <div class="step" data-step="4" hidden>
+      <div class="toggle-block">
+        <div class="tb-info">
+          <div class="tb-t">MemOS 长期记忆</div>
+          <div class="tb-d">跨日保留群成员偏好、议题脉络与结论，提升报告连贯性与个性化。</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="p4-memos"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="sec-mini">MemOS 连接配置 <span class="opt">· 启用记忆后生效</span></div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="p4-memos-api">MemOS API 地址</label>
+          <input class="mono" id="p4-memos-api" type="text" value="http://127.0.0.1:8000" />
+        </div>
+        <div class="field">
+          <label for="p4-qdrant">Qdrant 地址</label>
+          <input class="mono" id="p4-qdrant" type="text" value="http://127.0.0.1:6333" />
+        </div>
+        <div class="field">
+          <label for="p4-redis">Redis 地址</label>
+          <input class="mono" id="p4-redis" type="text" value="127.0.0.1:6379" />
+        </div>
+        <div class="field">
+          <label for="p4-redis-pw">Redis 密码 <span class="req">掩码</span></label>
+          <div class="input-row"><input class="mono" id="p4-redis-pw" type="password" placeholder="留空表示无密码" autocomplete="off" /></div>
+        </div>
+        <div class="field">
+          <label for="p4-cube">Cube 前缀</label>
+          <input class="mono" id="p4-cube" type="text" value="winnow" />
+        </div>
+        <div class="field">
+          <label for="p4-chat-model">MOS_CHAT_MODEL</label>
+          <input class="mono" id="p4-chat-model" type="text" value="deepseek-v4-flash" />
+          <span class="hint">容器内模型名，不带 provider 前缀。</span>
+        </div>
+        <div class="field">
+          <label for="p4-embed">Embedding 模型</label>
+          <input class="mono" id="p4-embed" type="text" placeholder="如 bge-m3" />
+        </div>
+        <div class="field">
+          <label for="p4-timeout">搜索超时（秒）</label>
+          <input class="mono" id="p4-timeout" type="number" min="1" value="60" />
+        </div>
+      </div>
+      <div class="cfg-actions" style="margin:6px 0 var(--space-4)">
+        <button class="btn btn-cream btn-sm" type="button" onclick="testMemos(this)">测试 MemOS 连接</button>
+        <span class="t-result" id="p4-memos-test-out"></span>
+      </div>
+      <div class="toggle-block">
+        <div class="tb-info">
+          <div class="tb-t">内容增强 · 图片分析 + 链接预览</div>
+          <div class="tb-d">对群内图片调用 Vision 识别、对链接抓取摘要，丰富议题与资源抽取。</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="p4-enhance"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="sec-mini">Vision 模型 <span class="opt">· 内容增强关闭时可不填；默认 Qwen3-VL-Flash（便宜，勿用 Claude 视觉）</span></div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="p4-vision-base">Base URL</label>
+          <input class="mono" id="p4-vision-base" type="text" value="https://dashscope.aliyuncs.com/compatible-mode/v1" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" />
+        </div>
+        <div class="field">
+          <label for="p4-vision-model">模型</label>
+          <input class="mono" id="p4-vision-model" type="text" value="qwen3-vl-flash" placeholder="如 qwen3-vl-flash / gemini-3-flash" />
+        </div>
+        <div class="field span2">
+          <label for="p4-vision-key">Vision API Key <span class="req">掩码</span></label>
+          <div class="input-row">
+            <input class="mono" id="p4-vision-key" type="password" placeholder="百炼 DashScope key（sk-...）· 留空则复用 .env 已配的 vision_api_key" autocomplete="off" />
+            <button class="btn btn-cream btn-sm" type="button" onclick="testVision(this)">测试</button>
+          </div>
+          <span class="t-result" id="p4-vision-test-out"></span>
+          <span class="hint">视觉端点独立密钥（走 OpenAI 兼容协议，不复用第 2 步主模型 key）。推荐 Qwen3-VL-Flash（百炼端点，约 $0.05/M token，≈ Claude 视觉 1/10）；点「测试」验证 base/model/key。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 · 运行与存储 -->
+    <div class="step" data-step="5" hidden>
+      <div class="form-grid">
+        <div class="field">
+          <label for="p5-dbpath">SQLite 路径</label>
+          <input class="mono" id="p5-dbpath" type="text" value="data/winnow.db" />
+          <span class="hint">主关系库相对路径；报告/数据集等产物按层落在其同级的 data/ 子目录，通常无需改。</span>
+        </div>
+        <div class="field">
+          <label for="p5-port">Web 端口</label>
+          <input class="mono" id="p5-port" type="text" value="8100" readonly />
+          <span class="hint">向导不允许改端口（浏览器无法跟随新端口）。</span>
+        </div>
+        <div class="field">
+          <label for="p5-loglevel">日志级别</label>
+          <select id="p5-loglevel">
+            <option>DEBUG</option>
+            <option selected>INFO</option>
+            <option>WARNING</option>
+            <option>ERROR</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p5-concurrency">最大并发</label>
+          <input class="mono" id="p5-concurrency" type="number" min="1" max="32" value="4" />
+          <span class="hint">并行生成日报的任务上限。</span>
+        </div>
+        <div class="field">
+          <label for="p5-ctxlimit">上下文 token 上限</label>
+          <input class="mono" id="p5-ctxlimit" type="number" min="1000" step="1000" value="32000" />
+          <span class="hint">单次喂给模型的上下文长度上限。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 · 校验与生成 -->
+    <div class="step" data-step="6" hidden>
+      <div class="sec-mini">校验汇总</div>
+      <div class="summary" id="summary"><!-- JS rendered --></div>
+      <div class="cfg-actions" style="margin-top:var(--space-5)">
+        <button class="btn btn-ghost" onclick="testAll(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          测试全部连接
+        </button>
+        <button class="btn btn-ghost" onclick="generateEnv(this)" id="gen-env">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+          下载 .env 草稿
+        </button>
+        <button class="btn btn-primary" onclick="saveAndRestart(this)" id="save-restart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>
+          保存并重启
+        </button>
+      </div>
+      <div class="env-out" id="env-out" hidden>
+        <div class="env-head">
+          <span class="eh-t">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+            预览 · .env
+          </span>
+          <button class="btn btn-cream btn-sm" onclick="downloadEnv()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            下载 .env
+          </button>
+        </div>
+        <pre class="env-pre" id="env-pre"></pre>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER NAV ───────────────────────────────────────── -->
+  <div class="wiz-foot">
+    <button class="btn btn-ghost" id="btn-prev" onclick="prev()" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      上一步
+    </button>
+    <span class="progress" id="foot-progress">第 1 步 / 共 6 步</span>
+    <button class="btn btn-primary" id="btn-next" onclick="next()">
+      下一步
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <footer class="foot">
+    <span>群日报 winnow · 初始化配置引导</span>
+    <span class="mono">onboarding.html · 接入 /api/v1 · 保存并重启</span>
+  </footer>
+</main>
+
+<div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+<script src="api.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+ * 初始化向导 · 已适配真实后端（api.js 提供 api()）
+ * 预填 /system/config · 测试 /system/config/test · 保存并重启 PUT /system/config
+ * 密钥一律掩码、不回填；未填密钥不覆盖已存。
+ * ════════════════════════════════════════════════════════════ */
+const STEPS=[
+  {title:"初始化 winnow",         lede:"首次部署向导 · 一步步完成系统初始化。下面是自动检测到的环境状态。"},
+  {title:"模型供应商",              lede:"主语言模型用于议题归纳、资源抽取与报告生成。选择供应商后填写密钥与默认模型。性价比之选：DeepSeek-V4-Flash / Claude Haiku 4.5 / GPT-5.4-mini / Gemini 3 Flash。"},
+  {title:"CipherTalk 数据源",       lede:"接入 CipherTalk 会话数据源。填写访问地址与 Token 后测试连接，再勾选要生成日报的群。"},
+  {title:"记忆与内容增强",          lede:"以下均为可选能力，按需开启。"},
+  {title:"运行与存储",              lede:"设置数据落盘位置、服务端口与运行参数。非敏感项已预填示例值。"},
+  {title:"校验并生成初始化草稿",    lede:"下方汇总各步的真实连通性（建议先在第 2/3/4 步分别点「测试连接」）。也可一键「测试全部」，确认无误后「保存并重启」即生效。"}
+];
+
+/* 供应商预设：官方端点只读；兼容端点 base 可填、模型自由输入。
+ * 模型清单更新于 2026-06（gpt-4o / claude-sonnet-4 / deepseek-chat 等旧 ID 已弃用）。
+ * deepseek-chat 与 deepseek-reasoner 将于 2026-07-24 停用 → 改用 deepseek-v4-* 。
+ * 性价比推荐：deepseek-v4-flash、claude-haiku-4-5、gpt-5.4-mini、gemini-3-flash。
+ * Gemini 已全线升级到 3.x（gemini-3.5-flash 最新带免费层；gemini-3-flash 性价比最优）。 */
+const PROVIDERS={
+  openai:    {label:"OpenAI",        base:"https://api.openai.com/v1",    models:["gpt-5.5","gpt-5.4","gpt-5.4-mini","gpt-5.4-nano","gpt-5","gpt-5-mini","gpt-5-nano","o4-mini"], def:"gpt-5.4-mini"},
+  anthropic: {label:"Anthropic",     base:"https://api.anthropic.com/v1", models:["claude-opus-4-8","claude-sonnet-4-6","claude-sonnet-4-5","claude-haiku-4-5"],                 def:"claude-sonnet-4-6"},
+  deepseek:  {label:"DeepSeek",      base:"https://api.deepseek.com/v1",  models:["deepseek-v4-flash","deepseek-v4-pro","deepseek-v3.2"],                                       def:"deepseek-v4-flash"},
+  gemini:    {label:"Google Gemini", base:"https://generativelanguage.googleapis.com/v1beta/openai", models:["gemini-3.5-flash","gemini-3.1-pro","gemini-3-pro","gemini-3-flash","gemini-3-flash-lite"], def:"gemini-3-flash"},
+  compatible:{label:"OpenAI 兼容端点", base:"", models:["gemini-3-flash","qwen-plus","qwen-max","kimi-k2.6","moonshot-v1-128k","deepseek-v4-flash","claude-sonnet-4-6"], def:""}
+};
+
+let cur=1;
+let envGenerated=false;
+let envText="";
+
+/* ── 工具 ──────────────────────────────────────────────── */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const val=id=>{const el=document.getElementById(id);return el?(el.value||"").trim():"";};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CHECK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+/* ── toast ─────────────────────────────────────────────── */
+function toast(msg,kind,loading){
+  const wrap=$("#toast-wrap");
+  const t=document.createElement('div');
+  t.className='toast'+(kind?(' '+kind):'');
+  let icon=loading?'<span class="spinner"></span>'
+    :kind==='warn'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  t.innerHTML=icon+'<span>'+esc(msg)+'</span>';
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  const life=loading?1400:2600;
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),220);},life);
+  return t;
+}
+
+/* ── stepper ───────────────────────────────────────────── */
+function renderStepper(){
+  $$('#stepper li').forEach(li=>{
+    const n=+li.dataset.s;
+    li.classList.toggle('s-active',n===cur);
+    li.classList.toggle('s-done',n<cur);
+    const node=li.querySelector('.node');
+    node.innerHTML = n<cur ? CHECK_SVG : String(n);
+  });
+}
+
+/* ── 步骤切换 ──────────────────────────────────────────── */
+function goStep(n){
+  if(n<1||n>STEPS.length) return;
+  cur=n;
+  $$('.step').forEach(s=>{const on=+s.dataset.step===n;s.classList.toggle('active',on);s.hidden=!on;});
+  const s=STEPS[n-1];
+  $("#hero-title").textContent=s.title;
+  $("#hero-lede").textContent=s.lede;
+  $("#btn-prev").disabled=(n===1);
+  const nextBtn=$("#btn-next");
+  if(n===STEPS.length){
+    nextBtn.innerHTML='完成初始化<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  }else{
+    nextBtn.innerHTML='下一步<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  }
+  $("#foot-progress").textContent='第 '+n+' 步 / 共 '+STEPS.length+' 步';
+  if(n===3 && !grpLoaded){ grpLoaded=true; loadGroups(); }
+  if(n===6) renderSummary();
+  renderStepper();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function next(){ if(cur<STEPS.length) goStep(cur+1); else finishInit(); }
+function prev(){ if(cur>1) goStep(cur-1); }
+
+/* ── 供应商切换 ────────────────────────────────────────── */
+function onProviderChange(){
+  const k=val('p2-provider');
+  const p=PROVIDERS[k]||PROVIDERS.openai;
+  const baseEl=$("#p2-baseurl");
+  baseEl.value=p.base;
+  baseEl.readOnly=!!p.base;
+  baseEl.placeholder=p.base?'':'https://api.deepseek.com/v1';
+  const dl=$("#p2-models");
+  dl.innerHTML=p.models.map(m=>'<option value="'+m+'">').join('');
+  $("#p2-model").value=p.def;
+  $("#p2-baseurl-hint").textContent = p.base ? '官方端点，通常无需修改（用代理则改成代理地址）。' : '兼容端点 · 常见 Base URL：OpenRouter https://openrouter.ai/api/v1 · SiliconFlow https://api.siliconflow.cn/v1 · Moonshot https://api.moonshot.cn/v1 · 通义 DashScope https://dashscope.aliyuncs.com/compatible-mode/v1';
+}
+
+/* ── 环境检测（真实探测 /health · /system/config · /groups/sessions · /memos/status）── */
+function setPill(id,ok,text){const el=document.getElementById(id);if(!el)return;el.className='stpill '+(ok?'ok':'off');el.textContent=text;}
+function setText(id,t){const el=document.getElementById(id);if(el)el.textContent=t;}
+let _detectCfg={};
+async function detectEnv(btn){
+  const restore=btn?(()=>{const o=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> 检测中…';return ()=>{btn.disabled=false;btn.innerHTML=o;};})():null;
+  setPill('det-sqlite-pill',false,'检测中…');
+  setPill('det-llm-pill',false,'检测中…');
+  setPill('det-ct-pill',false,'检测中…');
+  setPill('det-memos-pill',false,'检测中…');
+  setPill('det-lark-pill',false,'检测中…');
+  const [h,c,s,m,t]=await Promise.allSettled([
+    fetch('/api/v1/health',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject(r.status)),
+    api('/system/config'),
+    api('/groups/sessions'),
+    api('/memos/status'),
+    api('/system/tools'),
+  ]);
+  // 配置（展平 features）—— 用于读取 db_path / 已配置模型
+  const cfg=c.status==='fulfilled'?(c.value||{}):{};
+  _detectCfg=Object.assign({},cfg.features||{},cfg);
+
+  // SQLite
+  if(h.status==='fulfilled'){
+    const v=h.value||{};
+    const ok=(v.database==='ok'||v.status==='ok');
+    setPill('det-sqlite-pill',ok,ok?'已就绪':'异常');
+    setText('det-sqlite-detail',(_detectCfg.db_path||'data/winnow.db')+' · '+(ok?'本地关系库可读写':'连接异常')+(v.version?(' · v'+v.version):''));
+  }else{
+    setPill('det-sqlite-pill',false,'检测失败');
+    setText('det-sqlite-detail','未能读取数据库状态');
+  }
+
+  // 主语言模型（密钥被脱敏，只能据模型/base_url 判断）
+  const model=_detectCfg.orchestrator_model||_detectCfg.deepseek_model||_detectCfg.anthropic_model;
+  const base=_detectCfg.deepseek_base_url||_detectCfg.anthropic_base_url||_detectCfg.openai_base_url;
+  const llmOk=!!model;
+  setPill('det-llm-pill',llmOk,llmOk?'已配置':'未配置');
+  setText('det-llm-detail',llmOk?(model+(base?(' · '+base):'')):'供应商与 API Key 待填写（见第 2 步）');
+
+  // CipherTalk（真实可达性 = /groups/sessions 的 available）
+  if(s.status==='fulfilled'){
+    const v=s.value||{};
+    const avail=!!v.available;
+    const n=(v.sessions&&v.sessions.length)||0;
+    setPill('det-ct-pill',avail,avail?'已连接':'未连接');
+    setText('det-ct-detail',avail?('CipherTalk 可达 · '+n+' 个会话可接入（见第 3 步）'):'API URL / Token 未配置或不可达');
+  }else{
+    setPill('det-ct-pill',false,'未连接');
+    setText('det-ct-detail','API URL 与 Token 待填写（见第 3 步）');
+  }
+
+  // MemOS（/memos/status 的 connected）
+  if(m.status==='fulfilled'){
+    const v=m.value||{};
+    const conn=!!v.connected;
+    setPill('det-memos-pill',conn,conn?'已连接':'未连接');
+    const sub=document.getElementById('det-memos-sub');
+    if(sub) sub.querySelectorAll('.sdot').forEach(d=>d.classList.toggle('ok',conn));
+  }else{
+    setPill('det-memos-pill',false,'未连接');
+  }
+
+  // 飞书工具链 (lark-cli) —— /system/tools 的 lark_cli 就绪（可选：仅推飞书用，不计入阻断依赖）
+  if(t.status==='fulfilled'){
+    const lc=(t.value||{}).lark_cli||{};
+    const ready=!!(lc.installed && lc.authed && lc.base_drive_ok);
+    setPill('det-lark-pill',ready,ready?'已就绪':(lc.installed?'未授权':'未安装'));
+    let detail = lc.installed ? (lc.version||'lark-cli') : '未找到 lark-cli 二进制';
+    if(lc.user_name) detail += ' · 用户 '+lc.user_name;
+    if(ready) detail += ' · base/drive 权限就绪';
+    else if(lc.note) detail += ' · '+lc.note;
+    setText('det-lark-detail', detail);
+  }else{
+    setPill('det-lark-pill',false,'检测失败');
+    setText('det-lark-detail','未能检测 lark-cli（可选：仅推飞书多维表格时需要）');
+  }
+
+  // 底部提示：统计仍 off 的外部依赖
+  const pending=['det-llm-pill','det-ct-pill','det-memos-pill'].map(id=>document.getElementById(id)).filter(el=>el&&el.classList.contains('off')).length;
+  const hint=document.getElementById('det-hint');
+  if(hint) hint.textContent = pending?('SQLite 已就绪 · '+pending+' 项外部依赖待配置（详见上方卡片）'):'全部依赖已就绪 · 可进入下一步';
+
+  if(restore) restore();
+}
+function redoDetect(btn){ detectEnv(btn); }
+
+/* ── 登录闸（web_api_key 已配置时）────────────────────── */
+let loginRequired=false, loggedIn=false;
+async function checkAuth(){
+  try{ const r=await api('/auth/status'); loginRequired=!!r.login_required; }
+  catch(e){ loginRequired=false; }
+  const g=document.getElementById('login-gate'); if(g) g.hidden=!loginRequired;
+}
+async function doLogin(){
+  const key=val('login-key');
+  if(!key){ toast('请输入管理员密钥','warn'); return; }
+  try{
+    const r=await api('/auth/login',{method:'POST',body:JSON.stringify({api_key:key})});
+    loggedIn=true;
+    const g=document.getElementById('login-gate'); if(g) g.hidden=true;
+    toast(r&&r.dev?'dev 模式 · 无需登录':'登录成功');
+  }catch(e){ toast('登录失败：'+(String(e.message||e)).slice(0,60),'warn'); }
+}
+
+/* ── 收集表单 → {values(真实 Settings 字段), infra(compose .env)} ── */
+function collect(){
+  const prov=val('p2-provider');
+  const v={};
+  const infra={};
+  const intOr=id=>{const x=val(id);return x?parseInt(x,10):undefined;};
+  const set=(k,val)=>{if(val!==undefined&&val!==null&&val!=='') v[k]=val;};
+  // LLM —— orchestrator_provider 显式声明路由；openai/gemini/compatible 都走 openai 兼容字段
+  set('orchestrator_model', val('p2-model'));
+  if(prov==='anthropic'){
+    v.orchestrator_provider='anthropic';
+    set('anthropic_base_url',val('p2-baseurl')); set('anthropic_model',val('p2-model')); set('anthropic_api_key',val('p2-apikey'));
+  } else if(prov==='deepseek'){
+    v.orchestrator_provider='deepseek';
+    set('deepseek_base_url',val('p2-baseurl')); set('deepseek_model',val('p2-model')); set('deepseek_api_key',val('p2-apikey'));
+  } else {
+    v.orchestrator_provider='openai';
+    set('openai_base_url',val('p2-baseurl')); set('openai_api_key',val('p2-apikey')); set('openai_model',val('p2-model'));
+  }
+  // CipherTalk
+  set('ciphertalk_base_url',val('p3-url'));
+  set('ciphertalk_token',val('p3-token'));
+  // MemOS (app)
+  v.memos_enabled=document.getElementById('p4-memos').checked;
+  set('memos_api_url',val('p4-memos-api'));
+  set('memos_cube_prefix',val('p4-cube'));
+  set('mos_chat_model',val('p4-chat-model'));
+  set('mos_embedder_model',val('p4-embed'));
+  set('memos_search_timeout',intOr('p4-timeout'));
+  // 内容增强 / Vision
+  v.enable_enrich=document.getElementById('p4-enhance').checked;
+  set('vision_base_url',val('p4-vision-base'));
+  set('vision_model',val('p4-vision-model'));
+  set('vision_api_key',val('p4-vision-key'));
+  // 运行与存储（web_port 不发：禁改）
+  set('db_path',val('p5-dbpath'));
+  set('log_level',val('p5-loglevel'));
+  set('max_parallel_runs',intOr('p5-concurrency'));
+  set('max_context_tokens',intOr('p5-ctxlimit'));
+  // infra（memos-api 容器，写 compose .env）
+  setInfra(infra,'QDRANT_URL',val('p4-qdrant'));
+  if(val('p4-redis')) infra.REDIS_URL='redis://'+val('p4-redis');
+  if(val('p4-redis-pw')) infra.REDIS_PASSWORD=val('p4-redis-pw');
+  return {values:v, infra};
+}
+function setInfra(o,k,val){ if(val) o[k]=val; }
+
+/* ── 测试连接（真实 /system/config/test，targets 限定单步）── */
+async function probe(values, targets){
+  return await api('/system/config/test',{method:'POST',body:JSON.stringify({values,infra:{},restart:false,targets:targets||null})});
+}
+/* ── 每步内联测试状态 + 辅助 ─────────────────────────── */
+const testState={llm:null,cipher:null,memos:null,vision:null};
+function spinBtn(btn,label){ if(!btn) return ()=>{}; const o=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> '+label; return ()=>{btn.disabled=false;btn.innerHTML=o;}; }
+function setTestOut(id,result){
+  const el=document.getElementById(id); if(!el) return;
+  if(!result){ el.textContent=''; el.className='t-result'; return; }
+  const ok=/^ok/.test(result);
+  const txt=ok?'✓ 可用':('✗ '+result.replace(/^fail:\s*/,'').replace(/^skipped:\s*/,'未提供 · ').slice(0,50));
+  el.textContent=txt; el.className='t-result '+(ok?'ok':'off');
+}
+async function testLLM(btn){
+  const prov=val('p2-provider'),model=val('p2-model'),key=val('p2-apikey'),base=val('p2-baseurl');
+  const v={orchestrator_model:model};
+  if(prov==='anthropic'){ if(base)v.anthropic_base_url=base; v.anthropic_model=model; if(key)v.anthropic_api_key=key; }
+  else if(prov==='deepseek'){ if(base)v.deepseek_base_url=base; v.deepseek_model=model; if(key)v.deepseek_api_key=key; }
+  else { if(key)v.openai_api_key=key; }
+  const restore=spinBtn(btn,'测试中…');
+  try{ const r=await probe(v,['llm']); testState.llm=r.llm; setTestOut('p2-test-out',r.llm); toast('LLM · '+r.llm,/^ok/.test(r.llm)?null:'warn'); }
+  catch(e){ testState.llm='fail:'+String(e.message||e); setTestOut('p2-test-out',testState.llm); toast('测试失败','warn'); }
+  finally{ restore(); }
+}
+async function testMemos(btn){
+  const v={}; if(val('p4-memos-api')) v.memos_api_url=val('p4-memos-api');
+  const restore=spinBtn(btn,'测试中…');
+  try{ const r=await probe(v,['memos']); testState.memos=r.memos; setTestOut('p4-memos-test-out',r.memos); toast('MemOS · '+r.memos,/ok/.test(r.memos)?null:'warn'); }
+  catch(e){ testState.memos='fail:'+String(e.message||e); setTestOut('p4-memos-test-out',testState.memos); toast('测试失败','warn'); }
+  finally{ restore(); }
+}
+async function testVision(btn){
+  const v={};
+  if(val('p4-vision-base')) v.vision_base_url=val('p4-vision-base');
+  if(val('p4-vision-model')) v.vision_model=val('p4-vision-model');
+  if(val('p4-vision-key')) v.vision_api_key=val('p4-vision-key');
+  const restore=spinBtn(btn,'测试中…');
+  try{ const r=await probe(v,['vision']); testState.vision=r.vision; setTestOut('p4-vision-test-out',r.vision); toast('Vision · '+r.vision,/ok/.test(r.vision)?null:'warn'); }
+  catch(e){ testState.vision='fail:'+String(e.message||e); setTestOut('p4-vision-test-out',testState.vision); toast('测试失败','warn'); }
+  finally{ restore(); }
+}
+
+/* ── 保存并重启（PUT /system/config + 轮询 /health）──── */
+async function saveAndRestart(btn){
+  if(loginRequired&&!loggedIn){ toast('请先登录后再保存','warn'); const g=document.getElementById('login-gate'); if(g) g.scrollIntoView(); return; }
+  const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> 处理中…';
+  try{
+    // 先登记第 3 步勾选的新群到群组列表（幂等，重复登记不会建副本）
+    const newGroups = document.querySelectorAll('input[name="ct-group"]:checked').length ? await registerGroups(null) : 0;
+    const {values,infra}=collect();
+    if(!Object.keys(values).length && !Object.keys(infra).length){
+      if(newGroups>0){ toast('已登记 '+newGroups+' 个群，无需重启'); }
+      else { toast('没有需要保存的配置，也未勾选新群','warn'); }
+      btn.disabled=false; btn.innerHTML=orig; return;
+    }
+    btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> 保存中…';
+    const r=await api('/system/config',{method:'PUT',body:JSON.stringify({values,infra,restart:true})});
+    if(r&&r.warnings&&r.warnings.length) r.warnings.forEach(w=>toast(w,'warn'));
+    if(!r||!r.restart){ toast('已保存（本次未重启）'+(newGroups>0?(' · 另登记 '+newGroups+' 个群'):'')); btn.disabled=false; btn.innerHTML=orig; return; }
+    btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> 重启中…';
+    const back=await waitRestart();
+    if(back){ toast('重启完成 · 正在刷新'+(newGroups>0?('（已登记 '+newGroups+' 个群）'):'')); setTimeout(()=>location.reload(),500); }
+    else { toast('重启超时：服务可能仍在启动，请稍后手动刷新','warn'); btn.disabled=false; btn.innerHTML=orig; }
+  }catch(e){ toast('保存失败：'+(String(e.message||e)).slice(0,140),'warn'); btn.disabled=false; btn.innerHTML=orig; }
+}
+async function waitRestart(){
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const ping=()=>fetch('/api/v1/health',{cache:'no-store'}).then(x=>x.ok?200:x.status).catch(()=>0);
+  for(let i=0;i<16;i++){ if(await ping()!==200) break; await sleep(500); }   // 等下线
+  for(let i=0;i<80;i++){ if(await ping()===200) return true; await sleep(500); } // 等回来（≤40s）
+  return false;
+}
+
+/* ── 预填真实当前配置 ─────────────────────────────────── */
+async function prefill(){
+  let cfg={};
+  try{ const r=await api('/system/config'); cfg=Object.assign({}, r.features||{}, r); }
+  catch(e){ toast('读取当前配置失败：'+(String(e.message||e)).slice(0,60),'warn'); return; }
+  const setV=(id,v)=>{const el=document.getElementById(id); if(el && v!=null && v!=='') el.value=v;};
+  const setCk=(id,v)=>{const el=document.getElementById(id); if(el) el.checked=!!v;};
+  // 供应商探测：优先按 orchestrator_provider，再按 base_url 兜底；Claude 优先级最低。
+  let prov='openai', baseField='';
+  const op=(cfg.orchestrator_provider||'').toLowerCase();
+  if(op==='deepseek'){ prov='deepseek'; baseField='deepseek_base_url'; }
+  else if(op==='anthropic'){ prov='anthropic'; baseField='anthropic_base_url'; }
+  else if(op==='openai'){
+    baseField='openai_base_url';
+    const ob=(cfg.openai_base_url||'').toLowerCase();
+    prov = ob.includes('googleapis') ? 'gemini' : (ob && !ob.includes('api.openai.com') ? 'compatible' : 'openai');
+  } else if(cfg.deepseek_base_url){ prov='deepseek'; baseField='deepseek_base_url'; }
+  else if(cfg.anthropic_base_url){ prov='anthropic'; baseField='anthropic_base_url'; }
+  document.getElementById('p2-provider').value=prov;
+  onProviderChange();
+  setV('p2-model', cfg.orchestrator_model || cfg.openai_model || cfg.anthropic_model || cfg.deepseek_model);
+  if(baseField && cfg[baseField]) setV('p2-baseurl', cfg[baseField]);
+  setV('p3-url', cfg.ciphertalk_base_url);
+  setV('p4-memos-api', cfg.memos_api_url);
+  setV('p4-cube', cfg.memos_cube_prefix);
+  setV('p4-chat-model', cfg.mos_chat_model);
+  setV('p4-embed', cfg.mos_embedder_model);
+  setV('p4-timeout', cfg.memos_search_timeout);
+  setCk('p4-memos', cfg.memos_enabled);
+  setCk('p4-enhance', cfg.enable_enrich);
+  setV('p4-vision-base', cfg.vision_base_url);
+  setV('p4-vision-model', cfg.vision_model);
+  // 视觉模型：当前若为 Claude（价高），默认换为 qwen3-vl-flash（百炼兼容端点，约 1/10 价）；保存并重启后生效。
+  if(cfg.vision_model && /claude/i.test(cfg.vision_model)){
+    const vm=document.getElementById('p4-vision-model'); if(vm) vm.value='qwen3-vl-flash';
+    if(!cfg.vision_base_url){ const vb=document.getElementById('p4-vision-base'); if(vb) vb.value='https://dashscope.aliyuncs.com/compatible-mode/v1'; }
+    toast('视觉模型已从 Claude 换为 qwen3-vl-flash（更便宜）· 保存并重启后生效');
+  }
+  setV('p5-dbpath', cfg.db_path);
+  if(cfg.log_level) document.getElementById('p5-loglevel').value=cfg.log_level;
+  setV('p5-concurrency', cfg.max_parallel_runs);
+  setV('p5-ctxlimit', cfg.max_context_tokens);
+  setV('p5-port', cfg.web_port);
+}
+
+/* ── 群列表（真实 /groups/sessions，不再写死）──────────── */
+let grpLoaded=false;
+function grpFallback(msg){ return '<div class="grp-row" style="cursor:default;color:var(--meta)"><span class="gm">'+esc(msg)+'</span></div>'; }
+async function loadGroups(btn){
+  const box=document.getElementById('grp-list');
+  const restore=btn?(()=>{const o=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spinner" style="width:13px;height:13px"></span> 拉取中…';return ()=>{btn.disabled=false;btn.innerHTML=o;};})():null;
+  if(box) box.innerHTML=grpFallback('正在从 CipherTalk 拉取…');
+  let data;
+  try{ data=await api('/groups/sessions?_t='+Date.now()); }
+  catch(e){ if(box) box.innerHTML=grpFallback('拉取失败：'+String(e.message||e).slice(0,80)); if(restore)restore(); return; }
+  if(!data||!data.available){ if(box) box.innerHTML=grpFallback('CipherTalk 不可达。请先在上方填好 URL/Token 并点「测试连接」，再点「刷新群列表」。'); if(restore)restore(); return; }
+  const sess=data.sessions||[];
+  if(!sess.length){ if(box) box.innerHTML=grpFallback('CipherTalk 已连接，但未返回任何会话。'); if(restore)restore(); return; }
+  if(box){
+    box.innerHTML=sess.map(s=>{
+      const id=esc(s.chatroom_id||'');
+      const name=esc(s.display_name||id);
+      const reg=s.is_registered?'<span class="gm reg-badge" style="color:var(--success)">已登记</span>':'';
+      return '<label class="grp-row"><input type="checkbox" name="ct-group" value="'+id+'" data-name="'+name+'" data-registered="'+(s.is_registered?'true':'false')+'"><span class="grp-box"></span><span class="grp-name">'+name+'</span><span class="grp-meta">'+reg+'<span class="gid">'+id+'</span></span></label>';
+    }).join('');
+  }
+  toast('已拉取 '+sess.length+' 个 CipherTalk 会话');
+  if(restore)restore();
+  filterGroups();   // 应用当前搜索词
+}
+function filterGroups(){
+  const q=(val('grp-search')||'').toLowerCase().trim();
+  document.querySelectorAll('#grp-list .grp-row').forEach(row=>{
+    const name=(row.querySelector('.grp-name')||{}).textContent?.toLowerCase?.()||'';
+    const id=(row.querySelector('.gid')||{}).textContent?.toLowerCase?.()||'';
+    row.style.display = (!q||name.includes(q)||id.includes(q)) ? '' : 'none';
+  });
+}
+/* ── 登记勾选的群到群组列表（POST /groups，后端按 chatroom_id 幂等）── */
+function markRegistered(cb){
+  cb.dataset.registered='true';
+  const meta=cb.closest('.grp-row')?.querySelector('.grp-meta');
+  if(meta && !meta.querySelector('.reg-badge')){
+    const b=document.createElement('span'); b.className='gm reg-badge'; b.style.color='var(--success)'; b.textContent='已登记';
+    meta.insertBefore(b, meta.firstChild);
+  }
+}
+async function registerGroups(btn){
+  const checks=[...document.querySelectorAll('input[name="ct-group"]:checked')];
+  if(!checks.length){ if(btn) toast('请先勾选要登记的群','warn'); return 0; }
+  const restore=btn?spinBtn(btn,'登记中…'):null;
+  let ok=0, skip=0, fail=0;
+  for(const cb of checks){
+    const chatroom_id=cb.value, display_name=cb.dataset.name||chatroom_id;
+    try{
+      await api('/groups',{method:'POST',body:JSON.stringify({display_name,chatroom_id,is_active:true,daily_report_enabled:true})});
+      if(cb.dataset.registered==='true') skip++; else { ok++; markRegistered(cb); }
+    }catch(e){ fail++; }
+  }
+  if(restore) restore();
+  if(fail) toast('登记 '+ok+' 个新群，'+fail+' 个失败','warn');
+  else if(ok) toast('已登记 '+ok+' 个新群到群组列表'+(skip?('（另 '+skip+' 个已登记跳过）'):''));
+  else if(btn && skip) toast('勾选的 '+skip+' 个群均已登记');
+  return ok;
+}
+
+/* ── CipherTalk 测试连接（真实探测）────────────────────── */
+async function testCipher(btn){
+  if(!val('p3-url')){ toast('请先填写 CipherTalk API URL','warn'); return; }
+  const restore=spinBtn(btn,'测试中…');
+  try{
+    const values={ciphertalk_base_url:val('p3-url')};
+    if(val('p3-token')) values.ciphertalk_token=val('p3-token');
+    const r=await probe(values,['ciphertalk']);
+    testState.cipher=r.ciphertalk; setTestOut('p3-test-out',r.ciphertalk);
+    toast('CipherTalk · '+r.ciphertalk, /^ok/.test(r.ciphertalk)?null:'warn');
+    if(/^ok/.test(r.ciphertalk)) loadGroups();   // 连通后自动刷新群列表
+  }catch(e){ testState.cipher='fail:'+String(e.message||e); setTestOut('p3-test-out',testState.cipher); toast('测试失败：'+(String(e.message||e)).slice(0,80),'warn'); }
+  finally{ restore(); }
+}
+
+/* ── 测试全部连接（真实 /system/config/test，全 target）── */
+async function testAll(btn){
+  const restore=spinBtn(btn,'测试中…');
+  try{
+    const {values}=collect();
+    const r=await probe(values);
+    testState.llm=r.llm; testState.cipher=r.ciphertalk; testState.memos=r.memos; testState.vision=r.vision;
+    setTestOut('p2-test-out',r.llm); setTestOut('p3-test-out',r.ciphertalk); setTestOut('p4-memos-test-out',r.memos); setTestOut('p4-vision-test-out',r.vision);
+    [['LLM',r.llm],['CipherTalk',r.ciphertalk],['MemOS',r.memos],['Vision',r.vision]].forEach(([n,s])=>toast(n+' · '+s, /^ok/.test(s)?null:'warn'));
+    renderSummary();
+  }catch(e){ toast('测试失败：'+(String(e.message||e)).slice(0,80),'warn'); }
+  finally{ restore(); }
+}
+
+/* ── 收集配置（直接读取输入，输入跨步持久）────────────── */
+function readConfig(){
+  const pk=val('p2-provider');const P=PROVIDERS[pk]||PROVIDERS.openai;
+  const groups=$$('input[name="ct-group"]:checked').map(c=>({id:c.value,name:c.dataset.name}));
+  return {
+    provider_label:P.label, provider_key:pk,
+    base_url:val('p2-baseurl'), api_key:val('p2-apikey'), model:val('p2-model'),
+    ct_url:val('p3-url'), ct_token:val('p3-token'), groups,
+    memos:$("#p4-memos").checked, enhance:$("#p4-enhance").checked,
+    memos_api:val('p4-memos-api'), qdrant:val('p4-qdrant'), redis:val('p4-redis'),
+    cube:val('p4-cube'), mos_chat:val('p4-chat-model'), mos_embed:val('p4-embed'),
+    memos_timeout:val('p4-timeout'),
+    vision_base:val('p4-vision-base'), vision_model:val('p4-vision-model'), vision_key:val('p4-vision-key'),
+    db_path:val('p5-dbpath'), web_port:val('p5-port'),
+    log_level:val('p5-loglevel'), concurrency:val('p5-concurrency'), ctx_limit:val('p5-ctxlimit')
+  };
+}
+
+/* ── 校验汇总（连通性取每步真实测试结果，密钥脱敏不臆断）── */
+function renderSummary(){
+  const c=readConfig();
+  // 测试结果 → [文案, 是否告警]；未测试也提示，避免把「脱敏未填」误读为「缺失」。
+  const fmt=s=> !s ? ['未测试（建议点该步「测试连接」）',true]
+    : (/^ok/.test(s) ? ['✓ 可用',false]
+       : ['✗ '+s.replace(/^fail:\s*/,'').replace(/^skipped:\s*/,'未提供').slice(0,44),true]);
+  const tLlm=fmt(testState.llm), tCt=fmt(testState.cipher), tM=fmt(testState.memos), tV=fmt(testState.vision);
+  const maskedNote='（密钥已脱敏 · 留空复用 .env，点该步测试验证）';
+  const rows=[
+    ['主语言模型', c.model?(c.provider_label+' · '+c.model):'未配置', !c.model],
+    ['LLM 连通性', tLlm[0], tLlm[1]],
+    ['LLM 密钥', c.api_key?'已填写（覆盖 .env）':maskedNote, false],
+    ['sep'],
+    ['CipherTalk URL', c.ct_url||'未配置', !c.ct_url],
+    ['CipherTalk 连通性', tCt[0], tCt[1]],
+    ['CipherTalk Token', c.ct_token?'已填写（覆盖 .env）':maskedNote, false],
+    ['接入群组', c.groups.length?(c.groups.length+' 个 · '+c.groups.map(g=>g.name).join('、')):'未选择', !c.groups.length],
+    ['sep'],
+    ['MemOS 记忆', c.memos?'启用':'停用', false],
+    ['MemOS 连通性', tM[0], tM[1]],
+    ['sep'],
+    ['内容增强', c.enhance?'启用':'停用', false],
+    ['Vision 模型', c.vision_model||'未配置', !c.vision_model],
+    ['Vision 密钥', c.vision_key?'已填写（覆盖 .env）':maskedNote, false],
+    ['Vision 连通性', tV[0], tV[1]],
+    ['sep'],
+    ['SQLite 路径', c.db_path||'—', false],
+    ['Web 端口', c.web_port||'—', false],
+    ['日志级别', c.log_level, false],
+    ['最大并发', c.concurrency||'—', false],
+    ['上下文 token 上限', (c.ctx_limit||'—')+(c.ctx_limit?' tokens':''), false]
+  ];
+  $("#summary").innerHTML=rows.map(r=>{
+    if(r[0]==='sep') return '<span class="sep"></span>';
+    return '<span class="k">'+esc(r[0])+'</span><span class="v'+(r[2]?' warn':'')+'">'+esc(r[1])+'</span>';
+  }).join('');
+}
+
+/* ── 生成 .env 草稿（真实 env 变量名，密钥留空占位）────── */
+/* 本系统已支持「保存并重启」直接生效；此 .env 草稿仅作离线参考/兜底。 */
+function buildEnvText(){
+  const c=readConfig();
+  const L=[];
+  L.push('# winnow 初始化配置草稿');
+  L.push('# 由「初始化引导」生成 · 非敏感项预填，密钥项留空占位');
+  L.push('# 注：推荐用页面「保存并重启」直接生效；本文件仅作离线参考');
+  L.push('');
+  L.push('# ── 主语言模型 (LLM) ──');
+  if(c.provider_key==='anthropic'){ L.push('ANTHROPIC_API_KEY='); L.push('ANTHROPIC_BASE_URL='+c.base_url); L.push('ANTHROPIC_MODEL='+c.model); L.push('ORCHESTRATOR_PROVIDER=anthropic'); }
+  else if(c.provider_key==='deepseek'){ L.push('DEEPSEEK_API_KEY='); L.push('DEEPSEEK_BASE_URL='+c.base_url); L.push('DEEPSEEK_MODEL='+c.model); L.push('ORCHESTRATOR_PROVIDER=deepseek'); }
+  else { L.push('OPENAI_API_KEY='); L.push('OPENAI_BASE_URL='+c.base_url); L.push('OPENAI_MODEL='+c.model); L.push('ORCHESTRATOR_PROVIDER=openai'); }
+  L.push('ORCHESTRATOR_MODEL='+c.model);
+  L.push('');
+  L.push('# ── CipherTalk 数据源 ──');
+  L.push('CIPHERTALK_BASE_URL='+c.ct_url);
+  L.push('CIPHERTALK_TOKEN=');
+  L.push('');
+  L.push('# ── 记忆 (MemOS app 端) ──');
+  L.push('MEMOS_ENABLED='+(c.memos?'true':'false'));
+  L.push('MEMOS_API_URL='+c.memos_api);
+  L.push('MEMOS_CUBE_PREFIX='+c.cube);
+  L.push('MOS_CHAT_MODEL='+c.mos_chat);
+  L.push('MOS_EMBEDDER_MODEL='+c.mos_embed);
+  L.push('MEMOS_SEARCH_TIMEOUT='+c.memos_timeout);
+  L.push('');
+  L.push('# ── MemOS 容器基建（放进 docker-compose 的 .env）──');
+  L.push('QDRANT_URL='+c.qdrant);
+  L.push('REDIS_URL=redis://'+c.redis);
+  L.push('REDIS_PASSWORD=');
+  L.push('');
+  L.push('# ── 内容增强 ──');
+  L.push('ENABLE_ENRICH='+(c.enhance?'true':'false'));
+  L.push('VISION_BASE_URL='+c.vision_base);
+  L.push('VISION_MODEL='+c.vision_model);
+  L.push('');
+  L.push('# ── 运行与存储 ──');
+  L.push('DB_PATH='+c.db_path);
+  L.push('WEB_PORT='+c.web_port);
+  L.push('LOG_LEVEL='+c.log_level);
+  L.push('MAX_PARALLEL_RUNS='+c.concurrency);
+  L.push('MAX_CONTEXT_TOKENS='+c.ctx_limit);
+  return L.join('\n');
+}
+function renderEnvPreview(text){
+  const html=text.split('\n').map(line=>{
+    if(line==='') return ' ';
+    if(line.trimStart().startsWith('#')) return '<span class="env-c">'+esc(line)+'</span>';
+    const eq=line.indexOf('=');
+    if(eq<0) return esc(line);
+    const k=line.slice(0,eq), v=line.slice(eq+1);
+    const isSecret=/KEY|TOKEN/.test(k);
+    const vhtml=(isSecret||v==='')?'<span class="env-ph">&lt;填入&gt;</span>':'<span class="env-v">'+esc(v)+'</span>';
+    return '<span class="env-k">'+esc(k)+'</span><span class="env-e">=</span>'+vhtml;
+  }).join('\n');
+  $("#env-pre").innerHTML=html;
+}
+function generateEnv(btn){
+  envText=buildEnvText();
+  renderEnvPreview(envText);
+  $("#env-out").hidden=false;
+  envGenerated=true;
+  toast('已生成 .env 草稿 · 密钥项已留空占位');
+  setTimeout(()=>{const el=$("#env-out");if(el){const y=el.getBoundingClientRect().top+window.scrollY-80;if(y>window.scrollY)window.scrollTo({top:y,behavior:'smooth'});}},60);
+}
+
+/* ── 下载 .env（Blob，无网络）─────────────────────────── */
+function downloadEnv(){
+  if(!envGenerated) envText=buildEnvText();
+  const blob=new Blob([envText+'\n'],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='.env';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('已下载 .env 草稿');
+}
+
+/* ── 完成初始化（= 保存并重启）────────────────────────── */
+function finishInit(){ saveAndRestart(document.getElementById('save-restart')); }
+
+/* ── 初始化 ────────────────────────────────────────────── */
+async function init(){
+  onProviderChange();
+  goStep(1);
+  await checkAuth();
+  await prefill();
+  detectEnv();   // 第 1 步环境检测（真实探测，不阻塞进入向导）
+}
+init();
+</script>
+</body>
+</html>

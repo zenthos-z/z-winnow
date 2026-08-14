@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://z-winnow/schemas/topics.json",
+  "$title": "Topics JSON (Layer 3)",
+  "description": "Layer 3 topics.json schema — unified topic list with lifecycle classification (T-W13).",
+  "type": "object",
+  "required": ["date", "topics", "total_active"],
+  "properties": {
+    "date": {
+      "type": "string",
+      "description": "分析日期，格式 YYYYMMDD",
+      "pattern": "^[0-9]{8}$"
+    },
+    "topics": {
+      "type": "array",
+      "description": "统一议题列表（含 lifecycle 分类、background、process、conclusion 因果链三段、trend、participants）",
+      "items": {
+        "$ref": "#/$defs/TopicItem"
+      }
+    },
+    "trend_summary": {
+      "type": "string",
+      "description": "议题演变一句话汇总"
+    },
+    "lifecycle_counts": {
+      "type": "object",
+      "description": "按 lifecycle 类型统计议题数量",
+      "properties": {
+        "user_defined": { "type": "integer", "minimum": 0 },
+        "sustained": { "type": "integer", "minimum": 0 },
+        "emerging": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "total_active": {
+      "type": "integer",
+      "description": "状态为 active 的议题总数",
+      "minimum": 0
+    },
+    "total_count": {
+      "type": "integer",
+      "description": "议题总数",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "TopicItem": {
+      "type": "object",
+      "description": "统一议题项",
+      "required": ["topic_id", "topic_name", "lifecycle", "source_server_ids"],
+      "properties": {
+        "topic_id": {
+          "type": "string",
+          "description": "议题唯一标识，格式 tp_XXXXXXXX",
+          "pattern": "^tp_[0-9a-f]{8}$"
+        },
+        "topic_name": {
+          "type": "string",
+          "description": "议题名称",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "type": "string",
+          "description": "生命周期分类",
+          "enum": ["user_defined", "sustained", "emerging"]
+        },
+        "status": {
+          "type": "string",
+          "description": "讨论状态",
+          "enum": ["active", "discussion", "resolved", "archived"]
+        },
+        "weight": {
+          "type": "number",
+          "description": "活跃度权重 0.0-1.0",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "background": {
+          "type": "string",
+          "description": "议题背景：为什么讨论、上下文与起因"
+        },
+        "process": {
+          "type": "string",
+          "description": "讨论过程：讨论了什么、关键观点与推进"
+        },
+        "conclusion": {
+          "type": "string",
+          "description": "最终结论/结论性判断（不再包含背景与过程）"
+        },
+        "description": {
+          "type": "string",
+          "description": "议题描述与汇入边界"
+        },
+        "trend": {
+          "type": "string",
+          "description": "叙事性趋势段落"
+        },
+        "participants": {
+          "type": "array",
+          "description": "当天参与讨论的群成员昵称列表",
+          "items": { "type": "string" }
+        },
+        "first_seen": {
+          "type": "string",
+          "description": "首次出现日期 YYYY-MM-DD"
+        },
+        "last_seen": {
+          "type": "string",
+          "description": "最近出现日期 YYYY-MM-DD"
+        },
+        "source_server_ids": {
+          "type": "array",
+          "description": "关联消息 serverId 列表",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

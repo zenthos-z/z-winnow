@@ -1,0 +1,433 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://z-winnow/schemas/rl_record_v1.json",
+  "title": "RL Training Record v1",
+  "description": "RL 训练数据 JSONL 行格式 — v1 探索阶段。统一四元组 (state, action, reward, metadata) 支持三种训练场景：偏好对齐、路由决策、议题追踪。每条 JSONL 行为一个完整的训练样本。\n\n版本: v1 (探索阶段，后续可能大幅修订)\n关联: src/z_winnow/schemas/rl_data.py (Pydantic 模型验证)\n      docs/rl-training-requirements.md (需求分析)",
+  "type": "object",
+  "required": ["record_id", "date", "scenario", "state", "action", "reward", "metadata"],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "全局唯一 RL 记录标识。格式: rl-{YYYYMMDD}-{seq}，其中 seq 为至少 3 位数字序号，如 rl-20260428-001。此字段与 Pydantic 模型 RLTrainingSample.sample_id 对齐。",
+      "pattern": "^rl-\\d{8}-\\d{3,}$",
+      "examples": ["rl-20260428-001", "rl-20260428-042"]
+    },
+    "date": {
+      "type": "string",
+      "description": "数据对应日期，YYYY-MM-DD 格式。Pydantic 模型内部使用 YYYYMMDD (无连字符)，两者的转换由序列化层处理。",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "examples": ["2026-04-28"]
+    },
+    "scenario": {
+      "type": "string",
+      "description": "RL 训练场景类型。对应 Pydantic 枚举 RLScenario。三种场景共用同一顶层结构，通过此字段区分。",
+      "enum": ["preference_alignment", "routing_decision", "topic_tracking"]
+    },
+    "state": {
+      "type": "object",
+      "description": "当天上下文快照 — agent 做决策时看到的全部信息。对应 Pydantic 模型中 RLTrainingSample 的 raw_messages / parsed_contexts / topic_summaries 列表。",
+      "required": ["server_ids"],
+      "properties": {
+        "messages_summary": {
+          "type": "string",
+          "description": "当天消息的简要摘要，用于快速了解上下文（1-3 句话）。",
+          "minLength": 1
+        },
+        "context_token_count": {
+          "type": "integer",
+          "description": "上下文的估算 token 数量，用于成本/延迟分析。",
+          "minimum": 0
+        },
+        "history_topics": {
+          "type": "array",
+          "description": "历史议题 ID 列表（引用 SQLite Layer 3 topic_summaries 表）。topic_tracking 场景中此字段承载核心上下文。",
+          "items": {
+            "type": "string",
+            "description": "议题摘要 ID (topic_summary_id)"
+          }
+        },
+        "server_ids": {
+          "type": "array",
+          "description": "原始消息 serverID 列表（引用 SQLite Layer 1 raw_messages 表）。所有 scenario 的必填字段，是四元组溯源的起点。",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "description": "serverID — WeFlow 消息的唯一标识"
+          }
+        },
+        "parsed_context_ids": {
+          "type": "array",
+          "description": "已解析上下文 ID 列表（引用 SQLite Layer 2 parsed_contexts 表）。",
+          "items": {
+            "type": "string",
+            "description": "上下文 ID (parsed_context_id)"
+          }
+        },
+        "active_members": {
+          "type": "array",
+          "description": "当日活跃成员列表。",
+          "items": {
+            "type": "string"
+          }
+        },
+        "message_count": {
+          "type": "integer",
+          "description": "当日原始消息总数。",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "action": {
+      "type": "object",
+      "description": "agent 的决策或输出 — 被评估的对象。不同 scenario 的 action 结构有差异，通过 allOf/if-then 约束。",
+      "required": ["agent", "model_used"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "description": "执行该 action 的 subagent 标识。如 daily_report_generator / orchestrator / topic_tracker。",
+          "examples": ["daily_report_generator", "orchestrator", "topic_tracker"]
+        },
+        "decision": {
+          "type": "string",
+          "description": "agent 的决策内容描述。routing_decision 场景中为路由选择说明；topic_tracking 场景中为状态分类依据。"
+        },
+        "model_used": {
+          "type": "string",
+          "description": "生成 action 所使用的模型标识，如 claude-sonnet-4-20250514。对应 Pydantic 模型 RLTrainingSample.model_used。",
+          "examples": ["claude-sonnet-4-20250514"]
+        },
+        "temperature": {
+          "type": "number",
+          "description": "生成时的 temperature 参数。",
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "default": 0.7
+        },
+        "latency_ms": {
+          "type": "integer",
+          "description": "action 生成的端到端延迟（毫秒）。",
+          "minimum": 0
+        },
+        "report_sections": {
+          "type": "array",
+          "description": "日报输出包含的章节列表（preference_alignment 场景专用）。",
+          "items": {
+            "type": "string",
+            "enum": ["overview", "important_notice", "topic_sections", "trend_analysis", "highlights", "active_members"]
+          }
+        },
+        "routing_decisions": {
+          "type": "array",
+          "description": "具体路由决策列表（routing_decision 场景专用）。",
+          "items": {
+            "type": "object",
+            "required": ["agent", "enabled"],
+            "properties": {
+              "agent": {
+                "type": "string",
+                "description": "目标 subagent 标识。"
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "是否启用该 subagent。"
+              },
+              "reason": {
+                "type": "string",
+                "description": "启用/禁用的原因说明。"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "status_classifications": {
+          "type": "array",
+          "description": "议题状态分类结果（topic_tracking 场景专用）。",
+          "items": {
+            "type": "object",
+            "required": ["topic_id", "new_status"],
+            "properties": {
+              "topic_id": {
+                "type": "string",
+                "description": "议题 ID。"
+              },
+              "new_status": {
+                "type": "string",
+                "enum": ["new", "ongoing", "resolved", "dormant"],
+                "description": "新状态：new(新出现) / ongoing(进行中) / resolved(已解决) / dormant(休眠)。"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "分类置信度 [0, 1]。"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "prompt_version": {
+          "type": "string",
+          "description": "生成提示词的版本标识，用于复现。"
+        }
+      },
+      "additionalProperties": false
+    },
+    "reward": {
+      "type": "object",
+      "description": "反馈信号 — 评估 action 质量的量化指标。对应 Pydantic 模型中 RLTrainingSample.reward_signals 列表的聚合表示。",
+      "required": ["source", "score", "dimensions", "signals"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "主导 reward 来源（取所有 signals 中优先级最高的来源）。对应 Pydantic 枚举 RewardSource。",
+          "enum": ["system_check", "llm_judge", "old_system", "human_annotator", "user_feedback"]
+        },
+        "score": {
+          "type": "number",
+          "description": "聚合 reward 分数，所有 signal 的加权均值，归一化到 [0.0, 1.0]。对应 Pydantic 计算属性 RLTrainingSample.total_reward。",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "dimensions": {
+          "type": "object",
+          "description": "多维度质量评分。每个维度的值来自对应 RewardSignal，缺失维度默认为 null。",
+          "required": ["completeness", "accuracy", "conciseness", "actionability"],
+          "properties": {
+            "completeness": {
+              "type": ["number", "null"],
+              "description": "完整性评分 [0, 1] — 是否所有必要部分都存在。",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "accuracy": {
+              "type": ["number", "null"],
+              "description": "准确性评分 [0, 1] — 内容是否正确。",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "conciseness": {
+              "type": ["number", "null"],
+              "description": "简洁性评分 [0, 1] — 是否精炼、无冗余。",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "actionability": {
+              "type": ["number", "null"],
+              "description": "可操作性评分 [0, 1] — 结论/待办是否可执行。",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          },
+          "additionalProperties": false
+        },
+        "signals": {
+          "type": "array",
+          "description": "所有 reward signal 的明细列表。与 Pydantic 模型 RewardSignal 列表一一对应。",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["signal_type", "source", "value"],
+            "properties": {
+              "signal_type": {
+                "type": "string",
+                "enum": ["rule_based", "auto_comparison", "human_feedback"],
+                "description": "信号类型。对应 Pydantic 枚举 SignalType。"
+              },
+              "source": {
+                "type": "string",
+                "enum": ["system_check", "llm_judge", "old_system", "human_annotator", "user_feedback"],
+                "description": "反馈来源。对应 Pydantic 枚举 RewardSource。"
+              },
+              "value": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "归一化 reward 值 [0.0, 1.0]。"
+              },
+              "dimension": {
+                "type": "string",
+                "description": "质量维度标签（completeness / accuracy / conciseness / actionability）。"
+              },
+              "evidence": {
+                "type": "string",
+                "description": "评分依据的人类可读证据。"
+              },
+              "timestamp": {
+                "type": "string",
+                "description": "信号生成时间，ISO 8601 格式。",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "溯源和统计辅助信息。对应 Pydantic 模型中 RLTrainingSample.metadata 扩展字典。",
+      "required": ["timestamp", "version"],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "description": "记录创建时间戳，ISO 8601 格式。",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string",
+          "description": "Schema 版本号。v1 探索阶段锁定为 \"1.0\"。",
+          "const": "1.0"
+        },
+        "provenance": {
+          "type": "object",
+          "description": "溯源信息 — 记录数据在三层 SQLite 中的来源，保证全链路可追溯。",
+          "required": ["raw_message_count", "parsed_context_ids", "topic_summary_ids"],
+          "properties": {
+            "raw_message_count": {
+              "type": "integer",
+              "description": "原始消息数量（对应 state.server_ids 的长度）。",
+              "minimum": 1
+            },
+            "parsed_context_ids": {
+              "type": "array",
+              "description": "引用的上下文 ID 列表（SQLite Layer 2）。",
+              "items": {
+                "type": "string"
+              }
+            },
+            "topic_summary_ids": {
+              "type": "array",
+              "description": "引用的议题摘要 ID 列表（SQLite Layer 3）。",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "LangSmith trace ID，用于全链路可观测性。对应 Pydantic 模型 RLTrainingSample.trace_id。"
+        },
+        "report_char_count": {
+          "type": "integer",
+          "description": "日报总字符数（preference_alignment 场景专用统计）。",
+          "minimum": 0
+        },
+        "total_agents": {
+          "type": "integer",
+          "description": "可用 subagent 总数（routing_decision 场景专用统计）。",
+          "minimum": 0
+        },
+        "enabled_agent_count": {
+          "type": "integer",
+          "description": "本次启用的 subagent 数量（routing_decision 场景专用统计）。",
+          "minimum": 0
+        },
+        "history_topic_count": {
+          "type": "integer",
+          "description": "历史议题总数（topic_tracking 场景专用统计）。",
+          "minimum": 0
+        },
+        "affected_topic_count": {
+          "type": "integer",
+          "description": "本次受影响的议题数（topic_tracking 场景专用统计）。",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "scenario": { "const": "preference_alignment" }
+        },
+        "required": ["scenario"]
+      },
+      "then": {
+        "properties": {
+          "action": {
+            "required": ["report_sections"],
+            "properties": {
+              "agent": { "const": "daily_report_generator" }
+            }
+          },
+          "state": {
+            "required": ["messages_summary", "active_members"]
+          },
+          "reward": {
+            "properties": {
+              "dimensions": {
+                "required": ["completeness", "conciseness"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scenario": { "const": "routing_decision" }
+        },
+        "required": ["scenario"]
+      },
+      "then": {
+        "properties": {
+          "action": {
+            "required": ["routing_decisions"],
+            "properties": {
+              "agent": { "const": "orchestrator" }
+            }
+          },
+          "reward": {
+            "properties": {
+              "dimensions": {
+                "required": ["accuracy"]
+              }
+            }
+          },
+          "metadata": {
+            "required": ["total_agents", "enabled_agent_count"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scenario": { "const": "topic_tracking" }
+        },
+        "required": ["scenario"]
+      },
+      "then": {
+        "properties": {
+          "action": {
+            "required": ["status_classifications"],
+            "properties": {
+              "agent": { "const": "topic_tracker" }
+            }
+          },
+          "state": {
+            "required": ["history_topics"]
+          },
+          "reward": {
+            "properties": {
+              "dimensions": {
+                "required": ["accuracy"]
+              }
+            }
+          },
+          "metadata": {
+            "required": ["history_topic_count", "affected_topic_count"]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

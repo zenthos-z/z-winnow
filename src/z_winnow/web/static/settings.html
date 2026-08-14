@@ -1,0 +1,867 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>系统设置 · 群日报管理系统</title>
+<style>
+/* ════════════════════════════════════════════════════════════════
+ * design-systems/lovable/tokens.css - verbatim :root contract
+ * 与 index.html（仪表盘）共用同一套 token，保证视觉同源
+ * ════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#f7f4ed;
+  --surface:#f7f4ed;
+  --surface-warm:var(--surface);
+  --fg:#1c1c1c;
+  --fg-2:rgba(28,28,28,0.83);
+  --muted:#5f5f5d;
+  --meta:rgba(28,28,28,0.4);
+  --border:#eceae4;
+  --border-soft:var(--border);
+  --accent:#ff4d8d;
+  --accent-on:#ffffff;
+  --accent-hover:color-mix(in oklab,var(--accent),black 8%);
+  --accent-active:color-mix(in oklab,var(--accent),black 14%);
+  --success:#16a34a;
+  --warn:#eab308;
+  --danger:#dc2626;
+  --font-display:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Monaco,Consolas,monospace;
+  --text-xs:12px; --text-sm:14px; --text-base:16px; --text-lg:18px;
+  --text-xl:20px; --text-2xl:36px; --text-3xl:48px; --text-4xl:60px;
+  --leading-body:1.5; --leading-tight:1.10; --tracking-display:-0.025em;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --section-y-desktop:128px; --section-y-tablet:80px; --section-y-phone:64px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:16px; --radius-pill:9999px;
+  --elev-flat:none;
+  --elev-ring:0 0 0 1px var(--border);
+  --elev-raised:0 4px 12px rgba(0,0,0,0.1);
+  --focus-ring:0 0 0 2px rgba(59,130,246,0.5);
+  --motion-fast:150ms; --motion-base:200ms; --ease-standard:cubic-bezier(0.2,0,0,1);
+  --container-max:1200px;
+  --container-gutter-desktop:24px; --container-gutter-tablet:16px; --container-gutter-phone:12px;
+
+  /* shared with dashboard */
+  --on-dark:#fcfbf8;
+  --row-hover:rgba(28,28,28,0.035);
+  --shadow-inset-dark:rgba(255,255,255,0.2) 0 0.5px 0 0 inset, rgba(0,0,0,0.2) 0 0 0 0.5px inset, rgba(0,0,0,0.05) 0 1px 2px 0;
+}
+
+/* ── reset ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh;
+}
+button{font-family:inherit;color:inherit}
+a{color:var(--fg);text-decoration:none}
+img,svg{display:block}
+.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+.meta{color:var(--meta)}
+.sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── shell ─────────────────────────────────────────────── */
+.shell{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-gutter-desktop)}
+
+/* ── topbar（与仪表盘一致）─────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in oklab,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .row{display:flex;align-items:center;gap:var(--space-4);height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-0.01em}
+.brand .mark{
+  width:26px;height:26px;border-radius:var(--radius-sm);background:var(--accent);
+  display:grid;place-items:center;color:var(--accent-on);box-shadow:var(--shadow-inset-dark);
+}
+.brand .mark svg{width:15px;height:15px}
+.brand b{font-size:var(--text-base)}
+.brand .sub{color:var(--meta);font-size:var(--text-sm);font-weight:400;margin-left:2px}
+.topbar .spacer{flex:1}
+.tb-link{font-size:var(--text-sm);color:var(--fg-2);padding:8px 10px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:6px}
+.tb-link:hover{background:rgba(28,28,28,0.04)}
+.tb-link.active{color:var(--fg);font-weight:500}
+.tb-link svg{width:16px;height:16px}
+.admin{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface)}
+.admin .ava{width:24px;height:24px;border-radius:var(--radius-pill);background:var(--fg);color:var(--on-dark);display:grid;place-items:center;font-size:11px;font-weight:600}
+.admin span{font-size:var(--text-sm)}
+
+/* ── hero ─────────────────────────────────────────────── */
+.status-hero{position:relative;padding:var(--space-4) 0 var(--space-6);overflow:hidden}
+.status-hero .inner{position:relative}
+.eyebrow{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.08em;text-transform:uppercase;color:var(--meta)}
+.status-hero h1{font-size:clamp(28px,4vw,40px);line-height:var(--leading-tight);letter-spacing:var(--tracking-display);font-weight:600;margin:8px 0 0;display:inline-flex;align-items:center;gap:12px}
+.status-hero h1 .gdot{width:10px;height:10px;border-radius:50%;flex:none;align-self:center}
+.status-hero h1 .gdot.on{background:var(--success)}
+.status-hero h1 .gdot.off{background:var(--meta)}
+.status-hero .row2{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-3)}
+
+.idline{margin-top:var(--space-4);display:flex;flex-direction:column;gap:7px}
+.idline .ids{display:flex;flex-wrap:wrap;gap:6px 0;font-family:var(--font-mono);font-size:var(--text-xs)}
+.idline .ids .seg{display:inline-flex;align-items:center;gap:6px;color:var(--fg-2)}
+.idline .ids .seg + .seg::before{content:"·";color:var(--meta);margin:0 10px}
+.idline .ids .k{color:var(--meta)}
+.idline .ids .d.on{color:var(--success)}
+.idline .ids .d.off{color:var(--meta)}
+
+/* ── buttons ───────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:var(--text-sm);line-height:1.5;font-weight:400;
+  padding:8px 14px;border-radius:var(--radius-sm);border:1px solid transparent;
+  background:var(--surface);color:var(--fg);cursor:pointer;
+  transition:opacity var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+  white-space:nowrap;
+}
+.btn svg{width:15px;height:15px}
+.btn:active{opacity:0.8}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn:disabled{cursor:default;opacity:0.5}
+.btn-primary{background:var(--fg);color:var(--on-dark);border-color:var(--fg);box-shadow:var(--shadow-inset-dark)}
+.btn-primary:hover{background:color-mix(in oklab,var(--fg),white 9%)}
+.btn-ghost{background:transparent;border-color:rgba(28,28,28,0.4);color:var(--fg)}
+.btn-ghost:hover{background:rgba(28,28,28,0.04)}
+.btn-cream{background:var(--surface);border-color:var(--border)}
+.btn-cream:hover{background:rgba(28,28,28,0.035)}
+.btn-sm{padding:5px 10px;font-size:var(--text-xs);border-radius:var(--radius-sm)}
+
+/* ── tabs ──────────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-top:var(--space-2)}
+.tab{
+  appearance:none;background:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:var(--text-base);font-weight:400;color:var(--muted);
+  padding:14px 18px;position:relative;transition:color var(--motion-fast) var(--ease-standard);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.tab:hover{color:var(--fg-2)}
+.tab.active{color:var(--fg);font-weight:600}
+.tab.active::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--fg);border-radius:2px}
+.tabpanel{padding-top:var(--space-6)}
+.tabpanel[hidden]{display:none}
+
+/* ── section header ────────────────────────────────────── */
+.section{padding:var(--space-8) 0;border-top:1px solid var(--border)}
+.section:first-of-type{border-top:none}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-5)}
+.sec-head h2{font-size:var(--text-xl);font-weight:600;margin:0;letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:8px}
+.sec-head .lede{font-size:var(--text-sm);color:var(--muted);margin-top:2px;max-width:62ch}
+
+/* ── collapsible config block ──────────────────────────── */
+.cfg-stack{display:flex;flex-direction:column;gap:var(--space-3)}
+.cfg-block{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden;transition:box-shadow var(--motion-base) var(--ease-standard)}
+.cfg-block.open{box-shadow:var(--elev-raised)}
+.cfg-head{display:flex;align-items:center;gap:var(--space-3);padding:16px 18px;cursor:pointer;background:none;border:none;width:100%;text-align:left}
+.cfg-head:hover{background:var(--row-hover)}
+.cfg-head .chev{flex:none;width:18px;height:18px;color:var(--meta);transition:transform var(--motion-base) var(--ease-standard)}
+.cfg-block.open .cfg-head .chev{transform:rotate(90deg);color:var(--fg-2)}
+.cfg-head .ttl{font-size:var(--text-base);font-weight:600;letter-spacing:-0.01em}
+.cfg-head .right{margin-left:auto;display:inline-flex;align-items:center;gap:10px}
+.cfg-head .st-hint{font-size:var(--text-xs);color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.cfg-head .st-hint .d{width:7px;height:7px;border-radius:50%;background:var(--success)}
+.cfg-head .st-hint .d.off{background:var(--meta)}
+
+.cfg-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--motion-base) var(--ease-standard)}
+.cfg-block.open .cfg-body{grid-template-rows:1fr}
+.cfg-body>.inner{overflow:hidden}
+.cfg-pad{padding:6px 18px 20px;border-top:1px solid var(--border)}
+
+/* ── read-only field grid（适配：只读值展示，非可编辑输入）── */
+.ro-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4) var(--space-6);align-items:start}
+.ro-grid .span2{grid-column:1 / -1}
+.ro-field{display:flex;flex-direction:column;gap:5px}
+.ro-field > .k{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.04em;text-transform:uppercase;color:var(--meta)}
+.ro-field > .v{
+  font-family:var(--font-mono);font-size:var(--text-sm);color:var(--fg);
+  background:rgba(28,28,28,0.035);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 11px;min-height:34px;display:flex;align-items:center;word-break:break-all;
+}
+.ro-field > .v.empty{color:var(--meta);font-style:italic;background:transparent;border-style:dashed}
+.ro-field > .v.bool{font-family:var(--font-body);font-size:var(--text-sm)}
+.pill{font-family:var(--font-mono);font-size:var(--text-xs);padding:2px 9px;border-radius:var(--radius-pill);border:1px solid var(--border);letter-spacing:0.04em}
+.pill.on{color:var(--success);border-color:color-mix(in oklab,var(--success),white 55%);background:color-mix(in oklab,var(--success),white 90%)}
+.pill.off{color:var(--meta)}
+.note{font-size:var(--text-xs);color:var(--meta);margin-top:10px;display:inline-flex;align-items:center;gap:6px;grid-column:1 / -1}
+/* ── 数据源选择器 ────────────────────────────────────────── */
+.cfg-select{
+  font-family:var(--font-body);font-size:var(--text-sm);color:var(--fg);
+  background:#fcfbf8;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:6px 10px;min-height:0;width:100%;cursor:pointer;
+  transition:border-color var(--motion-fast) var(--ease-standard);
+}
+.cfg-select:hover{border-color:var(--fg-2)}
+.cfg-select:focus{outline:none;box-shadow:var(--focus-ring)}
+
+/* ── action bar ────────────────────────────────────────── */
+.cfg-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:var(--space-6);padding-top:var(--space-5);border-top:1px solid var(--border);flex-wrap:wrap}
+
+/* ── 服务状态面板 ─────────────────────────────────────── */
+.svc-panel{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden}
+.svc-row{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:var(--space-4);padding:14px 18px;border-bottom:1px solid var(--border)}
+.svc-row:last-child{border-bottom:none}
+.svc-name{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:var(--text-base)}
+.svc-name .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.svc-name .dot.ok{background:var(--success)}
+.svc-name .dot.off{background:var(--meta)}
+.svc-name .dot.warn{background:var(--warn)}
+.svc-detail{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-2);min-width:7ch;max-width:42ch}
+.svc-lat{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--muted);min-width:8ch;text-align:right}
+.svc-lat .none{color:var(--meta)}
+
+/* ── RL 导出 ──────────────────────────────────────────── */
+.filter-row{display:flex;align-items:flex-end;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-5)}
+.filter-row .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
+.filter-row .field.daterange{flex-direction:row;align-items:center;gap:8px;min-width:auto}
+.filter-row .field.daterange > label{margin:0}
+.filter-row .field.daterange input{width:148px}
+.filter-row .field > label{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.04em;text-transform:uppercase;color:var(--meta)}
+.filter-row .field input,.filter-row .field select{
+  background:var(--surface);color:var(--fg);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 12px;font-family:inherit;font-size:var(--text-sm);
+}
+.filter-row .field input.mono,.filter-row .field select.mono{font-family:var(--font-mono);font-size:var(--text-xs)}
+.rl-status{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.rl-status .sk{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.04em;text-transform:uppercase;color:var(--meta)}
+.rl-status .sv{font-size:var(--text-sm);color:var(--fg-2)}
+.rl-status[data-state="succeeded"]{border-color:color-mix(in oklab,var(--success),white 40%)}
+.rl-status[data-state="failed"]{border-color:color-mix(in oklab,var(--danger),white 45%)}
+
+/* footer */
+.foot{padding:var(--space-8) 0;color:var(--meta);font-size:var(--text-xs);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* toast */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--fg);color:var(--on-dark);font-size:var(--text-sm);padding:10px 16px;border-radius:var(--radius-sm);box-shadow:var(--shadow-inset-dark),0 8px 24px rgba(0,0,0,0.18);display:inline-flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:opacity var(--motion-base),transform var(--motion-base);max-width:min(90vw,420px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast svg{width:16px;height:16px;color:var(--accent);flex:none}
+.toast.warn svg{color:var(--warn)}
+.toast.danger svg{color:var(--danger)}
+
+/* ── responsive ────────────────────────────────────────── */
+@media (max-width:1024px){
+  .shell{padding:0 var(--container-gutter-tablet)}
+}
+@media (max-width:720px){
+  .shell{padding:0 var(--container-gutter-phone)}
+  .ro-grid{grid-template-columns:1fr}
+  .svc-row{grid-template-columns:1fr;gap:8px;padding:14px 16px}
+  .svc-row .svc-lat,.svc-row .svc-detail{text-align:left;min-width:0}
+  .svc-row .svc-act{justify-self:start}
+}
+@media (max-width:420px){
+  .topbar .row{height:54px}
+  .brand .sub{display:none}
+  .tb-link span{display:none}
+  .admin span{display:none}
+  .status-hero h1{font-size:26px}
+  .tab{padding:12px 12px;font-size:var(--text-sm)}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:0.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR（与仪表盘/群组配置页一致）────────────────── -->
+<header class="topbar">
+  <div class="shell">
+    <div class="row">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+        </span>
+        <b>群日报</b><span class="sub">管理系统</span>
+      </div>
+      <div class="spacer"></div>
+      <a class="tb-link" href="index.html" title="返回仪表盘">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"/></svg>
+        <span>仪表盘</span>
+      </a>
+      <a class="tb-link active" href="settings.html" title="系统设置" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </a>
+      <a class="tb-link" href="onboarding.html" title="初始化向导">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5 3 21l4.5-1.5M14 4l6 6-9.5 9.5-6-6L14 4z"/><path d="M13 5l6 6"/></svg>
+        <span>初始化</span>
+      </a>
+      <div class="admin">
+        <span class="ava">管</span><span>管理员</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ── PAGE HERO ──────────────────────────────────────── -->
+  <section class="status-hero" data-od-id="settings-hero">
+    <div class="inner">
+      <div class="eyebrow">仪表盘 / 系统设置</div>
+      <div class="row2">
+        <h1>
+          <span class="gdot off" id="hero-dot" aria-hidden="true"></span>
+          <span>全局配置</span>
+        </h1>
+        <div style="display:inline-flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="exportEnvDraft()" title="生成可落地部署的 .env 草稿（密钥留空占位）">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            导出 .env 草稿
+          </button>
+          <button class="btn btn-primary" onclick="exportConfigJson()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            导出配置草稿
+          </button>
+        </div>
+      </div>
+      <div class="idline" id="sys-idline"><!-- JS rendered --></div>
+    </div>
+  </section>
+
+  <!-- ── TABS ───────────────────────────────────────────── -->
+  <div class="tabs" role="tablist" aria-label="设置分区">
+    <button class="tab active" role="tab" id="tab-sys" aria-selected="true" aria-controls="panel-sys" data-tab="sys">系统配置</button>
+    <button class="tab" role="tab" id="tab-rl" aria-selected="false" aria-controls="panel-rl" data-tab="rl">RL 数据</button>
+  </div>
+
+  <!-- ════════ PANEL: 系统配置 ════════ -->
+  <section class="tabpanel" id="panel-sys" role="tabpanel" aria-labelledby="tab-sys" aria-label="系统配置" data-panel="sys" data-od-id="panel-sys">
+
+    <div class="section" data-od-id="providers">
+      <div class="sec-head">
+        <div>
+          <h2>模型与服务配置</h2>
+          <div class="lede">只读展示当前生效的全局配置（模型、端点、限额、存储路径）。敏感密钥不在界面暴露，统一在 <span class="mono">.env</span> 管理。</div>
+        </div>
+      </div>
+      <div class="cfg-stack" id="provider-stack"><!-- JS rendered --></div>
+    </div>
+
+    <div class="section" data-od-id="service-status">
+      <div class="sec-head">
+        <div>
+          <h2>服务状态</h2>
+          <div class="lede">核心依赖的连通性。点「测试连接」实时探测，延迟为客户端实测往返耗时。</div>
+        </div>
+      </div>
+      <div class="svc-panel" id="svc-panel"><!-- JS rendered --></div>
+    </div>
+
+    <div class="cfg-actions">
+      <button class="btn btn-ghost" onclick="exportEnvDraft()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        导出 .env 草稿
+      </button>
+      <button class="btn btn-primary" onclick="exportConfigJson()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+        导出配置草稿（JSON）
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════ PANEL: RL 数据 ════════ -->
+  <section class="tabpanel" id="panel-rl" role="tabpanel" aria-labelledby="tab-rl" aria-label="RL 数据" data-panel="rl" data-od-id="panel-rl" hidden>
+
+    <div class="section" data-od-id="rl-export">
+      <div class="sec-head">
+        <div>
+          <h2>RL 训练数据导出</h2>
+          <div class="lede">按日期范围与群组异步导出 (state, action, reward) 训练样本，落盘到 <span class="mono" id="rl-out-dir">data/rl</span>。导出为后台任务，提交后可在此查看进度。</div>
+        </div>
+      </div>
+
+      <!-- 过滤行 -->
+      <div class="filter-row">
+        <div class="field daterange">
+          <label for="rl-start">起始</label>
+          <input class="mono" type="date" id="rl-start" />
+        </div>
+        <div class="field daterange">
+          <label for="rl-end">截止</label>
+          <input class="mono" type="date" id="rl-end" />
+        </div>
+        <div class="field">
+          <label for="rl-group">群组</label>
+          <select id="rl-group"><option value="all">全部</option></select>
+        </div>
+        <button class="btn btn-primary" id="rl-submit" onclick="submitRLExport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          提交导出
+        </button>
+      </div>
+
+      <div class="rl-status" id="rl-status" data-state="idle">
+        <span class="sk">任务状态</span>
+        <span class="sv" id="rl-status-msg">尚未提交导出任务。</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>群日报 winnow · 多智能体报告系统</span>
+    <span class="mono">settings.html · 接入 /api/v1 实时数据</span>
+  </footer>
+</main>
+
+<div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+<script src="api.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+ * 数据契约 — 字段名与后端对齐，勿改（api.js 提供 api()）
+ * GET /api/v1/system/info   → health {status, version, database, uptime_seconds}
+ * GET /api/v1/system/config → config {db_path, web_port, default_model, log_level,
+ *        features:{...}, anthropic_model, deepseek_model, orchestrator_model,
+ *        ciphertalk_base_url, *_base_url, quick_img_*, max_context_tokens, ...}
+ * GET /api/v1/memos/status  → {status, url, connected, last_sync, pending_queue}
+ * GET /api/v1/groups/sessions → {sessions:[...], available}
+ * GET /api/v1/groups        → {items:[{group_id, display_name, ...}]}
+ * POST /api/v1/rl/export    → {task_id, status_url}（202 异步）
+ * GET  /api/v1/rl/export/{task_id} → {task_id, status, result, error}
+ * ════════════════════════════════════════════════════════════ */
+let health={}, config={};
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(n){return Number(n).toLocaleString('zh-CN');}
+function uptime(s){
+  s=Number(s)||0;
+  if(!s)return '—';
+  if(s<3600)return s+' 秒';
+  if(s<86400)return Math.floor(s/3600)+' 小时';
+  return Math.floor(s/86400)+' 天';
+}
+/* 真实往返延迟：包住一次 fetch 计时 */
+async function timed(fetcher){
+  const t0=performance.now();
+  try{ const r=await fetcher(); return {ok:true, data:r, ms:Math.round(performance.now()-t0)}; }
+  catch(e){ return {ok:false, error:String(e.message||e), ms:Math.round(performance.now()-t0)}; }
+}
+
+/* ── toast ─────────────────────────────────────────────── */
+function toast(msg,kind){
+  const wrap=$('#toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast'+(kind?(' '+kind):'');
+  const icon=kind==='warn'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+    :kind==='danger'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  t.innerHTML=icon+'<span>'+esc(msg)+'</span>';
+  wrap.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),220);},2800);
+}
+
+/* ── hero idline ───────────────────────────────────────── */
+function renderIdline(){
+  const f=config.features||{};
+  const realLlm = f.real_llm != null ? f.real_llm : !config.use_mock_llm;
+  const dotCls=(health.status==='ok'&&health.database==='ok')?'on':'off';
+  $('#hero-dot').className='gdot '+dotCls;
+  $('#sys-idline').innerHTML='<div class="ids">'
+    +'<span class="seg"><span class="k">version</span> '+esc(health.version||'—')+'</span>'
+    +'<span class="seg"><span class="k">运行</span> '+uptime(health.uptime_seconds)+'</span>'
+    +'<span class="seg"><span class="k">DB</span> <span class="d '+(health.database==='ok'?'on':'off')+'">'+(health.database==='ok'?'正常':'未就绪')+'</span></span>'
+    +'<span class="seg"><span class="k">web_port</span> '+esc(config.web_port)+'</span>'
+    +'<span class="seg"><span class="k">real_llm</span> <span class="d '+(realLlm?'on':'off')+'">'+(realLlm?'on':'off')+'</span></span>'
+    +'<span class="seg"><span class="k">memos</span> <span class="d '+(config.memos_enabled?'on':'off')+'">'+(config.memos_enabled?'on':'off')+'</span></span>'
+    +'<span class="seg"><span class="k">ciphertalk</span> <span class="d '+(config.data_source==='ciphertalk'?'on':'off')+'">'+(config.data_source||'—')+'</span></span>'
+    +'</div>';
+}
+
+/* ── 只读字段渲染 ──────────────────────────────────────── */
+function roField(label,value,opts){
+  opts=opts||{};
+  const span=opts.span2?' span2':'';
+  if(opts.bool){
+    const on=toBool(value);
+    return '<div class="ro-field'+span+'"><span class="k">'+esc(label)+'</span>'
+      +'<span class="v bool"><span class="pill '+(on?'on':'off')+'">'+(on?'已启用':'未启用')+'</span></span></div>';
+  }
+  const empty=(value==null||value===''||value===undefined);
+  return '<div class="ro-field'+span+'"><span class="k">'+esc(label)+'</span>'
+    +'<span class="v'+(empty?' empty':'')+'">'+(empty?(opts.placeholder||'未配置'):esc(value))+'</span></div>';
+}
+function roGrid(html){return '<div class="ro-grid">'+html+'</div>';}
+function cfgBlock(id,title,hint,dotOn,bodyHTML,open){
+  return '<div class="cfg-block'+(open?' open':'')+'" id="'+id+'">'
+    +'<button class="cfg-head" type="button" onclick="toggleBlock(\''+id+'\')" aria-expanded="'+(open?'true':'false')+'">'
+      +'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+      +'<span class="ttl">'+esc(title)+'</span>'
+      +'<span class="right"><span class="st-hint"><span class="d '+(dotOn?'':'off')+'"></span>'+esc(hint||'')+'</span></span>'
+    +'</button>'
+    +'<div class="cfg-body"><div class="inner"><div class="cfg-pad">'+bodyHTML+'</div></div></div>'
+  +'</div>';
+}
+function toggleBlock(id){
+  const b=document.getElementById(id);
+  const open=b.classList.toggle('open');
+  b.querySelector('.cfg-head').setAttribute('aria-expanded',open);
+}
+
+/* ── 配置块组装（全部只读，值来自 /system/config）────── */
+function renderProviderStack(){
+  const llmBody=roGrid(
+      roField('默认模型（orchestrator）', config.orchestrator_model)
+    + roField('日报模型（unified_reporter）', config.unified_reporter_model,{placeholder:'继承默认'})
+    + roField('报告模型（output_composer）', config.output_composer_model,{placeholder:'继承默认'})
+    + roField('议题模型（topic_tracker）', config.topic_tracker_model,{placeholder:'继承默认'})
+    + roField('Anthropic 端点', config.anthropic_base_url,{span2:true,placeholder:'官方默认'})
+    + roField('DeepSeek 端点', config.deepseek_base_url,{span2:true})
+    + '<p class="note">密钥（Anthropic / DeepSeek / OpenAI）在 .env 管理，不在此接口暴露。</p>'
+  );
+  const imgBody=roGrid(
+      roField('生图模型（quick_img）', config.quick_img_model,{placeholder:'未配置'})
+    + roField('生图端点', config.quick_img_base_url,{placeholder:'未配置'})
+    + roField('生图并发', config.image_max_concurrency)
+    + roField('内容增强', config.enable_enrich,{bool:true})
+    + roField('Vision 模型', config.vision_model,{span2:true,placeholder:'未启用'})
+    + roField('Vision 端点', config.vision_base_url,{span2:true,placeholder:'未配置'})
+  );
+  const ctBody=roGrid(
+      roField('CipherTalk 端点', config.ciphertalk_base_url)
+    + '<div class="ro-field"><span class="k">数据源</span>'
+    + '<span class="v"><select class="cfg-select" id="cfg-data-source" onchange="onDataSourceChange(this.value)">'
+    + '<option value="ciphertalk"'+(config.data_source==='ciphertalk'?' selected':'')+'>CipherTalk（默认，/v1/ API）</option>'
+    + '<option value="weflow"'+(config.data_source==='weflow'?' selected':'')+'>WeFlow（旧版 /api/v1/ API）</option>'
+    + '</select></span></div>'
+    + roField('当前端点', config.effective_data_base_url,{placeholder:'未配置'})
+    + '<p class="note">CipherTalk Token 在 .env 管理，不在此接口暴露。</p>'
+  );
+  const memBody=roGrid(
+      roField('MemOS 记忆', config.memos_enabled,{bool:true})
+    + roField('飞书推送', config.feishu_enabled,{bool:true})
+    + roField('飞书环境', config.feishu_env,{placeholder:'未配置'})
+  );
+  const storeBody=roGrid(
+      roField('SQLite 路径', config.db_path,{span2:true})
+    + roField('Web 监听', (config.web_host||'')+' : '+config.web_port)
+    + roField('日志级别', config.log_level)
+    + roField('Layer3 输出', config.layer3_output_dir)
+    + roField('RL 输出', config.rl_output_dir)
+    + roField('报告目录', config.reports_dir)
+    + roField('记忆目录', config.memory_dir)
+  );
+  const limitBody=roGrid(
+      roField('最大上下文 tokens', fmt(config.max_context_tokens))
+    + roField('最大并发运行', config.max_parallel_runs)
+    + roField('节点超时(秒)', config.graph_node_timeout)
+    + roField('子 agent 超时(秒)', config.subagent_timeout_seconds)
+    + roField('内容增强超时(秒)', config.content_enrich_timeout)
+    + roField('Mock LLM', config.use_mock_llm,{bool:true})
+    + roField('环境', config.environment,{placeholder:'—'})
+  );
+  $('#provider-stack').innerHTML=
+      cfgBlock('prov-llm','主语言模型 (LLM)','已配置',true,llmBody,true)
+    + cfgBlock('prov-img','生图与视觉','已配置',!!config.quick_img_model,imgBody,false)
+    + cfgBlock('prov-ct','数据源（聊天消息）','已配置',config.data_source==='ciphertalk'||config.data_source==='weflow',ctBody,false)
+    + cfgBlock('prov-mem','记忆与推送','已配置',!!config.memos_enabled,memBody,false)
+    + cfgBlock('prov-store','存储','正常',true,storeBody,false)
+    + cfgBlock('prov-limit','运行限额','生效中',true,limitBody,false);
+}
+
+/* ── 服务状态面板（真实探测）──────────────────────────── */
+let svcState={};
+function svcRow(name,dotCls,detail,latHTML,actLabel,actFn){
+  const idx=svcState._i=(svcState._i||0)+1;
+  svcState[name]={idx};
+  return '<div class="svc-row" data-svc="'+esc(name)+'">'
+    +'<span class="svc-name"><span class="dot '+dotCls+'"></span>'+esc(name)+'</span>'
+    +'<span class="svc-detail">'+detail+'</span>'
+    +'<span class="svc-lat" id="svc-lat-'+name+'">'+latHTML+'</span>'
+    +'<span class="svc-act"><button class="btn btn-cream btn-sm" onclick="'+actFn+'(\''+esc(name)+'\',this)">'+actLabel+'</button></span>'
+  +'</div>';
+}
+function renderServices(){
+  const dbOk=health.database==='ok';
+  $('#svc-panel').innerHTML=
+     svcRow('SQLite', dbOk?'ok':'off', esc(config.db_path||'—'), '<span class="none">本地</span>', '检查', 'testSvc')
+   + svcRow('MemOS','off','读取中…', '<span class="none">—</span>', '测试连接', 'testSvc')
+   + svcRow('CipherTalk','off','读取中…', '<span class="none">—</span>', '测试连接', 'testSvc')
+   + svcRow('飞书','off','读取中…', '<span class="none">—</span>', '检查', 'testSvc');
+}
+async function probeMemos(){
+  const r=await timed(()=>api('/memos/status'));
+  const row=$('.svc-row[data-svc="MemOS"]');
+  if(!row)return;
+  const dot=row.querySelector('.dot');const det=row.querySelector('.svc-detail');
+  if(r.ok && r.data){
+    const c=r.data.connected;
+    dot.className='dot '+(c?'ok':'off');
+    det.textContent=(r.data.url?('url '+r.data.url):'未连接')+(r.data.pending_queue!=null?(' · pending '+r.data.pending_queue):'');
+    $('#svc-lat-MemOS').textContent=r.ms+'ms';
+  }else{
+    dot.className='dot off';det.textContent='不可用（'+(r.error||'MemOS 未启动').slice(0,40)+'）';
+    $('#svc-lat-MemOS').innerHTML='<span class="none">—</span>';
+  }
+}
+async function probeCipherTalk(){
+  const r=await timed(()=>api('/groups/sessions'));
+  const row=$('.svc-row[data-svc="CipherTalk"]');
+  if(!row)return;
+  const dot=row.querySelector('.dot');const det=row.querySelector('.svc-detail');
+  if(r.ok && r.data){
+    const av=!!r.data.available; const n=(r.data.sessions||[]).length;
+    dot.className='dot '+(av?'ok':'off');
+    det.textContent=av?('可用 · 会话 '+n+' 个'):('不可用（CipherTalk 未连接）');
+    $('#svc-lat-CipherTalk').textContent=r.ms+'ms';
+  }else{
+    dot.className='dot off';det.textContent='不可用（'+(r.error||'').slice(0,40)+'）';
+    $('#svc-lat-CipherTalk').innerHTML='<span class="none">—</span>';
+  }
+}
+function renderFeishuStatic(){
+  const row=$('.svc-row[data-svc="飞书"]');if(!row)return;
+  const on=toBool(config.feishu_enabled);
+  row.querySelector('.dot').className='dot '+(on?'ok':'off');
+  row.querySelector('.svc-detail').textContent=on?('已启用 · '+esc(config.feishu_env||'test')):'未启用';
+  row.querySelector('.svc-lat').innerHTML='<span class="none">本地配置</span>';
+}
+async function testSvc(name,btn){
+  const orig=btn.textContent;btn.disabled=true;btn.textContent='测试中…';
+  try{
+    if(name==='SQLite'){ await probeSystemInfo(); toast('SQLite · '+(health.database==='ok'?'就绪':'未就绪')+' · '+config.db_path); }
+    else if(name==='MemOS'){ await probeMemos(); toast('MemOS 探测完成'); }
+    else if(name==='CipherTalk'){ await probeCipherTalk(); toast('CipherTalk 探测完成'); }
+    else if(name==='飞书'){ renderFeishuStatic(); toast('飞书 · '+(config.feishu_enabled?'已启用':'未启用')); }
+  }finally{ btn.disabled=false;btn.textContent=orig; }
+}
+
+/* ── 导出：初始化配置草稿（JSON 快照 + .env 模板）──────── */
+function download(name,content,type){
+  const blob=new Blob([content],{type:type||'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportConfigJson(){
+  const dump={exported_at:new Date().toISOString(), health, config};
+  download('winnow-config-draft.json',JSON.stringify(dump,null,2),'application/json');
+  toast('已导出 winnow-config-draft.json');
+}
+/* .env 草稿：用当前非敏感值预填，密钥留占位 — 可直接作为初始化配置草稿落地 */
+function exportEnvDraft(){
+  const c=config||{};
+  const line=(k,v)=> v==null||v===''?'# '+k+'=':'# '+k+'='+String(v).replace(/\n/g,' ');
+  /* 敏感项：永远只输出占位，绝不回填真实密钥 */
+  const env=[
+    '# winnow 初始化配置草稿（.env）',
+    '# 由 settings.html 依据当前 /system/config 生成。密钥项留空占位，需手动填入。',
+    '# 生成时间：'+new Date().toISOString(),
+    '',
+    '# ── 模型供应商密钥（请手动填入）──',
+    'ANTHROPIC_API_KEY=',
+    'DEEPSEEK_API_KEY=',
+    'OPENAI_API_KEY=',
+    'LANGSMITH_API_KEY=',
+    '',
+    '# ── CipherTalk 数据源 ──',
+    line('CIPHERTALK_BASE_URL', c.ciphertalk_base_url).replace('# ',''),
+    'CIPHERTALK_TOKEN=',
+    line('DATA_SOURCE', c.data_source||'ciphertalk').replace('# ',''),
+    '',
+    '# ── 模型配置 ──',
+    line('ORCHESTRATOR_MODEL', c.orchestrator_model).replace('# ',''),
+    line('ANTHROPIC_BASE_URL', c.anthropic_base_url),
+    line('DEEPSEEK_BASE_URL', c.deepseek_base_url),
+    line('UNIFIED_REPORTER_MODEL', c.unified_reporter_model),
+    line('OUTPUT_COMPOSER_MODEL', c.output_composer_model),
+    '',
+    '# ── 生图 / Vision ──',
+    'QUICK_IMG_API_KEY=',
+    line('QUICK_IMG_BASE_URL', c.quick_img_base_url),
+    line('QUICK_IMG_MODEL', c.quick_img_model),
+    line('VISION_MODEL', c.vision_model),
+    'VISION_API_KEY=',
+    '',
+    '# ── 运行参数 ──',
+    line('WEB_PORT', c.web_port),
+    line('WEB_HOST', c.web_host),
+    line('DB_PATH', c.db_path),
+    line('LOG_LEVEL', c.log_level||'INFO'),
+    line('MAX_CONTEXT_TOKENS', c.max_context_tokens),
+    line('MAX_PARALLEL_RUNS', c.max_parallel_runs),
+    line('GRAPH_NODE_TIMEOUT', c.graph_node_timeout),
+    line('MOCK 模式(WINNOW_REAL_LLM)', c.use_mock_llm?'false':'true'),
+    '',
+    '# ── MemOS / 飞书 ──',
+    line('MEMOS_ENABLED', c.memos_enabled),
+    line('FEISHU_ENABLED', c.feishu_enabled),
+    line('FEISHU_ENV', c.feishu_env),
+  ];
+  download('.env.winnow-draft', env.join('\n')+'\n','text/plain;charset=utf-8');
+  toast('已导出 .env 初始化草稿（密钥留空）');
+}
+
+/* ── 数据源切换 ─────────────────────────────────────────── */
+async function onDataSourceChange(newValue){
+  if(newValue === config.data_source) return;
+  const sel = document.getElementById('cfg-data-source');
+  const orig = sel.disabled;
+  sel.disabled = true;
+  toast('正在切换数据源…');
+  try{
+    const res = await api('/system/config', {
+      method: 'PUT',
+      body: JSON.stringify({values: {data_source: newValue}, restart: false})
+    });
+    if(res && res.applied_fields && res.applied_fields.includes('data_source')){
+      config.data_source = newValue;
+      config.effective_data_base_url = (newValue === 'weflow' ? config.weflow_base_url : config.ciphertalk_base_url);
+      toast('数据源已切换至 ' + newValue);
+      /* 刷新显示：更新「当前端点」和状态行 */
+      const idline = document.getElementById('sys-idline');
+      if(idline){
+        const ciphSeg = idline.querySelector('.seg:last-child .d');
+        if(ciphSeg){
+          ciphSeg.className = 'd ' + (newValue === 'ciphertalk' ? 'on' : 'off');
+          ciphSeg.textContent = newValue;
+        }
+      }
+      renderProviderStack();
+    } else {
+      toast('切换失败：' + (res && res.warnings && res.warnings[0] || '未知错误'));
+      sel.value = config.data_source;
+    }
+  }catch(e){
+    toast('切换失败：' + (e && e.message || e));
+    sel.value = config.data_source;
+  }finally{
+    sel.disabled = orig;
+  }
+}
+
+/* ── RL 异步导出 ──────────────────────────────────────── */
+async function loadGroupsForRL(){
+  try{
+    const r=await api('/groups?page=1&page_size=200');
+    const items=itemsOf(r)||[];
+    const sel=$('#rl-group');
+    items.forEach(g=>{
+      const o=document.createElement('option');
+      o.value=g.group_id;o.textContent=g.display_name||g.group_id;
+      sel.appendChild(o);
+    });
+  }catch(e){ /* 忽略：保留「全部」 */ }
+}
+let rlPolling=null;
+function setRLStatus(state,msg){
+  $('#rl-status').setAttribute('data-state',state);
+  $('#rl-status-msg').textContent=msg;
+}
+async function submitRLExport(){
+  const start=$('#rl-start').value, end=$('#rl-end').value, group=$('#rl-group').value;
+  if(!start||!end){ toast('请选择起止日期','warn'); return; }
+  if(new Date(start)>new Date(end)){ toast('起始日期不能晚于截止','warn'); return; }
+  const btn=$('#rl-submit');btn.disabled=true;
+  setRLStatus('queued','提交中…');
+  try{
+    const body={group_id:group, start_date:start, end_date:end};
+    const r=await api('/rl/export',{method:'POST',body:JSON.stringify(body)});
+    const taskId=r.task_id;
+    setRLStatus('queued','已提交 · task_id '+taskId+' · 轮询进度…');
+    toast('导出任务已提交');
+    pollRL(taskId);
+  }catch(e){
+    setRLStatus('failed','提交失败：'+(String(e.message||e)).slice(0,120));
+    toast('提交失败','danger');
+  }finally{ btn.disabled=false; }
+}
+function pollRL(taskId){
+  if(rlPolling)clearInterval(rlPolling);
+  let ticks=0;
+  rlPolling=setInterval(async()=>{
+    ticks++;
+    let st;
+    try{ st=await api('/rl/export/'+encodeURIComponent(taskId)); }
+    catch(e){ setRLStatus('failed','查询失败：'+(String(e.message||e)).slice(0,120)); clearInterval(rlPolling);rlPolling=null;return; }
+    const s=st.status;
+    if(s==='succeeded'||s==='done'){
+      clearInterval(rlPolling);rlPolling=null;
+      const res=st.result||{};
+      setRLStatus('succeeded','导出完成 · '+(res.output_path?('文件 '+res.output_path+' · '):'')+(res.record_count!=null?('样本 '+fmt(res.record_count)):(res.message||'已生成')));
+      toast('RL 导出完成');
+    }else if(s==='failed'){
+      clearInterval(rlPolling);rlPolling=null;
+      setRLStatus('failed','导出失败：'+(st.error||'未知错误').slice(0,160));
+      toast('RL 导出失败','danger');
+    }else{
+      setRLStatus(s,{queued:'排队中…',running:'运行中…'}[s]||('状态：'+s));
+    }
+    if(ticks>120){ clearInterval(rlPolling);rlPolling=null; setRLStatus('failed','轮询超时，请稍后在 RL 输出目录查看'); }
+  },1500);
+}
+
+/* ── system/info 探测 ──────────────────────────────────── */
+async function probeSystemInfo(){
+  const r=await timed(()=>api('/system/info'));
+  if(r.ok&&r.data){ health=r.data; }
+  else{ health={status:'error',version:health.version,database:'unknown',uptime_seconds:null}; }
+  // 同步刷新 SQLite 行
+  const row=$('.svc-row[data-svc="SQLite"]');
+  if(row){ row.querySelector('.dot').className='dot '+(health.database==='ok'?'ok':'off'); }
+}
+
+/* ── tabs ──────────────────────────────────────────────── */
+function setTab(id,skip){
+  $$('.tab').forEach(t=>{const on=t.dataset.tab===id;t.classList.toggle('active',on);t.setAttribute('aria-selected',on);});
+  $$('.tabpanel').forEach(p=>{p.hidden=p.dataset.panel!==id;});
+  if(!skip)localStorage.setItem('winnow_settings_tab',id);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── init ──────────────────────────────────────────────── */
+async function init(){
+  // 默认日期：本月 1 日 ~ 今天
+  const today=new Date(); const y=today.getFullYear(); const m=String(today.getMonth()+1).padStart(2,'0');
+  $('#rl-start').value=y+'-'+m+'-01';
+  $('#rl-end').value=y+'-'+m+'-'+String(today.getDate()).padStart(2,'0');
+
+  $$('.tab').forEach(t=>t.addEventListener('click',()=>setTab(t.dataset.tab)));
+  const savedTab=localStorage.getItem('winnow_settings_tab');
+  if(savedTab==='rl')setTab('rl',true);
+
+  // 拉取配置 + 健康
+  try{ config=await api('/system/config'); }
+  catch(e){ config={}; toast('读取 /system/config 失败：'+(String(e.message||e)).slice(0,80),'danger'); }
+  try{ await probeSystemInfo(); }
+  catch(e){ /* probeSystemInfo 内部已兜底 */ }
+
+  // 形态对齐：/system/config 把全部字段塞在 features 下
+  // （路由 features=config），这里铺平到顶层，方便各处 config.<field> 读取
+  config=Object.assign({}, config.features||{}, config);
+
+  // features 兜底：system/config 的 features 可能不含 real_llm，按字段推断
+  config.features=Object.assign({
+    real_llm:!config.use_mock_llm,
+    memos_enabled:config.memos_enabled,
+    ciphertalk:config.data_source==='ciphertalk',
+  }, config.features||{});
+
+  renderIdline();
+  renderProviderStack();
+  renderServices();
+  renderFeishuStatic();
+  $('#rl-out-dir').textContent=config.rl_output_dir||'data/rl';
+
+  // 并发探测依赖连通性（失败兜底，不阻塞）
+  probeMemos(); probeCipherTalk();
+  loadGroupsForRL();
+}
+init();
+</script>
+</body>
+</html>

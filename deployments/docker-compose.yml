@@ -1,0 +1,165 @@
+# docker-compose.yml — z-winnow production deployment
+#
+# Services:
+#   winnow    — the main application (LangGraph orchestration)
+#   qdrant      — vector database for MemOS memory system
+#   redis       — message queue for MemOS
+#   memos-api   — MemOS API server (depends on qdrant + redis)
+#
+# Network: host mode for direct access to WeFlow API on localhost:5031.
+# Security (EXP-010): env_file for sensitive values, never hardcoded.
+# Data persistence: named volumes for SQLite, reports, and memory.
+
+services:
+  # ---- MemOS: Vector Database ----
+  qdrant:
+    image: qdrant/qdrant
+    container_name: winnow-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+
+  # ---- MemOS: Redis Queue ----
+  redis:
+    image: redis:7-alpine
+    container_name: winnow-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-memos_redis}
+    restart: unless-stopped
+
+  # ---- MemOS: Neo4j Graph DB ----
+  neo4j:
+    image: neo4j:5-community
+    container_name: winnow-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-memos_password}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_server_memory_pagecache_size=128M
+      - NEO4J_server_memory_heap_initial__size=256M
+      - NEO4J_server_memory_heap_max__size=512M
+    volumes:
+      - neo4j-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-memos_password} 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+
+  # ---- MemOS: API Server ----
+  memos-api:
+    image: registry.cn-shanghai.aliyuncs.com/memtensor/memos-base:v1.0
+    container_name: winnow-memos-api
+    working_dir: /app/memos/MemOS
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - PYTHONPATH=/app/memos/MemOS/src
+      - QDRANT_URL=http://host.docker.internal:6333
+      - QDRANT_HOST=host.docker.internal
+      - QDRANT_PORT=6333
+      # Chat model
+      - MOS_CHAT_MODEL=${MOS_CHAT_MODEL:-deepseek-v4-flash}
+      # Embedding — DMX API (OpenAI-compatible) via universal_api backend
+      - MOS_EMBEDDER_BACKEND=universal_api
+      - MOS_EMBEDDER_PROVIDER=openai
+      # CRITICAL: WINNOW_QUICK_IMG_API_KEY 必须在 .env 中设置，否则 embedding 调度器静默失败，
+      # 导致 get_all 有数据但 search 返回空 (M.5.1)
+      - MOS_EMBEDDER_API_KEY=${WINNOW_QUICK_IMG_API_KEY:-}
+      - MOS_EMBEDDER_API_BASE=https://www.dmxapi.cn/v1
+      - MOS_EMBEDDER_MODEL=text-embedding-3-large
+      - EMBEDDING_DIMENSION=3072
+      # Reranker
+      - MOS_RERANKER_BACKEND=${MOS_RERANKER_BACKEND:-openai}
+      # API keys — DMX for both chat and embedding
+      - OPENAI_API_KEY=${WINNOW_QUICK_IMG_API_KEY:-}
+      - OPENAI_API_BASE=https://www.dmxapi.cn/v1
+      # MemReader uses separate env vars
+      - MEMRADER_API_KEY=${WINNOW_QUICK_IMG_API_KEY:-}
+      - MEMRADER_API_BASE=https://www.dmxapi.cn/v1
+      - MEMRADER_MODEL=${MOS_CHAT_MODEL:-deepseek-v4-flash}
+      # Enable scheduler for memory processing
+      - MOS_ENABLE_SCHEDULER=true
+      - ENABLE_PREFERENCE_MEMORY=false
+      - ENABLE_ACTIVATION_MEMORY=false
+      - ENABLE_INTERNET=false
+      - ENABLE_DINGDING_BOT=false
+      # HuggingFace: pre-cached tokenizer + mirror
+      - HF_ENDPOINT=https://hf-mirror.com
+      - HF_HOME=/opt/hf_cache
+      # Redis for message queue — used by MemOS main app
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      # CRITICAL: MemOS scheduler reads MEMSCHEDULER_REDIS_* prefix, NOT REDIS_*.
+      # Without this, auto_initialize_redis() defaults to localhost → queue never connects → /product/add returns 500
+      - MEMSCHEDULER_REDIS_HOST=host.docker.internal
+      - MEMSCHEDULER_REDIS_PORT=6379
+      - MEMSCHEDULER_REDIS_PASSWORD=memos_redis
+      # Neo4j config — GeneralTextMemory 模式实际不依赖 GraphDB，但 init_server() 需要
+      # NEO4J_BACKEND 来决定 graph_db 后端。默认 "nebular" 会走 PolarDB 导致崩溃。
+      # 设为 "neo4j-community" 让其容忍连接失败（本地 Neo4j 仅在 --profile graph 下启动）。
+      - NEO4J_BACKEND=neo4j-community
+      - NEO4J_URI=bolt://host.docker.internal:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-memos_password}
+      - NEO4J_DB_NAME=neo4j
+    volumes:
+      - ./hf_cache4:/opt/hf_cache/hub
+    command: ["sh", "-c", "pip install -q -i https://mirrors.aliyun.com/pypi/simple/ 'qdrant-client==1.11.3' tiktoken &&sed -i 's|\"tokenizer_or_token_counter\": \"gpt2\"|\"tokenizer_or_token_counter\": \"cl100k_base\"|g' /app/memos/MemOS/src/memos/api/config.py && exec uvicorn memos.api.server_api:app --host 0.0.0.0 --port 8000"]
+    depends_on:
+      qdrant:
+        condition: service_started
+      neo4j:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- Main Application ----
+  winnow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: z-winnow:latest
+    container_name: z-winnow
+    env_file:
+      - .env
+    environment:
+      # WeFlow API — host networking allows direct localhost access
+      - WEFLOW_BASE_URL=${WEFLOW_BASE_URL:-http://127.0.0.1:5031}
+      - WEFLOW_API_TOKEN=${WEFLOW_API_TOKEN:-}
+      # Storage paths (volumes mount over defaults)
+      - SQLITE_DB_PATH=${SQLITE_DB_PATH:-data/winnow.db}
+      - MEMORY_DIR=${MEMORY_DIR:-memory}
+      - REPORTS_DIR=${REPORTS_DIR:-reports}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Persistent data
+      - winnow-data:/app/data
+      - winnow-reports:/app/reports
+      - winnow-memory:/app/memory
+    # Host networking: required to access WeFlow API on localhost:5031
+    network_mode: "host"
+    restart: unless-stopped
+    # Default: CLI help. Override with `docker compose run winnow ingest --date ...`
+
+volumes:
+  winnow-data:
+    name: winnow-data
+  winnow-reports:
+    name: winnow-reports
+  winnow-memory:
+    name: winnow-memory
+  qdrant-data:
+    name: winnow-qdrant-data
+  neo4j-data:
+    name: winnow-neo4j-data

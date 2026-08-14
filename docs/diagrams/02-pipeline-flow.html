@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据流水线流程图 — z-winnow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 40px;
+      min-height: 100vh;
+    }
+    .diagram-container { max-width: 1100px; margin: 0 auto; }
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+    }
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+    .diagram-title {
+      font-size: 20px; font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+    .diagram-subtitle {
+      font-size: 11px; font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Flow step */
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin-bottom: 0;
+    }
+    .flow-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 48px;
+      flex-shrink: 0;
+    }
+    .flow-dot {
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--c-text-main);
+      border-radius: 50%;
+      margin-top: 12px;
+      flex-shrink: 0;
+    }
+    .flow-dot.start { background: var(--c-text-main); }
+    .flow-dot.end { background: var(--c-accent); border-color: var(--c-accent); }
+    .flow-connector {
+      width: 1px;
+      flex: 1;
+      min-height: 20px;
+      background: var(--c-border);
+    }
+    .flow-content {
+      flex: 1;
+      padding-bottom: 20px;
+    }
+    .step-box {
+      border: 1px solid var(--c-border);
+      padding: 14px 16px;
+      background: var(--c-canvas);
+    }
+    .step-box.highlight {
+      border-color: var(--c-text-main);
+      border-width: 2px;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .step-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+    .badge-solid {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+    .step-io {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-top: 4px;
+    }
+    .step-io span {
+      font-family: var(--font-mono);
+    }
+    .step-desc {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .step-items {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--c-text-sub);
+      line-height: 1.6;
+      padding-left: 12px;
+      border-left: 1px dashed var(--c-border);
+    }
+
+    /* Branch */
+    .branch-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      padding-left: 48px;
+    }
+    .branch-col {
+      flex: 1;
+      border: 1px solid var(--c-border);
+      padding: 12px;
+    }
+    .branch-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 6px;
+    }
+
+    .note {
+      font-size: 10px;
+      color: var(--c-text-sub);
+      border-left: 2px solid var(--c-border);
+      padding-left: 8px;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div class="diagram-title">数据流水线流程图</div>
+        <div class="diagram-subtitle">z-winnow / 主流线节点执行序列 / Wave 12</div>
+      </div>
+
+      <!-- START -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot start"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box" style="border-style: dashed;">
+            <div class="step-name">START</div>
+            <div class="step-io">
+              输入: <span>group_name, date, report_types, api_token</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 1: data_fetch -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box">
+            <div class="step-header">
+              <div class="step-name">data_fetch</div>
+              <span class="badge">Phase A</span>
+              <span class="badge">~10s</span>
+            </div>
+            <div class="step-io">
+              写入: <span>L1 raw_messages (不可变)</span>
+            </div>
+            <div class="step-desc">通过 CipherTalk/WeFlow API 获取群聊原始消息，解析 group_id → chatroom_id</div>
+            <div class="step-items">
+              1. 解析群标识 (group_name → group_id → chatroom_id)<br/>
+              2. 调用 CipherTalk API 获取消息 (失败则 fallback 文件/mock)<br/>
+              3. T-W13-2: 通过 group-members API 构建昵称映射 (member_map)<br/>
+              4. S1 即时固化: INSERT raw_messages 到 SQLite (L1 层)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 2: content_enrich -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box">
+            <div class="step-header">
+              <div class="step-name">content_enrich</div>
+              <span class="badge">Phase B</span>
+              <span class="badge">~180s</span>
+            </div>
+            <div class="step-io">
+              写入: <span>L2 parsed_contexts (不可变)</span>
+            </div>
+            <div class="step-desc">XML 解析 + Vision API 图片描述 + 链接预览 + Token 边界上下文分块</div>
+            <div class="step-items">
+              1. XML 沙箱解析 (11 种消息类型路由)<br/>
+              2. Vision API 图片 → 文本描述 (image_descriptions)<br/>
+              3. HTTP 预取链接 → 标题/摘要 (link_previews)<br/>
+              4. 卡片/引用/合并转发解析<br/>
+              5. S1 即时固化: INSERT parsed_contexts 到 SQLite (L2 层)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 3: orchestrator -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box">
+            <div class="step-header">
+              <div class="step-name">orchestrator</div>
+              <span class="badge">Phase C</span>
+              <span class="badge">~5-10s</span>
+            </div>
+            <div class="step-io">
+              输出: <span>memory_context, report_types (validated)</span>
+            </div>
+            <div class="step-desc">验证 report_types + 加载 MemOS 上下文记忆包</div>
+            <div class="step-items">
+              1. 验证 report_types (默认 ["daily"])<br/>
+              2. LLM 生成 2-3 个语义搜索查询<br/>
+              3. MemOS topics cube 搜索 → historical_topics (top_k=5/query)<br/>
+              4. MemOS feedback cube 搜索 → prior_corrections<br/>
+              5. SQLite core_topics 表 → user_defined_topics<br/>
+              6. S3: MemOS 查询失败 → 流水中断 (必需服务)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 4: unified_reporter -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box highlight">
+            <div class="step-header">
+              <div class="step-name">unified_reporter</div>
+              <span class="badge-solid badge">核心节点</span>
+              <span class="badge">Phase D</span>
+              <span class="badge">~30-60s</span>
+            </div>
+            <div class="step-io">
+              输出: <span>unified_report (单次 LLM 调用)</span>
+            </div>
+            <div class="step-desc">S2 设计标准 — 单 Agent、单次 LLM 调用，产出所有报告内容</div>
+            <div class="step-items">
+              1. 合并 L2 增强消息 + 历史议题 + 用户预设议题<br/>
+              2. 加载 prior_corrections (RL 修正样本)<br/>
+              3. 单次 LLM 调用生成全部内容:<br/>
+              &nbsp;&nbsp;&nbsp;• 日报概览 + 议题列表 (含 lifecycle)<br/>
+              &nbsp;&nbsp;&nbsp;• 资源提取 (分类型)<br/>
+              &nbsp;&nbsp;&nbsp;• 工程问题分析<br/>
+              &nbsp;&nbsp;&nbsp;• 议题追踪 + 趋势摘要 + 生命周期分类<br/>
+              4. Mock 模式仅在 test 环境可用
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node 5: output_composer -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+          <div class="flow-connector"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box">
+            <div class="step-header">
+              <div class="step-name">output_composer</div>
+              <span class="badge">Phase E</span>
+            </div>
+            <div class="step-io">
+              写入: <span>L3 JSON files + L3 DB (topic_summaries, report_versions)</span>
+            </div>
+            <div class="step-desc">L3 JSON 持久化 + MemOS 同步队列 + 条件路由</div>
+            <div class="step-items">
+              1. 写入 4 个 L3 JSON 文件 (overview, topics, resources, engineering)<br/>
+              2. INSERT OR REPLACE topic_summaries (确定性 summary_id 支持重跑)<br/>
+              3. 创建 report_versions 记录 (content=NULL, Phase H 更新)<br/>
+              4. 入队 MemOS sync jobs (topics/resources/engineering → sync worker)<br/>
+              5. 质量检查 (check_daily_report_quality)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch: route_after_compose -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot"></div>
+        </div>
+        <div class="flow-content">
+          <div style="padding-bottom: 20px;">
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--c-text-sub); margin-bottom: 8px;">route_after_compose — 条件路由</div>
+            <div class="branch-row">
+              <div class="branch-col">
+                <div class="branch-label">
+                  <span class="badge">daily</span>
+                  日报路径
+                </div>
+                <div style="font-size: 11px; color: var(--c-text-sub); line-height: 1.5;">
+                  直接到达 END<br/>
+                  Markdown 由 Phase H 手动触发:<br/>
+                  <span style="font-family: var(--font-mono); font-size: 10px;">export_markdown(date, group_id)</span>
+                </div>
+              </div>
+              <div class="branch-col">
+                <div class="branch-label">
+                  <span class="badge">weekly</span>
+                  周报路径
+                </div>
+                <div style="font-size: 11px; color: var(--c-text-sub); line-height: 1.5;">
+                  → <span style="font-family: var(--font-mono);">write_weekly_report</span><br/>
+                  读取 7 天 L3 JSON 聚合<br/>
+                  可选 LLM 增强 (WEEKLY_LLM_ENHANCE)<br/>
+                  → END
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- END -->
+      <div class="flow-step">
+        <div class="flow-line">
+          <div class="flow-dot end"></div>
+        </div>
+        <div class="flow-content">
+          <div class="step-box" style="border-style: dashed;">
+            <div class="step-name" style="color: var(--c-accent);">END</div>
+            <div class="step-desc">
+              产出: L1 raw_messages + L2 parsed_contexts + L3 JSON/DB + MemOS 记忆 + (可选) 周报 Markdown
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        S1 即时固化: 各阶段结束立即写入存储层，无集中 persist 节点。L1/L2 不可变，L3 允许 INSERT OR REPLACE 重跑。<br/>
+        Phase H (export_markdown): 手动触发入口，读取 L3 JSON → Jinja2 渲染 → .md 文件 → 更新 report_versions.content。不在主图边中。
+      </div>
+    </div>
+  </div>
+</body>
+</html>

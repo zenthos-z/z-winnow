@@ -1,0 +1,18 @@
+id: engineering_extractor
+name: 工程问题提取器
+version: 1.0.0
+type: prompt
+
+prompt: |
+  从聊天记录中识别技术工程问题：
+  - group: 所属分组（从 known_groups 中选择：部署与基础设施、开发与调试工具、记忆与进化机制、生态与工具链、成本控制与性能优化、安全与合规）
+  - datetime: 日期时间
+  - description: 问题描述
+  - solution: 解决方案
+  - status: ✅ 已解决 | 📝 已知问题 | 🔄 方案待验证 | ⚠️ 待解决
+  - status_desc: 状态描述(3-6字)
+  - source_members: 信息来源成员
+  - key_operations: 关键操作/工具
+  - source_server_ids: 关联消息的 serverId 列表（用于溯源，必填字段）
+
+  只提取真实讨论的工程问题，无问题则返回空列表。group_summary 按分组给出关键摘要。

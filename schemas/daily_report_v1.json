@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://z-winnow/schemas/daily_report_v1.json",
+  "title": "Daily Report v1",
+  "description": "日报输出 JSON Schema，对齐 UnifiedReporterOutput — unified topics with lifecycle (T-W13)",
+  "type": "object",
+  "required": ["date", "overview", "topics", "trend_analysis", "highlights"],
+  "properties": {
+    "date": {
+      "type": "string",
+      "description": "日报日期，格式 YYYY-MM-DD",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "overview": {
+      "type": "string",
+      "description": "日报概览，3-5 句精辟总结当日讨论",
+      "minLength": 10
+    },
+    "important_notice": {
+      "type": ["string", "null"],
+      "description": "重要提醒内容。没有则 null"
+    },
+    "topics": {
+      "type": "array",
+      "description": "统一议题列表，含 lifecycle 分类",
+      "items": {
+        "$ref": "#/$defs/TopicItem"
+      }
+    },
+    "trend_analysis": {
+      "type": "string",
+      "description": "讨论趋势总分析（自由文本）"
+    },
+    "trend_summary": {
+      "type": "string",
+      "description": "议题演变一句话汇总"
+    },
+    "highlights": {
+      "type": "array",
+      "description": "亮点 / 金句列表",
+      "items": {
+        "type": "string"
+      }
+    },
+    "resources": {
+      "type": "array",
+      "description": "资源列表",
+      "items": {
+        "$ref": "#/$defs/ResourceItem"
+      }
+    },
+    "resource_count_by_type": {
+      "type": "object",
+      "description": "按资源类型统计数量",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "engineering_issues": {
+      "type": "array",
+      "description": "工程问题列表",
+      "items": {
+        "$ref": "#/$defs/EngineeringIssue"
+      }
+    },
+    "group_summary": {
+      "type": "object",
+      "description": "按工程分组的摘要 {分组名: 摘要}",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "model_used": {
+      "type": "string",
+      "description": "使用的模型标识"
+    }
+  },
+  "$defs": {
+    "TopicItem": {
+      "type": "object",
+      "description": "统一议题项 — 含 lifecycle、background、process、conclusion（因果链三段）、description、trend、participants",
+      "required": ["topic_id", "topic_name", "lifecycle", "status", "weight", "background", "process", "conclusion", "source_server_ids"],
+      "properties": {
+        "topic_id": {
+          "type": "string",
+          "description": "唯一标识，格式 tp_ + 8位hex",
+          "pattern": "^tp_[0-9a-f]{8}$"
+        },
+        "topic_name": {
+          "type": "string",
+          "description": "议题名称",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "type": "string",
+          "description": "生命周期分类",
+          "enum": ["user_defined", "sustained", "emerging"]
+        },
+        "status": {
+          "type": "string",
+          "description": "讨论状态",
+          "enum": ["active", "discussion", "resolved", "archived"]
+        },
+        "weight": {
+          "type": "number",
+          "description": "活跃度权重 0.0-1.0",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "background": {
+          "type": "string",
+          "description": "议题背景：为什么讨论、上下文与起因（仅当日）"
+        },
+        "process": {
+          "type": "string",
+          "description": "讨论过程：讨论了什么、关键观点与推进"
+        },
+        "conclusion": {
+          "type": "string",
+          "description": "最终结论/结论性判断（仅当日，不再包含背景与过程）"
+        },
+        "description": {
+          "type": "string",
+          "description": "议题描述与汇入边界"
+        },
+        "trend": {
+          "type": "string",
+          "description": "叙事性趋势段落"
+        },
+        "participants": {
+          "type": "array",
+          "description": "当天参与讨论的群成员昵称列表",
+          "items": {
+            "type": "string"
+          }
+        },
+        "first_seen": {
+          "type": "string",
+          "description": "首次出现日期 YYYY-MM-DD"
+        },
+        "last_seen": {
+          "type": "string",
+          "description": "最近出现日期 YYYY-MM-DD"
+        },
+        "source_server_ids": {
+          "type": "array",
+          "description": "关联消息的 serverId 列表",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "ResourceItem": {
+      "type": "object",
+      "description": "单条资源记录",
+      "required": ["time_range", "resource_type", "summary", "content"],
+      "properties": {
+        "time_range": {
+          "type": "string",
+          "description": "时间段 HH:MM-HH:MM"
+        },
+        "resource_type": {
+          "type": "string",
+          "description": "资源类型",
+          "enum": ["link", "paper", "article", "repo", "site", "doc", "other"]
+        },
+        "summary": {
+          "type": "string",
+          "description": "根据上下文和讨论综合描述资源作用"
+        },
+        "content": {
+          "type": "string",
+          "description": "资源链接，多链接用 / 分隔，无链接填 手动上传"
+        }
+      },
+      "additionalProperties": true
+    },
+    "EngineeringIssue": {
+      "type": "object",
+      "description": "单条工程问题记录",
+      "required": ["datetime", "group", "description", "solution", "key_operations", "status", "status_desc", "source_members"],
+      "properties": {
+        "datetime": {
+          "type": "string",
+          "description": "日期时间"
+        },
+        "group": {
+          "type": "string",
+          "description": "问题分组",
+          "enum": [
+            "部署与基础设施",
+            "开发与调试工具",
+            "记忆与进化机制",
+            "生态与工具链",
+            "成本控制与性能优化",
+            "安全与合规"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "问题描述"
+        },
+        "solution": {
+          "type": "string",
+          "description": "解决方案"
+        },
+        "key_operations": {
+          "type": "string",
+          "description": "关键操作"
+        },
+        "status": {
+          "type": "string",
+          "description": "状态符号",
+          "enum": ["✅", "📝", "🔄", "⚠️"]
+        },
+        "status_desc": {
+          "type": "string",
+          "description": "状态描述"
+        },
+        "source_members": {
+          "type": "string",
+          "description": "信息来源成员"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

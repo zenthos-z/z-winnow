@@ -1,0 +1,4 @@
+# Docker Compose auto-loads .env from this directory for variable substitution.
+# We use --env-file ../.env instead. An empty .env here would blank all API keys
+# and cause MemOS embedding 401 failures. Do NOT create .env in this directory.
+.env

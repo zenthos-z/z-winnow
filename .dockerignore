@@ -1,0 +1,47 @@
+# ============================================================
+# .dockerignore — z-winnow MCP 部署镜像
+# 镜像只跑 MCP server (http)，不带数据/密钥/开发产物
+# ============================================================
+
+# --- Git ---
+.git
+.gitignore
+.gitattributes
+
+# --- 密钥（绝对不进镜像）---
+config/*id_rsa*
+config/*.pem
+config/*.key
+.env
+.env.*
+!.env.example
+
+# --- 数据（走 sync，不进镜像；容器挂载 volume）---
+data/
+data/tmp/
+
+# --- 测试 / 文档 / 规划 / CI ---
+tests/
+docs/
+plans/
+.github/
+.pre-commit-config.yaml
+.claude/
+bandit-report/
+htmlcov/
+.coverage
+coverage.xml
+
+# --- Python 缓存 ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# --- 本地杂项（保留 README）---
+*.md
+!README.md
+.DS_Store

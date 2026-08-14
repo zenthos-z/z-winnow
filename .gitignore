@@ -1,0 +1,142 @@
+# ============================================================
+# .gitignore — z-winnow
+# Excludes secrets, generated files, caches, and build artifacts
+# ============================================================
+
+# --- Secrets & environment ---
+.env
+.env.*
+!.env.example
+
+# SSH 私钥（ECS 部署等）— 绝不入库
+config/*id_rsa*
+config/*.pem
+config/*.key
+
+# MCP API key 注册表（含敏感 key，winnow mcp-key 生成）— 不入库；.example 模板入库
+config/mcp_keys.yaml
+
+# --- Docker 部署产物 ---
+requirements-deploy.txt
+
+# --- SQLite databases (3-layer storage with serverID provenance) ---
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# --- Python bytecode & caches ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# --- Tool caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Test pollution (files named after MagicMock reprs from db_path mocks) ---
+*MagicMock*
+.mypy_cache/
+
+# --- Build artifacts ---
+dist/
+build/
+*.egg-info/
+*.egg
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- IDE & editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Claude Code cache (exclude internal state, keep agents/skills) ---
+# 用 .claude/* 而非 .claude/ —— 忽略整个目录会让下面的 !negation 失效（git 不下钻）
+.claude/*
+!.claude/agents/
+!.claude/skills/
+
+# --- Memory files (auto-generated topic trackers) ---
+memory/topic_tracker_*.md
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Docker ---
+.dockerignore
+!.dockerignore
+
+# --- Harness runtime lock (prevents concurrent cron activation) ---
+plans/.harness.lock
+plans/.harness.prompt
+.locks/
+
+# Generated reports and outputs
+reports/
+reports_test/
+outputs/
+
+# Coverage data
+.coverage
+htmlcov/
+
+# Test artifacts (pytest JUnit XML reports)
+.eval-*.xml
+.test-result*.xml
+
+# --- Temporary scripts and scratch files ---
+_*.py
+!__init__.py
+_*.txt
+
+# --- Generated data outputs ---
+data/processed/
+data/rl/
+data/tmp/
+data/pipeline_stats.json
+
+# --- Runtime config overrides (onboarding wizard「保存并重启」) ---
+data/config_overrides.json
+data/config_overrides.json.bak
+.env.bak
+
+# --- HuggingFace model caches ---
+deployments/hf_cache*/
+
+# --- 本机 docker compose 覆盖（端口/卷等本地适配，不入库）---
+deployments/docker-compose.override.yml
+
+# --- Tool cache directories ---
+.understand-*/
+.last-config.json
+.mcp.json
+.dispatcher_idle_count
+
+# --- Demo HTML (build artifacts; 由 scripts/build_demo_html.py 重建，不入库) ---
+docs/demo/*.html
+
+# --- Local scratch / external tools / personal notes (not for repo) ---
+.agents/
+AGENTS.md
+DIAGNOSIS.md
+tools/
+
+# ECS 凭证（技能目录内的 SSH 密钥 + 阿里云 RAM）— 绝不入库
+.claude/skills/winnow-dev/ecs-secrets/

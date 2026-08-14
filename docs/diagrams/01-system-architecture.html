@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统架构图 — z-winnow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 40px;
+      min-height: 100vh;
+    }
+    .diagram-container { max-width: 1100px; margin: 0 auto; }
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+    }
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .diagram-title {
+      font-size: 20px; font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+    .diagram-subtitle {
+      font-size: 11px; font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Row layout */
+    .row {
+      display: flex;
+      align-items: stretch;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .row:last-child { margin-bottom: 0; }
+
+    /* Component box */
+    .comp {
+      border: 1px solid var(--c-border);
+      padding: 14px 16px;
+      background: var(--c-canvas);
+      flex: 1;
+      min-width: 0;
+    }
+    .comp-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .comp-value {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+    .comp-desc {
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+      margin-right: 4px;
+    }
+    .badge-solid {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+
+    /* Arrow connector row */
+    .arrow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 28px;
+      color: var(--c-text-sub);
+      font-size: 11px;
+    }
+    .arrow-row svg { margin: 0 4px; }
+
+    /* Section title */
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+
+    /* 2-col layout */
+    .col-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Pipeline flow */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 12px 0;
+    }
+    .pipe-node {
+      border: 1px solid var(--c-text-main);
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 8px 14px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .pipe-node.outline {
+      background: var(--c-canvas);
+      color: var(--c-text-main);
+    }
+    .pipe-arrow {
+      width: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--c-text-sub);
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid var(--c-border);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--c-text-sub);
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border: 1px solid var(--c-border);
+    }
+    .legend-dot.filled { background: var(--c-text-main); }
+
+    /* Note box */
+    .note {
+      font-size: 10px;
+      color: var(--c-text-sub);
+      border-left: 2px solid var(--c-border);
+      padding-left: 8px;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div class="diagram-title">系统架构图</div>
+        <div class="diagram-subtitle">z-winnow / Wave 12 单 Agent 直线流水线 / v2.0</div>
+      </div>
+
+      <!-- 技术栈概览 -->
+      <div class="section-title">技术栈</div>
+      <div class="row">
+        <div class="comp">
+          <div class="comp-label">编排层</div>
+          <div class="comp-value">LangGraph StateGraph</div>
+          <div class="comp-desc">interrupt() 支持人工审批<br/>单 Agent 直线流水线，无并行 fan-out</div>
+        </div>
+        <div class="comp">
+          <div class="comp-label">Agent 循环</div>
+          <div class="comp-value">deepagents</div>
+          <div class="comp-desc">仅 orchestrator 使用<br/>基于 DeepAgent 的任务拆解</div>
+        </div>
+        <div class="comp">
+          <div class="comp-label">LLM</div>
+          <div class="comp-value">环境变量配置</div>
+          <div class="comp-desc">支持 Anthropic / DeepSeek<br/>per-subagent 可在 defaults.yaml 覆盖</div>
+        </div>
+        <div class="comp">
+          <div class="comp-label">存储</div>
+          <div class="comp-value">SQLite 三层 + JSON</div>
+          <div class="comp-desc">L1 原始 / L2 上下文 / L3 摘要<br/>serverID 全链路溯源</div>
+        </div>
+      </div>
+
+      <div class="arrow-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </div>
+
+      <!-- 主流水线 -->
+      <div class="section-title">LangGraph 主流水线 — 9 节点注册</div>
+      <div style="overflow-x: auto; padding-bottom: 4px;">
+        <div class="pipeline" style="min-width: 900px;">
+          <div class="pipe-node outline" style="background: var(--c-bg); border-style: dashed;">START</div>
+          <div class="pipe-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div class="pipe-node">data_fetch</div>
+          <div class="pipe-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div class="pipe-node">content_enrich</div>
+          <div class="pipe-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div class="pipe-node">orchestrator</div>
+          <div class="pipe-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div class="pipe-node">unified_reporter</div>
+          <div class="pipe-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+          <div class="pipe-node">output_composer</div>
+        </div>
+      </div>
+
+      <!-- 分支路由 -->
+      <div style="margin-top: 4px; padding-left: 20px;">
+        <div style="display: flex; align-items: center; gap: 0;">
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--c-text-sub); margin-right: 8px;">route_after_compose</span>
+          <svg width="16" height="32" viewBox="0 0 24 48" fill="none" stroke="var(--c-text-sub)" stroke-width="1"><path d="M12 0v16M4 20l8 8 8-8" transform="rotate(90,12,24)"/></svg>
+          <div style="display: flex; gap: 24px; margin-left: 12px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="badge">daily</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--c-accent); font-weight: 500;">END</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="badge">weekly</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <span class="badge badge-solid">write_weekly_report</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--c-accent); font-weight: 500;">END</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feishu 独立节点 -->
+      <div style="margin-top: 16px;">
+        <div class="section-title">Feishu 独立节点（无边连接，Web UI 独立调用）</div>
+        <div class="row">
+          <div class="comp" style="flex: 0 0 auto; min-width: 160px;">
+            <div class="comp-label">节点 A</div>
+            <div class="comp-value">human_review_feishu</div>
+            <div class="comp-desc">interrupt() 人工审批</div>
+          </div>
+          <div style="display: flex; align-items: center; color: var(--c-text-sub);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="comp" style="flex: 0 0 auto; min-width: 120px;">
+            <div class="comp-label">节点 B</div>
+            <div class="comp-value">feishu_upload</div>
+            <div class="comp-desc">Bitable batch_create</div>
+          </div>
+          <div class="comp" style="flex: 0 0 auto; min-width: 120px;">
+            <div class="comp-label">节点 C</div>
+            <div class="comp-value">skip_upload</div>
+            <div class="comp-desc">跳过上传</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 外部服务 -->
+      <div style="margin-top: 16px;">
+        <div class="section-title">外部服务依赖</div>
+        <div class="row">
+          <div class="comp">
+            <div class="comp-label">数据源</div>
+            <div class="comp-value">CipherTalk API</div>
+            <div class="comp-desc">替代 WeFlow 为默认数据源<br/>鸭子类型兼容</div>
+          </div>
+          <div class="comp">
+            <div class="comp-label">长期记忆</div>
+            <div class="comp-value">MemOS (GeneralTextMemory)</div>
+            <div class="comp-desc">Redis + Qdrant + memos-api<br/>议题快照 / 反馈 / 语义搜索</div>
+          </div>
+          <div class="comp">
+            <div class="comp-label">可观测性</div>
+            <div class="comp-value">LangSmith</div>
+            <div class="comp-desc">节点级追踪 (traced_node)<br/>structlog 指标</div>
+          </div>
+          <div class="comp">
+            <div class="comp-label">Web 面板</div>
+            <div class="comp-value">FastAPI + HTMX</div>
+            <div class="comp-desc">10+ 页面控制面板<br/>端口 :8100</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 图例 -->
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot filled"></div>
+          主流线节点（有边连接）
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot"></div>
+          独立注册节点（无边连接）
+        </div>
+        <div class="legend-item" style="margin-left: auto;">
+          <span class="badge">Phase H</span>
+          export_markdown() 手动触发，不在主图中
+        </div>
+      </div>
+
+      <div class="note">
+        Wave 12 设计标准: S1 即时固化（各阶段各自写入）, S2 单 Agent 单次 LLM 调用（无 Send API）, S3 MemOS 必需服务, S4 Markdown 延迟到 Phase H, S7 配置单源 (Settings).<br/>
+        入口: <span style="font-family: var(--font-mono);">build_graph()</span> → CompiledStateGraph, 9 个节点注册，6 个在主边，3 个 Feishu 独立调用。
+      </div>
+    </div>
+  </div>
+</body>
+</html>

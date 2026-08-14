@@ -1,0 +1,16 @@
+{# engineering_issues.j2 — 工程问题与解决方案 Markdown 模板 #}
+{# 对齐旧系统格式：reports/engineering/工程问题 · YYYY-MM-DD.md #}
+# 工程问题 · {{ date }}
+
+## 当日工程问题汇总
+
+| 日期时间 | 问题分组 | 问题描述 | 解决方案 | 关键操作/工具 | 状态 | 状态描述 | 信息来源 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+{%- for issue in issues %}
+| {{ issue.datetime }} | {{ issue.group }} | {{ issue.description }} | {{ issue.solution }} | {{ issue.key_operations }} | {{ issue.status }} | {{ issue.status_desc }} | {{ issue.source_members }} |
+{%- else %}
+| (本日无工程问题记录) |
+{%- endfor %}
+
+---
+*工程问题整理时间：{{ generation_time | default(date) }}*

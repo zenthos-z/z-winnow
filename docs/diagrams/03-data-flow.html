@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三层存储数据流图 — z-winnow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 40px;
+      min-height: 100vh;
+    }
+    .diagram-container { max-width: 1100px; margin: 0 auto; }
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+    }
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+    .diagram-title {
+      font-size: 20px; font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+    .diagram-subtitle {
+      font-size: 11px; font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+
+    /* Layer boxes */
+    .layers {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .layer {
+      border: 1px solid var(--c-border);
+      padding: 16px;
+    }
+    .layer-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .layer-name {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--c-text-main);
+    }
+    .layer-table {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+    .badge-solid {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+    .badge-immutable {
+      border-color: var(--c-text-main);
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+    .layer-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--c-text-sub);
+      margin-top: 4px;
+    }
+    .layer-meta span { font-family: var(--font-mono); font-size: 10px; }
+    .layer-fields {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .field-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+    .field-tag.pk {
+      border-color: var(--c-text-main);
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+
+    /* Arrow between layers */
+    .layer-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      gap: 8px;
+    }
+    .layer-arrow-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+    }
+
+    /* Side panel for MemOS */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 24px;
+    }
+
+    .memos-panel {
+      border: 2px solid var(--c-text-main);
+      padding: 16px;
+      background: var(--c-canvas);
+      align-self: start;
+    }
+    .memos-title {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 8px;
+    }
+    .memos-section {
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+    .memos-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .memos-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .memos-value {
+      font-size: 11px;
+      color: var(--c-text-main);
+      line-height: 1.5;
+    }
+
+    /* L3 JSON files */
+    .json-files {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .json-file {
+      border: 1px solid var(--c-border);
+      padding: 8px;
+      text-align: center;
+    }
+    .json-file-name {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-main);
+      font-weight: 500;
+    }
+    .json-file-desc {
+      font-size: 9px;
+      color: var(--c-text-sub);
+      margin-top: 2px;
+    }
+
+    /* Write-back flow */
+    .writeback-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      margin-top: 12px;
+    }
+    .writeback-step {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--c-text-sub);
+      border: 1px solid var(--c-border);
+      padding: 4px 8px;
+    }
+    .writeback-arrow {
+      color: var(--c-text-sub);
+    }
+
+    .note {
+      font-size: 10px;
+      color: var(--c-text-sub);
+      border-left: 2px solid var(--c-border);
+      padding-left: 8px;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div class="diagram-title">三层存储数据流图</div>
+        <div class="diagram-subtitle">z-winnow / SQLite 当日快照 + MemOS 长期记忆 / T-W12-7</div>
+      </div>
+
+      <div class="split-layout">
+        <!-- 左侧：SQLite 三层 -->
+        <div>
+          <div class="section-title">SQLite 三层存储（当日快照）</div>
+          <div class="layers">
+            <!-- L1 -->
+            <div class="layer">
+              <div class="layer-header">
+                <div class="layer-name">Layer 1</div>
+                <div class="layer-table">raw_messages</div>
+                <span class="badge-immutable badge">不可变</span>
+                <span class="badge">data_fetch</span>
+              </div>
+              <div class="layer-meta">
+                写入时机: <span>data_fetch 末尾</span> | 去重: <span>INSERT server_id UNIQUE</span> | 覆盖: <span>不允许</span>
+              </div>
+              <div class="layer-fields">
+                <span class="field-tag pk">server_id (PK)</span>
+                <span class="field-tag">sender</span>
+                <span class="field-tag">account_name</span>
+                <span class="field-tag">timestamp</span>
+                <span class="field-tag">msg_type</span>
+                <span class="field-tag">content</span>
+                <span class="field-tag">media_url</span>
+                <span class="field-tag">reply_to</span>
+                <span class="field-tag">date</span>
+                <span class="field-tag">group_id</span>
+              </div>
+            </div>
+
+            <div class="layer-arrow">
+              <svg width="14" height="24" viewBox="0 0 14 24" fill="none" stroke="var(--c-text-sub)" stroke-width="1.5"><path d="M7 0v16M2 12l5 5 5-5"/></svg>
+              <span class="layer-arrow-label">content_enrich 解析 → Token 边界分块</span>
+            </div>
+
+            <!-- L2 -->
+            <div class="layer">
+              <div class="layer-header">
+                <div class="layer-name">Layer 2</div>
+                <div class="layer-table">parsed_contexts</div>
+                <span class="badge-immutable badge">不可变</span>
+                <span class="badge">content_enrich</span>
+              </div>
+              <div class="layer-meta">
+                写入时机: <span>content_enrich 末尾</span> | 覆盖: <span>不允许</span> | 内容: <span>Token 边界内的上下文块</span>
+              </div>
+              <div class="layer-fields">
+                <span class="field-tag pk">context_id (PK)</span>
+                <span class="field-tag">server_id (FK→L1)</span>
+                <span class="field-tag">context_text</span>
+                <span class="field-tag">token_count</span>
+                <span class="field-tag">date</span>
+                <span class="field-tag">group_id</span>
+              </div>
+            </div>
+
+            <div class="layer-arrow">
+              <svg width="14" height="24" viewBox="0 0 14 24" fill="none" stroke="var(--c-text-sub)" stroke-width="1.5"><path d="M7 0v16M2 12l5 5 5-5"/></svg>
+              <span class="layer-arrow-label">unified_reporter LLM → output_composer 持久化</span>
+            </div>
+
+            <!-- L3 -->
+            <div class="layer">
+              <div class="layer-header">
+                <div class="layer-name">Layer 3</div>
+                <div class="layer-table">topic_summaries + report_versions</div>
+                <span class="badge">允许重跑覆盖</span>
+                <span class="badge">output_composer</span>
+              </div>
+              <div class="layer-meta">
+                写入时机: <span>output_composer 末尾</span> | 去重: <span>INSERT OR REPLACE (确定性 summary_id)</span> | 覆盖: <span>重跑覆盖</span>
+              </div>
+              <div class="layer-fields">
+                <span class="field-tag pk">summary_id (PK)</span>
+                <span class="field-tag">topic_name</span>
+                <span class="field-tag">lifecycle</span>
+                <span class="field-tag">confidence</span>
+                <span class="field-tag">source_server_ids</span>
+                <span class="field-tag">summary_text</span>
+                <span class="field-tag">trend</span>
+                <span class="field-tag">participants</span>
+                <span class="field-tag">group_id</span>
+              </div>
+
+              <!-- L3 JSON files -->
+              <div style="margin-top: 12px; font-size: 10px; color: var(--c-text-sub); text-transform: uppercase; letter-spacing: 0.05em;">L3 JSON 文件 — data/processed/{group_id}/{date}/</div>
+              <div class="json-files">
+                <div class="json-file">
+                  <div class="json-file-name">overview.json</div>
+                  <div class="json-file-desc">日报概览</div>
+                </div>
+                <div class="json-file">
+                  <div class="json-file-name">topics.json</div>
+                  <div class="json-file-desc">议题列表</div>
+                </div>
+                <div class="json-file">
+                  <div class="json-file-name">resources.json</div>
+                  <div class="json-file-desc">资源提取</div>
+                </div>
+                <div class="json-file">
+                  <div class="json-file-name">engineering.json</div>
+                  <div class="json-file-desc">工程问题</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：MemOS -->
+        <div class="memos-panel">
+          <div class="memos-title">MemOS 长期语义记忆</div>
+          <div style="font-size: 10px; color: var(--c-text-sub); margin-bottom: 12px;">GeneralTextMemory — Qdrant + Redis</div>
+
+          <div class="memos-section">
+            <div class="memos-label">读取路径 (orchestrator)</div>
+            <div class="memos-value">
+              1. LLM 生成语义查询 (2-3 条)<br/>
+              2. topics cube 搜索 → historical_topics<br/>
+              3. feedback cube 搜索 → prior_corrections<br/>
+              <span style="font-family: var(--font-mono); font-size: 9px; color: var(--c-accent);">S3: 查询失败 → 流水中断</span>
+            </div>
+          </div>
+
+          <div class="memos-section">
+            <div class="memos-label">写入路径 (sync worker)</div>
+            <div class="memos-value">
+              1. output_composer 入队 sync_jobs<br/>
+              2. <span style="font-family: var(--font-mono);">winnow memos flush</span> 处理<br/>
+              3. 写入 topics cube (每日快照)<br/>
+              4. 写入 feedback cube (修正记录)
+            </div>
+          </div>
+
+          <div class="memos-section">
+            <div class="memos-label">Cube 结构</div>
+            <div class="memos-value">
+              <span style="font-family: var(--font-mono);">{group_id}:topics</span><br/>
+              <span style="font-family: var(--font-mono);">{group_id}:feedback</span><br/>
+              去重: get_all → delete → 重新写入
+            </div>
+          </div>
+
+          <div class="memos-section">
+            <div class="memos-label">Docker 依赖</div>
+            <div class="memos-value">
+              Redis <span style="font-family: var(--font-mono);">:6379</span><br/>
+              Qdrant <span style="font-family: var(--font-mono);">:6333</span><br/>
+              memos-api <span style="font-family: var(--font-mono);">:8000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 溯源链路 -->
+      <div style="margin-top: 20px;">
+        <div class="section-title">全链路溯源 — serverID 贯穿三层</div>
+        <div class="writeback-flow">
+          <div class="writeback-step" style="border-color: var(--c-text-main); color: var(--c-text-main); font-weight: 500;">WeFlow serverID</div>
+          <div class="writeback-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="writeback-step">L1 raw_messages.server_id</div>
+          <div class="writeback-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="writeback-step">L2 parsed_contexts.server_id</div>
+          <div class="writeback-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="writeback-step">L3 topic_summaries.source_server_ids</div>
+          <div class="writeback-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="writeback-step">MemOS 记忆文本内嵌</div>
+        </div>
+      </div>
+
+      <div class="note">
+        P022: 存储层与格式化层分离 — 主流线只写存储 (L3 JSON + DB)，Markdown 渲染延迟到 Phase H (export_markdown)。<br/>
+        S1 即时固化: 各阶段结束立即写入，无集中 persist 节点。L1/L2 不可变，L3 支持重跑覆盖。<br/>
+        MemOS sync queue: output_composer 写入 SQLite sync_jobs 表，<span style="font-family: var(--font-mono);">winnow memos flush</span> 命令处理队列。
+      </div>
+    </div>
+  </div>
+</body>
+</html>

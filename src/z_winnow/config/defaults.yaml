@@ -1,0 +1,86 @@
+# ============================================================
+# defaults.yaml — Default configuration values for z-winnow
+# ============================================================
+#
+# Configuration layering (lowest to highest priority):
+#   1. defaults.yaml (this file) — baseline defaults
+#   2. .env file — user overrides via WINNOW_* / standard env vars
+#   3. CLI arguments — runtime overrides (handled by application code)
+#
+# All values here mirror the Field(default=...) in settings.py.
+# Environment variables take precedence over these defaults.
+#
+# Environment variable naming convention:
+#   - Standard names: ANTHROPIC_API_KEY, DEEPSEEK_API_KEY, etc.
+#   - Project-prefixed names: WINNOW_ANTHROPIC_API_KEY, WINNOW_DEEPSEEK_API_KEY, etc.
+#     (project-prefixed vars override standard vars when both are set)
+
+# ============ API Keys (sensitive — set via env, NOT here) ============
+api_keys:
+  anthropic_api_key: ""        # ANTHROPIC_API_KEY / WINNOW_ANTHROPIC_API_KEY
+  deepseek_api_key: ""         # DEEPSEEK_API_KEY / WINNOW_DEEPSEEK_API_KEY
+  openai_api_key: ""           # OPENAI_API_KEY / WINNOW_OPENAI_API_KEY
+  langsmith_api_key: ""        # LANGSMITH_API_KEY / WINNOW_LANGSMITH_API_KEY
+  mem0_api_key: ""             # MEM0_API_KEY / WINNOW_MEM0_API_KEY
+
+# ============ Model Configuration ============
+models:
+  anthropic_model: "claude-sonnet-4-20250514"
+  deepseek_model: "deepseek-chat"
+  orchestrator_model: "claude-sonnet-4-20250514"
+
+  # Per-subagent model overrides (empty = inherit from orchestrator_model)
+  subagent_models:
+    unified_reporter: ""           # WINNOW_UNIFIED_REPORTER_MODEL
+    output_composer: ""            # WINNOW_OUTPUT_COMPOSER_MODEL
+
+# ============ Database ============
+database:
+  url: "sqlite:///data/winnow.db"        # DATABASE_URL / WINNOW_DATABASE_URL
+  sqlite_db_path: "data/winnow.db"       # SQLITE_DB_PATH / WINNOW_SQLITE_DB_PATH
+
+# ============ LangSmith Tracing ============
+langsmith:
+  project: "z-winnow"
+  tracing_v2: true
+
+# ============ Operational Limits ============
+limits:
+  max_context_tokens: 128000               # MAX_CONTEXT_TOKENS / WINNOW_MAX_CONTEXT_TOKENS
+  subagent_timeout_seconds: 120            # SUBAGENT_TIMEOUT_SECONDS / WINNOW_SUBAGENT_TIMEOUT_SECONDS
+
+# ============ Logging ============
+logging:
+  level: "INFO"                            # LOG_LEVEL / WINNOW_LOG_LEVEL
+
+# ============ Storage Paths ============
+paths:
+  memory_dir: "memory"                     # MEMORY_DIR / WINNOW_MEMORY_DIR
+  reports_dir: "reports"                   # REPORTS_DIR / WINNOW_REPORTS_DIR
+
+# ============ mem0 (reserved for future use) ============
+mem0:
+  org_id: ""                               # MEM0_ORG_ID / WINNOW_MEM0_ORG_ID
+
+# ============ MemOS Memory System ============
+# P009: MEMOS_ENABLED defaults to false — zero side-effect when disabled.
+# All settings here are safe defaults for local development.
+# Production values should be set via environment variables.
+memos:
+  enabled: false                            # MEMOS_ENABLED / WINNOW_MEMOS_ENABLED
+  api_url: "http://localhost:8000"          # MEMOS_API_URL / WINNOW_MEMOS_API_URL
+  cube_prefix: "winnow"                   # MEMOS_CUBE_PREFIX / WINNOW_MEMOS_CUBE_PREFIX
+
+  # MemOS model configuration (align with deployments/docker-compose.yml memos-api)
+  mos_chat_model: "deepseek-v4-flash"              # MOS_CHAT_MODEL — bare name, NO provider/ prefix (MemOS rejects prefixed names)
+  mos_embedder_model: "openai/text-embedding-3-large"  # MOS_EMBEDDER_MODEL
+  mos_embedder_backend: "openai"                    # MOS_EMBEDDER_BACKEND
+  embedding_dimension: 3072                         # EMBEDDING_DIMENSION (text-embedding-3-large = 3072)
+  mos_reranker_backend: "openai"                    # MOS_RERANKER_BACKEND / WINNOW_MOS_RERANKER_BACKEND
+
+  # Topic Classifier (Wave10 §3.3)
+  # A013: Thresholds are Field defaults on Settings singleton — read lazily
+  # at classify_topics() call time. Do NOT cache at module scope.
+  topic_classifier_core_semantic_threshold: 0.85    # TOPIC_CLASSIFIER_CORE_SEMANTIC_THRESHOLD / WINNOW_TOPIC_CLASSIFIER_CORE_SEMANTIC_THRESHOLD
+  topic_classifier_continuous_threshold: 0.75       # TOPIC_CLASSIFIER_CONTINUOUS_THRESHOLD / WINNOW_TOPIC_CLASSIFIER_CONTINUOUS_THRESHOLD
+  topic_classifier_continuous_window_days: 14       # TOPIC_CLASSIFIER_CONTINUOUS_WINDOW_DAYS / WINNOW_TOPIC_CLASSIFIER_CONTINUOUS_WINDOW_DAYS

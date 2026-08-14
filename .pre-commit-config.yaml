@@ -1,0 +1,59 @@
+# .pre-commit-config.yaml — CI/CD scaffolding for z-winnow
+# Run: pre-commit install && pre-commit run --all-files
+
+repos:
+  # --- File hygiene: no trailing whitespace, final newline, valid YAML/TOML ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=500]
+
+  # --- Ruff: lint + auto-fix (replaces flake8, isort, black) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        name: ruff (lint + fix)
+        args: [--fix, --config, ruff.toml]
+        exclude: ^plans/
+      - id: ruff-format
+        name: ruff (format)
+        args: [--config, ruff.toml]
+        exclude: ^plans/
+
+  # --- MyPy: static type checking (basic mode, not strict) ---
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        name: mypy (basic)
+        args: [--config-file=pyproject.toml]
+        exclude: ^plans/
+        additional_dependencies:
+          - pydantic>=2.0
+          - types-python-dateutil
+        # mypy errors are ACCEPTABLE at this stage — we start with basic mode
+        # and progressively enable strict checks
+        verbose: true
+
+  # --- Bandit: security scanning ---
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        name: bandit (security)
+        args:
+          - -r
+          - src/
+          - -ll
+          - --configfile=pyproject.toml
+        # Do NOT pass individual filenames — bandit scans src/ recursively
+        pass_filenames: false

@@ -1,0 +1,77 @@
+id: engineering
+name: 工程问题
+description: 从群聊中提取技术相关问题、阻塞、决策
+
+skill_id: engineering_extractor
+
+output_schema:
+  type: object
+  properties:
+    issues:
+      type: array
+      items:
+        type: object
+        properties:
+          datetime:
+            type: string
+            description: 日期时间
+          group:
+            type: string
+            description: 所属工程分组
+          description:
+            type: string
+            description: 问题描述
+          solution:
+            type: string
+            description: 解决方案
+          status:
+            type: string
+            description: "✅ 已解决 | 📝 已知问题 | 🔄 方案待验证 | ⚠️ 待解决"
+          status_desc:
+            type: string
+            description: 状态描述(3-6字)
+          source_members:
+            type: string
+            description: 信息来源成员
+          key_operations:
+            type: string
+            description: 关键操作/工具
+          source_server_ids:
+            type: array
+            items:
+              type: string
+            description: 关联消息的 serverId 列表（必填）
+        required:
+          - description
+          - source_server_ids
+    group_summary:
+      type: object
+      additionalProperties:
+        type: string
+      description: "按工程分组的摘要 {group_name: summary}"
+  required:
+    - issues
+
+feishu_fields:
+  - field_name: "日期时间"
+    type: 4
+  - field_name: "问题分组"
+    type: 1
+  - field_name: "问题描述"
+    type: 1
+  - field_name: "解决方案"
+    type: 1
+  - field_name: "关键操作/工具"
+    type: 1
+  - field_name: "状态"
+    type: 1
+  - field_name: "状态描述"
+    type: 1
+  - field_name: "信息来源"
+    type: 1
+
+frontend_component: table
+enabled_by_default: false
+mandatory: false
+records_key: issues
+summary_key: group_summary

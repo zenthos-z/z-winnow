@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>报告浏览 · 班长群 · 群日报管理系统</title>
+<style>
+/* ════════════════════════════════════════════════════════════════
+ * design-systems/lovable/tokens.css — verbatim :root contract
+ * 与 index.html（仪表盘）共用同一套 token，视觉同源
+ * ════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#f7f4ed;
+  --surface:#f7f4ed;
+  --surface-warm:var(--surface);
+  --fg:#1c1c1c;
+  --fg-2:rgba(28,28,28,0.83);
+  --muted:#5f5f5d;
+  --meta:rgba(28,28,28,0.4);
+  --border:#eceae4;
+  --border-soft:var(--border);
+  --accent:#ff4d8d;
+  --accent-on:#ffffff;
+  --accent-hover:color-mix(in oklab,var(--accent),black 8%);
+  --accent-active:color-mix(in oklab,var(--accent),black 14%);
+  --success:#16a34a;
+  --warn:#eab308;
+  --danger:#dc2626;
+  --font-display:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Camera Plain Variable","Camera Plain",ui-sans-serif,system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Monaco,Consolas,monospace;
+  --text-xs:12px; --text-sm:14px; --text-base:16px; --text-lg:18px;
+  --text-xl:20px; --text-2xl:36px; --text-3xl:48px; --text-4xl:60px;
+  --leading-body:1.5; --leading-tight:1.10; --tracking-display:-0.025em;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:20px; --space-6:24px; --space-8:32px; --space-12:48px;
+  --section-y-desktop:128px; --section-y-tablet:80px; --section-y-phone:64px;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:16px; --radius-pill:9999px;
+  --elev-flat:none;
+  --elev-ring:0 0 0 1px var(--border);
+  --elev-raised:0 4px 12px rgba(0,0,0,0.1);
+  --focus-ring:0 0 0 2px rgba(59,130,246,0.5);
+  --motion-fast:150ms; --motion-base:200ms; --ease-standard:cubic-bezier(0.2,0,0,1);
+  --container-max:1200px;
+  --container-gutter-desktop:24px; --container-gutter-tablet:16px; --container-gutter-phone:12px;
+
+  /* shared with dashboard / groups */
+  --star:#caa53d;            /* 评分星 — 暖金 */
+  --on-dark:#fcfbf8;         /* 暗底文字 */
+  --row-hover:rgba(28,28,28,0.035);
+  --shadow-inset-dark:rgba(255,255,255,0.2) 0 0.5px 0 0 inset, rgba(0,0,0,0.2) 0 0 0 0.5px inset, rgba(0,0,0,0.05) 0 1px 2px 0;
+}
+
+/* ── reset ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-body);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh;
+}
+button{font-family:inherit;color:inherit}
+a{color:var(--fg);text-decoration:none}
+img,svg{display:block}
+.tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+.meta{color:var(--meta)}
+.sronly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ── shell ─────────────────────────────────────────────── */
+.shell{max-width:var(--container-max);margin:0 auto;padding:0 var(--container-gutter-desktop)}
+
+/* ── topbar（与仪表盘一致）─────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in oklab,var(--bg) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .row{display:flex;align-items:center;gap:var(--space-4);height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-0.01em}
+.brand .mark{
+  width:26px;height:26px;border-radius:var(--radius-sm);background:var(--accent);
+  display:grid;place-items:center;color:var(--accent-on);box-shadow:var(--shadow-inset-dark);
+}
+.brand .mark svg{width:15px;height:15px}
+.brand b{font-size:var(--text-base)}
+.brand .sub{color:var(--meta);font-size:var(--text-sm);font-weight:400;margin-left:2px}
+.topbar .spacer{flex:1}
+.tb-link{font-size:var(--text-sm);color:var(--fg-2);padding:8px 10px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:6px}
+.tb-link:hover{background:rgba(28,28,28,0.04)}
+.tb-link svg{width:16px;height:16px}
+.tb-link.active{color:var(--fg);background:rgba(28,28,28,0.05)}
+.admin{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface)}
+.admin .ava{width:24px;height:24px;border-radius:var(--radius-pill);background:var(--fg);color:var(--on-dark);display:grid;place-items:center;font-size:11px;font-weight:600}
+.admin span{font-size:var(--text-sm)}
+
+/* ── page hero ─────────────────────────────────────────── */
+.back-link{
+  display:inline-flex;align-items:center;gap:6px;font-size:var(--text-sm);color:var(--fg-2);
+  padding:6px 0;margin-top:var(--space-6);border-radius:var(--radius-sm);
+}
+.back-link svg{width:16px;height:16px;transition:transform var(--motion-fast) var(--ease-standard)}
+.back-link:hover{color:var(--accent)}
+.back-link:hover svg{transform:translateX(-3px)}
+
+.status-hero{position:relative;padding:var(--space-4) 0 var(--space-6);overflow:hidden}
+.status-hero::before{
+  content:"";position:absolute;inset:-40% -10% auto -10%;height:340px;pointer-events:none;
+  background:
+    radial-gradient(40% 60% at 12% 0%, rgba(255,77,141,0.10), transparent 60%),
+    radial-gradient(45% 60% at 85% 0%, rgba(255,122,92,0.10), transparent 60%),
+    radial-gradient(50% 70% at 60% 10%, rgba(59,130,246,0.06), transparent 60%);
+  filter:blur(2px);
+}
+.status-hero .inner{position:relative}
+.eyebrow{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.08em;text-transform:uppercase;color:var(--meta)}
+.status-hero h1{font-size:clamp(28px,4vw,40px);line-height:var(--leading-tight);letter-spacing:var(--tracking-display);font-weight:600;margin:8px 0 0;display:inline-flex;align-items:center;gap:12px}
+.status-hero h1 .gdot{width:10px;height:10px;border-radius:50%;flex:none;align-self:center;background:var(--success)}
+.status-hero .row2{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-3)}
+
+.idline{font-family:var(--font-mono);font-size:var(--text-sm);color:var(--fg-2);margin-top:var(--space-4);display:flex;flex-wrap:wrap;gap:6px 0}
+.idline .seg{display:inline-flex;align-items:center;gap:6px}
+.idline .seg + .seg::before{content:"·";color:var(--meta);margin:0 10px}
+.idline .k{color:var(--meta);font-size:var(--text-xs)}
+.idline .v{color:var(--fg-2)}
+
+.kpis{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:var(--space-4)}
+.kpi{display:flex;align-items:baseline;gap:8px}
+.kpi .n{font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.kpi .lab{font-size:var(--text-sm);color:var(--muted)}
+.kpi .swatch{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:2px;transform:translateY(-2px)}
+
+/* ── buttons ───────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:var(--text-sm);line-height:1.5;font-weight:400;
+  padding:8px 14px;border-radius:var(--radius-sm);border:1px solid transparent;
+  background:var(--surface);color:var(--fg);cursor:pointer;
+  transition:opacity var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+  white-space:nowrap;
+}
+.btn svg{width:15px;height:15px}
+.btn:active{opacity:0.8}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn:disabled{cursor:default}
+.btn-primary{background:var(--fg);color:var(--on-dark);border-color:var(--fg);box-shadow:var(--shadow-inset-dark)}
+.btn-primary:hover{background:color-mix(in oklab,var(--fg),white 9%)}
+.btn-ghost{background:transparent;border-color:rgba(28,28,28,0.4);color:var(--fg)}
+.btn-ghost:hover{background:rgba(28,28,28,0.04)}
+.btn-cream{background:var(--surface);border-color:var(--border)}
+.btn-cream:hover{background:rgba(28,28,28,0.035)}
+.btn-sm{padding:5px 10px;font-size:var(--text-xs);border-radius:var(--radius-sm)}
+.btn-link{background:none;border:none;padding:4px 2px;color:var(--fg-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(28,28,28,0.25)}
+.btn-link:hover{text-decoration-color:var(--accent);color:var(--accent)}
+.btn-accent{background:var(--accent);color:var(--accent-on);box-shadow:var(--shadow-inset-dark)}
+.btn-accent:hover{background:var(--accent-hover)}
+.btn-danger-ghost{background:transparent;border-color:transparent;color:var(--danger)}
+.btn-danger-ghost:hover{background:color-mix(in oklab,var(--danger),white 90%)}
+
+/* ── section header ────────────────────────────────────── */
+.section{padding:var(--space-8) 0;border-top:1px solid var(--border)}
+.section:first-of-type{border-top:none}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-5)}
+.sec-head h2{font-size:var(--text-xl);font-weight:600;margin:0;letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:8px}
+.sec-head .lede{font-size:var(--text-sm);color:var(--muted);margin-top:2px}
+.sec-head .right{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.src-tag{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta)}
+
+/* month filter */
+.month-pick{
+  appearance:none;font-family:var(--font-mono);font-size:var(--text-sm);color:var(--fg);
+  background:var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235f5f5d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 10px center;
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 32px 7px 12px;cursor:pointer;
+  transition:box-shadow var(--motion-fast) var(--ease-standard);
+}
+.month-pick:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+
+/* ── timeline report block（复用 rblock 折叠手法）──────── */
+.reports{display:flex;flex-direction:column;gap:var(--space-3)}
+.rblock{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);overflow:hidden;transition:box-shadow var(--motion-base) var(--ease-standard)}
+.rblock.open{box-shadow:var(--elev-raised)}
+
+.tl-head{
+  display:grid;grid-template-columns:22px 1fr auto;gap:14px;
+  align-items:center;padding:14px 16px;cursor:pointer;background:none;border:none;width:100%;text-align:left;
+}
+.tl-head:hover{background:var(--row-hover)}
+.tl-head .chev{flex:none;width:18px;height:18px;color:var(--meta);transition:transform var(--motion-base) var(--ease-standard)}
+.rblock.open .tl-head .chev{transform:rotate(90deg);color:var(--fg-2)}
+
+.tl-date{display:flex;flex-direction:column;gap:3px}
+.tl-date .d{font-weight:600;font-size:var(--text-base);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:7px}
+.tl-date .d .today{font-size:var(--text-xs);padding:1px 7px;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-on);font-weight:500}
+.tl-date .ver{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta)}
+
+.tl-act{justify-self:end;display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);color:var(--fg-2)}
+.tl-act .chev-label{font-family:var(--font-mono)}
+
+.rbody{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--motion-base) var(--ease-standard)}
+.rblock.open .rbody{grid-template-rows:1fr}
+.rbody>.inner{overflow:hidden}
+.rbody .pad{padding:8px 16px 18px;border-top:1px solid var(--border)}
+
+/* lazy-load（非今日日期：详情未拉取）──────────────────── */
+.lazy{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 4px 4px}
+.lazy .tx{flex:1;min-width:200px}
+.lazy .tx .t{font-size:var(--text-sm);color:var(--fg)}
+.lazy .tx .d{font-size:var(--text-xs);color:var(--meta);font-family:var(--font-mono);margin-top:3px}
+.lazy .mini-stars{display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);color:var(--muted)}
+
+/* ── detail section label（── 概要 ──）────────────────── */
+.dsec{margin-top:18px}
+.dsec:first-child{margin-top:6px}
+.dsec-label{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.06em;text-transform:uppercase;color:var(--meta);
+  margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+.dsec-label .bar{width:3px;height:13px;background:var(--accent);border-radius:2px;display:inline-block}
+.dsec-label .nm{color:var(--fg);font-family:var(--font-body);font-weight:600;font-size:var(--text-lg);letter-spacing:normal;text-transform:none;line-height:1.2}
+.dsec-label .code{font-family:var(--font-mono);color:var(--meta);text-transform:none;letter-spacing:0;font-size:var(--text-xs);padding:1px 7px;border-radius:4px;border:1px solid var(--border)}
+.dsec-label .fb{margin-left:auto}
+
+/* overview + meta */
+.overview-text{font-size:var(--text-base);color:var(--fg);line-height:1.6;max-width:62ch}
+.gen-meta{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.gen-meta .pill{padding:1px 7px;border-radius:var(--radius-pill);border:1px solid var(--border);color:var(--fg-2)}
+.gen-meta .sep{color:rgba(28,28,28,0.2)}
+
+.notice{display:flex;gap:8px;background:color-mix(in oklab,var(--warn),white 88%);border:1px solid color-mix(in oklab,var(--warn),white 55%);border-radius:var(--radius-sm);padding:10px 12px;color:#6b5300;font-size:var(--text-sm)}
+.notice .ico{flex:none;color:var(--warn);margin-top:1px}
+
+/* topic cards */
+.topics{display:flex;flex-direction:column;gap:10px}
+.topic-card{border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(28,28,28,0.012);padding:13px 15px}
+.tc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tc-head .idx{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);min-width:18px}
+.tc-head .nm{font-weight:600;color:var(--fg);font-size:var(--text-base)}
+.lc{font-size:var(--text-xs);padding:1px 8px;border-radius:var(--radius-pill);font-family:var(--font-mono);white-space:nowrap}
+.lc.sustained{color:var(--muted);border:1px solid var(--border)}
+.lc.emerging{color:var(--accent);border:1px solid color-mix(in oklab,var(--accent),white 55%);background:color-mix(in oklab,var(--accent),white 90%)}
+.lc.user_defined{color:var(--fg-2);border:1px solid rgba(28,28,28,0.3);background:rgba(28,28,28,0.03)}
+.tc-head .stars{margin-left:auto}
+
+.tc-meta{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:9px;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta)}
+.tc-meta .m{display:inline-flex;align-items:center;gap:6px}
+.tc-meta .m .k{color:var(--meta)}
+.tc-meta .m .v{color:var(--fg-2)}
+.tc-meta .m.trend .v.up{color:var(--accent)}
+.tc-meta .m.trend .v.down{color:var(--muted)}
+
+.wbar{display:inline-flex;align-items:center;gap:6px;color:var(--meta);font-size:var(--text-xs);font-variant-numeric:tabular-nums}
+.wbar .track{width:48px;height:5px;border-radius:3px;background:rgba(28,28,28,0.08);overflow:hidden}
+.wbar .fill{height:100%;background:var(--fg);border-radius:3px;opacity:0.7}
+
+.tc-seg{margin-top:11px;padding-top:11px;border-top:1px dashed var(--border);display:grid;grid-template-columns:84px 1fr;gap:9px 16px;font-size:var(--text-sm)}
+.tc-seg .sl{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);text-transform:uppercase;letter-spacing:0.03em;padding-top:1px}
+.tc-seg .sv{color:var(--fg-2);line-height:1.55}
+.tc-seg .sv.concl{color:var(--fg);font-weight:500}
+
+.tc-foot{margin-top:11px;padding-top:11px;border-top:1px dashed var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.parts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.parts .pl{font-size:var(--text-xs);color:var(--meta);margin-right:2px}
+.member{font-size:var(--text-xs);padding:2px 8px;border-radius:var(--radius-pill);border:1px solid var(--border);color:var(--fg-2);background:var(--surface)}
+
+/* trend / highlights */
+.trend{font-size:var(--text-sm);color:var(--fg-2);display:flex;gap:8px;align-items:flex-start;line-height:1.55}
+.trend .ico{color:var(--accent);flex:none;margin-top:1px}
+.hl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.hl li{font-size:var(--text-sm);color:var(--fg-2);padding-left:16px;position:relative;line-height:1.5}
+.hl li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.hl.empty{color:var(--meta);font-size:var(--text-sm);padding-left:0}
+.hl.empty::before{display:none}
+
+/* resource sub-table */
+.gtable-wrap{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;background:var(--surface)}
+table.gtable{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+.gtable thead th{
+  text-align:left;font-weight:400;color:var(--muted);font-size:var(--text-xs);
+  padding:11px 14px;border-bottom:1px solid var(--border);background:rgba(28,28,28,0.02);white-space:nowrap;letter-spacing:0.02em;
+}
+.gtable thead th.center,.gtable tbody td.center{text-align:center}
+.gtable tbody td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.gtable tbody tr:last-child td{border-bottom:none}
+.gtable tbody tr{transition:background var(--motion-fast) var(--ease-standard)}
+.gtable tbody tr:hover{background:var(--row-hover)}
+.res-type{font-family:var(--font-mono);font-size:var(--text-xs);padding:1px 6px;border-radius:4px;border:1px solid var(--border);color:var(--fg-2)}
+.res-title{color:var(--fg);font-weight:500}
+.res-by{color:var(--fg-2)}
+.res-link{display:inline-block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;color:var(--fg);text-decoration:underline;text-underline-offset:2px}
+.res-link:hover{color:var(--accent)}
+.res-sum{color:var(--muted);font-size:var(--text-xs);margin-top:2px}
+
+/* engineering / empty states */
+.empty-inline{font-size:var(--text-sm);color:var(--meta);padding:6px 2px;display:inline-flex;align-items:center;gap:6px}
+
+/* topic tracking */
+.trace{display:flex;flex-direction:column;gap:8px}
+.trace .tr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--text-sm);padding:8px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(28,28,28,0.012)}
+.trace .tr .nm{font-weight:500;color:var(--fg)}
+.trace .tr .arr{color:var(--meta)}
+.trace .tr .stat{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-2)}
+.trace .tr .up{color:var(--accent)}
+
+/* overall score row */
+.score-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;padding:14px 0 4px;margin-top:6px;border-top:1px solid var(--border)}
+.score{display:inline-flex;align-items:center;gap:12px}
+.score .lbl{font-size:var(--text-xs);color:var(--muted)}
+.score .val{font-size:var(--text-base);font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums}
+.score .consumed-tag{font-size:var(--text-xs);padding:2px 9px;border-radius:var(--radius-pill);font-family:var(--font-mono)}
+.score .consumed-tag.on{color:var(--success);border:1px solid color-mix(in oklab,var(--success),white 55%);background:color-mix(in oklab,var(--success),white 88%)}
+.score .consumed-tag.off{color:var(--warn);border:1px solid color-mix(in oklab,var(--warn),white 55%);background:color-mix(in oklab,var(--warn),white 90%)}
+
+/* stars (rating) */
+.stars{display:inline-flex;gap:3px}
+.star{width:18px;height:18px;cursor:pointer;color:rgba(28,28,28,0.18);transition:color var(--motion-fast),transform var(--motion-fast)}
+.star svg{width:18px;height:18px}
+.star.filled{color:var(--star)}
+.star:hover{transform:scale(1.12)}
+.stars.sm .star{width:14px;height:14px}
+.stars.sm .star svg{width:14px;height:14px}
+
+/* LLM judge card */
+.judge{display:grid;grid-template-columns:96px 1fr;gap:24px;align-items:center;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:20px}
+.gauge{--p:0;width:96px;height:96px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*1%), rgba(28,28,28,0.08) 0);display:grid;place-items:center;position:relative}
+.gauge::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--surface)}
+.gauge .gv{position:relative;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.gauge .gv small{font-size:var(--text-xs);color:var(--meta);font-weight:400}
+.judge .dims{display:flex;flex-direction:column;gap:11px}
+.judge .dim{display:grid;grid-template-columns:120px 1fr 56px;gap:12px;align-items:center}
+.judge .dim .dl{font-size:var(--text-sm);color:var(--fg-2)}
+.judge .dim .dl .ok{font-size:var(--text-xs);color:var(--success);margin-left:6px}
+.judge .dim .dl .no{font-size:var(--text-xs);color:var(--danger);margin-left:6px}
+.judge .dim .dtrack{height:6px;border-radius:4px;background:rgba(28,28,28,0.08);overflow:hidden}
+.judge .dim .dfill{height:100%;border-radius:4px;background:var(--fg);opacity:0.72}
+.judge .dim .dv{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-2);text-align:right;font-variant-numeric:tabular-nums}
+.judge .summary{margin-top:4px;font-size:var(--text-sm);color:var(--muted);line-height:1.5}
+.judge .summary b{color:var(--fg);font-weight:500}
+.judge-meta{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);margin-top:10px;display:inline-flex;gap:10px;flex-wrap:wrap}
+.judge-meta .pill{padding:1px 7px;border-radius:var(--radius-pill);border:1px solid var(--border);color:var(--fg-2)}
+
+/* actions row */
+.actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:16px 0 4px;margin-top:10px;border-top:1px solid var(--border)}
+.actions-row .al{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);text-transform:uppercase;letter-spacing:0.04em;margin-right:auto}
+
+/* feedback / version button */
+.fb-btn{display:inline-flex;align-items:center;gap:5px;font-size:var(--text-xs);color:var(--fg-2);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 9px;cursor:pointer;font-family:var(--font-mono);transition:background var(--motion-fast),color var(--motion-fast),border-color var(--motion-fast)}
+.fb-btn:hover{color:var(--accent);border-color:color-mix(in oklab,var(--accent),white 55%);background:color-mix(in oklab,var(--accent),white 94%)}
+.fb-btn svg{width:13px;height:13px}
+.fb-btn.has{color:var(--accent);border-color:color-mix(in oklab,var(--accent),white 60%)}
+.fb-btn.unconsumed{color:var(--warn);border-color:color-mix(in oklab,var(--warn),white 55%);background:color-mix(in oklab,var(--warn),white 94%)}
+
+/* ── drawer ────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(28,28,28,0.34);z-index:50;opacity:0;visibility:hidden;transition:opacity var(--motion-base) var(--ease-standard),visibility var(--motion-base) var(--ease-standard)}
+.overlay.show{opacity:1;visibility:visible}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(460px,100vw);background:var(--bg);z-index:51;
+  transform:translateX(100%);transition:transform var(--motion-base) var(--ease-standard);
+  display:flex;flex-direction:column;border-left:1px solid var(--border);box-shadow:-12px 0 40px rgba(0,0,0,0.08);
+}
+.drawer.show{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-5);border-bottom:1px solid var(--border)}
+.drawer-head h3{margin:0;font-size:var(--text-lg);font-weight:600;letter-spacing:-0.01em}
+.drawer-head .sub{font-size:var(--text-xs);color:var(--meta);font-family:var(--font-mono);margin-top:3px}
+.drawer-head .x{border:none;background:rgba(28,28,28,0.04);width:32px;height:32px;border-radius:var(--radius-sm);cursor:pointer;display:grid;place-items:center;color:var(--fg-2)}
+.drawer-head .x:hover{background:rgba(28,28,28,0.08)}
+.drawer-head .x svg{width:16px;height:16px}
+.drawer-body{flex:1;overflow-y:auto;padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-5)}
+.drawer-foot{padding:var(--space-4) var(--space-5);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.drawer-foot .hint{margin-right:auto;font-size:var(--text-xs);color:var(--meta);min-height:16px;display:inline-flex;align-items:center;gap:6px}
+
+.fb-field{display:flex;flex-direction:column;gap:8px}
+.fb-field > .fl{font-family:var(--font-mono);font-size:var(--text-xs);letter-spacing:0.04em;text-transform:uppercase;color:var(--meta)}
+.fb-stars{display:inline-flex;gap:6px;align-items:center}
+.fb-stars .star{width:28px;height:28px}
+.fb-stars .star svg{width:28px;height:28px}
+.fb-stars .hint{font-size:var(--text-xs);color:var(--meta);margin-left:6px}
+
+.signal-pick{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.signal-pick button{border:none;background:var(--surface);font-size:var(--text-sm);padding:8px 14px;cursor:pointer;color:var(--fg-2);display:inline-flex;align-items:center;gap:6px}
+.signal-pick button + button{border-left:1px solid var(--border)}
+.signal-pick button.active{background:var(--fg);color:var(--on-dark)}
+.signal-pick button[data-sig="negative"].active{background:var(--danger);color:#fff}
+
+.tag-editor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);min-height:42px}
+.tag-editor .tag{display:inline-flex;align-items:center;gap:5px;font-size:var(--text-xs);padding:3px 5px 3px 9px;border-radius:var(--radius-pill);background:rgba(28,28,28,0.05);color:var(--fg)}
+.tag-editor .tag button{border:none;background:none;cursor:pointer;color:var(--meta);display:grid;place-items:center;padding:0;width:16px;height:16px;border-radius:50%}
+.tag-editor .tag button:hover{background:rgba(28,28,28,0.12);color:var(--fg)}
+.tag-editor .tag button svg{width:11px;height:11px}
+.tag-editor input{flex:1;min-width:120px;border:none;background:none;font-family:inherit;font-size:var(--text-sm);color:var(--fg);outline:none;padding:4px}
+
+.status-box{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(28,28,28,0.015)}
+.status-box .l{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--meta);text-transform:uppercase;letter-spacing:0.04em}
+.status-box .r{font-size:var(--text-xs);font-family:var(--font-mono);padding:2px 9px;border-radius:var(--radius-pill)}
+.status-box .r.on{color:var(--success);border:1px solid color-mix(in oklab,var(--success),white 55%);background:color-mix(in oklab,var(--success),white 88%)}
+.status-box .r.off{color:var(--warn);border:1px solid color-mix(in oklab,var(--warn),white 55%);background:color-mix(in oklab,var(--warn),white 90%)}
+.status-box .r.none{color:var(--meta);border:1px solid var(--border)}
+
+/* version history list */
+.vlist{display:flex;flex-direction:column;gap:10px}
+.vitem{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:13px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.vitem.current{border-color:color-mix(in oklab,var(--accent),white 50%);background:color-mix(in oklab,var(--accent),white 96%)}
+.vitem .vn{font-family:var(--font-mono);font-weight:600;color:var(--fg);font-size:var(--text-sm)}
+.vitem .vmeta{font-size:var(--text-xs);color:var(--meta);font-family:var(--font-mono);margin-top:2px}
+.vitem .vnote{font-size:var(--text-sm);color:var(--fg-2)}
+.vitem .curtag{font-size:var(--text-xs);padding:2px 9px;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-on);font-weight:500}
+
+/* footer */
+.foot{padding:var(--space-8) 0;color:var(--meta);font-size:var(--text-xs);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* toast */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--fg);color:var(--on-dark);font-size:var(--text-sm);padding:10px 16px;border-radius:var(--radius-sm);box-shadow:var(--shadow-inset-dark),0 8px 24px rgba(0,0,0,0.18);display:inline-flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:opacity var(--motion-base),transform var(--motion-base);max-width:min(90vw,420px)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast svg{width:16px;height:16px;color:var(--accent)}
+.toast.warn svg{color:var(--warn)}
+
+/* ── responsive ────────────────────────────────────────── */
+@media (max-width:1024px){
+  .shell{padding:0 var(--container-gutter-tablet)}
+  .judge{grid-template-columns:80px 1fr;gap:18px}
+}
+@media (max-width:720px){
+  .shell{padding:0 var(--container-gutter-phone)}
+  .tc-seg{grid-template-columns:1fr;gap:4px}
+  .tc-seg .sl{padding-top:0}
+  .judge{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .judge .dims{width:100%}
+  .judge .dim{grid-template-columns:1fr 48px;gap:4px 12px}
+  .judge .dim .dl{grid-column:1}
+  .judge .dim .dv{grid-column:2}
+  .judge .dim .dtrack{grid-column:1 / -1}
+  .score-row{flex-direction:column;align-items:flex-start}
+  .actions-row .al{margin-right:0;width:100%}
+  .gtable-wrap{border:none;border-radius:0;background:transparent}
+  .gtable thead{display:none}
+  .gtable,.gtable tbody,.gtable tr,.gtable td{display:block;width:auto}
+  .gtable tr{border:1px solid var(--border);border-radius:var(--radius-md);padding:6px 14px;margin-bottom:12px;background:var(--surface)}
+  .gtable tbody td{border-bottom:1px solid var(--border);padding:10px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .gtable tbody td:last-child{border-bottom:none}
+  .gtable tbody td::before{content:attr(data-label);color:var(--meta);font-size:var(--text-xs);font-family:var(--font-mono)}
+  .kpi .n{font-size:18px}
+  .kpis{gap:8px 22px}
+}
+@media (max-width:420px){
+  .topbar .row{height:54px}
+  .brand .sub{display:none}
+  .tb-link span{display:none}
+  .admin span{display:none}
+  .status-hero h1{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:0.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="shell">
+    <div class="row">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+        </span>
+        <b>群日报</b><span class="sub">管理系统</span>
+      </div>
+      <div class="spacer"></div>
+      <a class="tb-link active" href="index.html" title="返回仪表盘">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"/></svg>
+        <span>仪表盘</span>
+      </a>
+      <a class="tb-link" href="settings.html" title="系统设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </a>
+      <div class="admin">
+        <span class="ava">管</span><span>管理员</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ── PAGE HERO ──────────────────────────────────────── -->
+  <section class="status-hero" data-od-id="report-hero">
+    <div class="inner">
+      <div class="eyebrow">仪表盘 / 报告浏览</div>
+      <div class="row2">
+        <h1>
+          <span class="gdot" aria-hidden="true"></span>
+          <span id="g-title">班长群</span>
+          <span class="meta" style="font-size:0.42em;font-weight:400;letter-spacing:0">· 报告</span>
+        </h1>
+        <div style="display:inline-flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="exportMd()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            导出 Markdown
+          </button>
+        </div>
+      </div>
+
+      <div class="idline" id="g-idline"><!-- JS rendered --></div>
+      <div class="kpis" id="g-kpis"><!-- JS rendered --></div>
+    </div>
+  </section>
+
+  <!-- ── 历史日报时间线 ─────────────────────────────────── -->
+  <section class="section" data-od-id="timeline">
+    <div class="sec-head">
+      <div>
+        <h2>历史日报</h2>
+        <div class="lede">按日倒序排列，展开任意一天查看当日完整日报。</div>
+      </div>
+      <div class="right">
+        <label class="sronly" for="month-pick">按月筛选</label>
+        <select class="month-pick" id="month-pick">
+          <option value="2026-05">2026-05</option>
+          <option value="2026-04">2026-04</option>
+          <option value="2026-03">2026-03</option>
+          <option value="2026-02">2026-02</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="reports" id="reports"><!-- JS rendered --></div>
+  </section>
+
+  <footer class="foot">
+    <span>群日报 winnow · 多智能体报告系统</span>
+    <span class="mono">reports.html · 单文件 · 数据内联无网络请求</span>
+  </footer>
+</main>
+
+<!-- ── 反馈抽屉 ───────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <h3 id="drawer-title">评分反馈</h3>
+      <div class="sub" id="drawer-sub"></div>
+    </div>
+    <button class="x" onclick="closeDrawer()" aria-label="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body"><!-- JS rendered --></div>
+  <div class="drawer-foot">
+    <span class="hint" id="drawer-hint"></span>
+    <button class="btn btn-ghost" onclick="closeDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="saveFeedback()">保存反馈</button>
+  </div>
+</aside>
+
+<div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+<script src="api.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+ * 数据契约 — 字段名与后端对齐，勿改（数据由 boot 异步从 API 加载）
+ * GET /api/v1/reports?group_id=                      → report_list（时间线）
+ * GET /api/v1/reports/{report_version_id}/content     → details[date]（envelope.data，懒加载）
+ * GET /api/v1/feedback?group_id=                      → feedback_list
+ * POST /api/v1/feedback                               → saveFeedback 写回
+ * POST /api/v1/judge (LLM 评估，按需)                  → judge_result
+ * ════════════════════════════════════════════════════════════ */
+/* group 从 URL ?group_id= 读（默认葡萄船 g_7180a7cf2eff，有真实数据）；display_name 由 boot 填充 */
+const _params = new URLSearchParams(location.search);
+let group = { group_id: _params.get('group_id') || 'g_7180a7cf2eff', display_name: '' };
+let report_list = [];
+let details = {};          /* {date: content.data}，loadDetail 懒加载 */
+let feedback_list = [];
+let judge_result = null;   /* 按需 POST /judge 填充 */
+let latestDate = '';       /* report_list[0].date，替代原硬编码 '2026-05-29' */
+let activeDetail = {date:'', report_id:''};  /* 当前展开日报：反馈/评估绑定的 report 上下文 */
+
+/* 生命周期显示映射 */
+const LIFE_LABEL = {user_defined:"定义", sustained:"持续", emerging:"新兴"};
+const LIFE_ORDER = ["user_defined","sustained","emerging"];
+
+/* ── helpers ───────────────────────────────────────────── */
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const starSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.95 6.6 7.05.6-5.3 4.7 1.6 7L12 17.8 5.7 21.5l1.6-7L2 9.8l7.05-.6z"/></svg>';
+const warnSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+const trendSVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>';
+const chevSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+const fbSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+const xSmallSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+/* 反馈查找：按 target_type + target_id */
+function fbKey(t){ return t.target_type + ":" + t.target_id; }
+function findFeedback(type, id){
+  return feedback_list.find(f => f.target_type===type && String(f.target_id)===String(id)) || null;
+}
+
+/* 趋势箭头 */
+function trendChip(trend){
+  const t = (trend||'').trim();
+  let cls='up', arr='↗', lab=t||'持平';
+  if(/降|冷|衰/.test(t)){ cls='down'; arr='↘'; }
+  else if(/平|稳/.test(t)){ cls='flat'; arr='→'; }
+  return `<span class="${cls}">${esc(lab)} ${arr}</span>`;
+}
+
+/* ── render hero ───────────────────────────────────────── */
+function renderHero(){
+  document.getElementById('g-title').textContent = group.display_name;
+  document.getElementById('g-idline').innerHTML = `
+    <span class="seg"><span class="k">group_id</span><span class="v">${esc(group.group_id)}</span></span>
+    <span class="seg"><span class="k">report_type</span><span class="v">daily</span></span>
+    <span class="seg"><span class="k">时区</span><span class="v">Asia/Shanghai</span></span>`;
+  const monthPrefix = latestDate ? latestDate.slice(0,7) : '';
+  const thisMonth = monthPrefix ? report_list.filter(r=>r.date.startsWith(monthPrefix)).length : 0;
+  document.getElementById('g-kpis').innerHTML = [
+    {n:report_list.length, lab:'历史日报'},
+    {n:thisMonth, lab:'本月', c:'var(--fg)'},
+    {n: latestDate ? latestDate.slice(5) : '—', lab:'最近生成', c:'var(--accent)'}
+  ].map(x=>`<div class="kpi"><span class="n">${esc(x.n)}</span><span class="lab">${x.c?`<span class="swatch" style="background:${x.c}"></span>`:''}${esc(x.lab)}</span></div>`).join('');
+}
+
+/* ── stars ─────────────────────────────────────────────── */
+function renderStars(rating, key, opts){
+  opts = opts||{};
+  const sm = opts.sm?' sm':'';
+  let h = `<span class="stars${sm}" data-key="${esc(key)}">`;
+  for(let i=1;i<=5;i++){
+    const filled = i<=rating ? ' filled' : '';
+    const click = opts.interactive ? `onclick="quickRate('${esc(opts.type)}','${esc(opts.id)}',${i},'${esc(opts.label||'')}')"` : '';
+    const role = opts.interactive ? `role="button" tabindex="0" aria-label="${i}星"` : 'aria-hidden="true"';
+    const kb = opts.interactive ? `onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();quickRate('${esc(opts.type)}','${esc(opts.id)}',${i},'${esc(opts.label||'')}')}"` : '';
+    h += `<span class="star${filled}" ${role} ${kb} ${click}>${starSVG}</span>`;
+  }
+  return h + '</span>';
+}
+
+/* ── timeline head ─────────────────────────────────────── */
+function tlHead(r){
+  const isToday = r.date === latestDate;
+  return `<button class="tl-head" onclick="toggleBlock('${r.date}')" aria-expanded="false" data-date="${r.date}">
+    ${chevSVG.replace('<svg','<svg class="chev"')}
+    <span class="tl-date">
+      <span class="d">
+        ${esc(r.date.slice(5))}
+        ${isToday?`<span class="today">今天</span>`:''}
+      </span>
+      <span class="ver">v${r.latest_version}</span>
+    </span>
+    <span class="tl-act"><span class="chev-label" data-open="展开 ▾" data-close="收起 ▴">展开 ▾</span></span>
+  </button>`;
+}
+
+/* ── detail body（仅 05-29 有 content）─────────────────── */
+function topicCard(t, idx){
+  const fb = findFeedback('topic', t.topic_id);
+  const rating = fb ? parseInt(fb.rating,10)||0 : 0;
+  /* 因果链三段拆分：背景/过程/结论 三槽分别读 t.background / t.process / t.conclusion
+     （后端 unified_reporter 已拆为三字段，对应此处三槽；时间仍置「—」）。
+     description（汇入边界备注）不再上卡片。旧数据无 background/process 时显示「—」。 */
+  const trCls = /降|冷/.test(t.trend)?'down':(/平|稳/.test(t.trend)?'flat':'up');
+  return `<div class="topic-card">
+    <div class="tc-head">
+      <span class="idx">${idx+1}.</span>
+      <span class="nm">${esc(t.topic_name)}</span>
+      <span class="lc ${t.lifecycle}">${LIFE_LABEL[t.lifecycle]||t.lifecycle}</span>
+      <span class="wbar"><span class="track"><span class="fill" style="width:${Math.min(100,(t.weight||0)*10)}%"></span></span>${(t.weight||0).toFixed(1)}</span>
+      <span class="stars">${renderStars(rating, 'topic-'+t.topic_id, {interactive:true, type:'topic', id:t.topic_id, label:t.topic_name, sm:true})}</span>
+    </div>
+    <div class="tc-meta">
+      <span class="m"><span class="k">首次</span><span class="v">${esc(t.first_seen)}</span></span>
+      <span class="m"><span class="k">最近</span><span class="v">${esc(t.last_seen)}</span></span>
+      <span class="m"><span class="k">结论</span><span class="v">${esc(t.conclusion||'—')}</span></span>
+      <span class="m trend"><span class="k">趋势</span><span class="v ${trCls}">${esc(t.trend||'持平')} ${/降|冷/.test(t.trend)?'↘':(/平|稳/.test(t.trend)?'→':'↗')}</span></span>
+    </div>
+    <div class="tc-seg">
+      <span class="sl">时间</span><span class="sv">—</span>
+      <span class="sl">背景</span><span class="sv">${esc(t.background||'—')}</span>
+      <span class="sl">过程</span><span class="sv">${esc(t.process||'—')}</span>
+      <span class="sl">结论</span><span class="sv concl">${esc(t.conclusion||'—')}</span>
+    </div>
+    <div class="tc-foot">
+      <div class="parts">
+        <span class="pl">参与者</span>
+        ${(t.participants||[]).map(p=>`<span class="member">${esc(p)}</span>`).join('')}
+      </div>
+      ${fbButton('topic', t.topic_id, t.topic_name, fb)}
+    </div>
+  </div>`;
+}
+
+function resourceRows(d){
+  return (d.resources||[]).map((rs,i)=>{
+    const fb = findFeedback('resource', rs.resource_title);
+    const rating = fb ? parseInt(fb.rating,10)||0 : 0;
+    return `<tr>
+      <td data-label="序号" class="center meta mono">${i+1}</td>
+      <td data-label="标题"><div><div class="res-title">${esc(rs.resource_title)}</div><div class="res-sum">${esc(rs.summary||'')}</div></div></td>
+      <td data-label="类型"><span class="res-type">${esc(rs.resource_type)}</span></td>
+      <td data-label="链接">${rs.resource_type==='link'&&rs.url?`<a class="res-link" href="${esc(rs.url)}" target="_blank" rel="noopener noreferrer" title="${esc(rs.url)}">${esc(rs.url)}</a>`:`<span class="meta">—</span>`}</td>
+      <td data-label="分享者"><span class="res-by">${esc(rs.shared_by||'—')}</span></td>
+      <td data-label="评分">${renderStars(rating,'res-'+rs.resource_title,{interactive:true,type:'resource',id:rs.resource_title,label:rs.resource_title,sm:true})}</td>
+      <td data-label="反馈">${fbButton('resource', rs.resource_title, rs.resource_title, fb)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function judgeCard(){
+  const j = judge_result;
+  if(!j){
+    return `<div class="judge empty"><div class="empty-inline">未评估。点上方"LLM 评估"按钮触发 POST /judge（按需，未自动加载）。</div></div>`;
+  }
+  const score = Number(j.overall_score);
+  const pct = isFinite(score) ? Math.round(score*100) : 0;
+  const dimsArr = Array.isArray(j.dimensions) ? j.dimensions : [];
+  const dims = dimsArr.length ? dimsArr.map(dm=>{
+    const sc = Number(dm.score); const scTxt = isFinite(sc)?sc.toFixed(2):'—';
+    const w = isFinite(sc)?Math.round(sc*100):0;
+    return `<div class="dim">
+      <div class="dl">${esc(dm.dimension)}${dm.passed?'<span class="ok">通过</span>':'<span class="no">未达</span>'}</div>
+      <div class="dtrack"><div class="dfill" style="width:${w}%"></div></div>
+      <div class="dv">${scTxt}</div>
+    </div>`;
+  }).join('') : '<div class="empty-inline">（无维度数据）</div>';
+  const evid = dimsArr.map(x=>esc(x.evidence)).filter(Boolean).join('；');
+  return `<div class="judge">
+    <div class="gauge" style="--p:${pct}"><div class="gv">${pct}<small>/100</small></div></div>
+    <div>
+      <div class="dims">${dims}</div>
+      <div class="summary">${evid?('证据 · '+evid+'。<br>'):''}<b>${esc(j.summary||'')}</b></div>
+      <div class="judge-meta">评估模型 <span class="pill">${esc(j.model_used||'—')}</span> · ${esc(j.judged_at||'—')} · report_id <span class="pill">${esc(j.report_id||'—')}</span></div>
+    </div>
+  </div>`;
+}
+
+/* 反馈按钮（带采纳状态语义） */
+function fbButton(type, id, label, fb){
+  if(!fb){
+    return `<button class="fb-btn" onclick="openFeedback('${esc(type)}','${esc(id)}','${esc(label).replace(/'/g,"\\'")}',0)">反馈 ▾</button>`;
+  }
+  const cls = fb.consumed_at ? 'has' : 'unconsumed';
+  const title = fb.consumed_at ? `已采纳 · ${fb.consumed_at}` : '反馈待采纳（consumed_at 为空）';
+  return `<button class="fb-btn ${cls}" title="${esc(title)}" onclick="openFeedback('${esc(type)}','${esc(id)}','${esc(label).replace(/'/g,"\\'")}',${parseInt(fb.rating,10)||0})">
+    ${fb.consumed_at?'✓ 已评':'⚠ 已评'} ${esc(fb.rating)}星 ▾
+  </button>`;
+}
+
+function detailBody(r){
+  const d = details[r.date];
+  if(!d){
+    /* 详情未拉取（按需加载） */
+    return `<div class="pad"><div class="lazy">
+      <div class="tx">
+        <div class="t">该版本完整内容未加载</div>
+        <div class="d">GET /api/v1/reports/${esc(r.report_version_id)}/content</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadMissing('${esc(r.date)}', this)">加载完整报告</button>
+    </div></div>`;
+  }
+
+  const reportFb = findFeedback('report', r.report_id);
+  const reportRating = reportFb ? parseInt(reportFb.rating,10)||0 : 0;
+  const brk = d.resource_count_by_type ? Object.entries(d.resource_count_by_type).filter(([k,v])=>v>0).map(([k,v])=>`${k} <b>${v}</b>`).join(' · ') : '';
+
+  return `<div class="pad">
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">概要</span></div>
+      <div class="overview-text">${esc(d.overview)}${d.important_notice?'<br>重要通知：'+esc(d.important_notice):''}</div>
+      <div class="gen-meta">
+        模型 <span class="pill">${esc(d.model_used)}</span>
+        <span class="sep">·</span> 生成时间 <span class="pill">${esc(d.generation_time)}</span>
+        <span class="sep">·</span> 活跃成员 <span class="pill">${(d.active_members||[]).length}</span>
+        <span class="sep">·</span> 生命周期分布 <span class="pill">${(()=>{const lc={user_defined:0,sustained:0,emerging:0};(d.topics||[]).forEach(t=>{if(lc[t.lifecycle]!=null)lc[t.lifecycle]++;});return LIFE_ORDER.map(k=>`${lc[k]}${LIFE_LABEL[k]}`).join('·');})()}</span>
+      </div>
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">议题</span></div>
+      <div class="topics">${d.topics.map((t,i)=>topicCard(t,i)).join('')}</div>
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">趋势分析</span><span class="fb">${fbButton('trend','trend_'+r.date.replace(/-/g,''),'趋势分析',findFeedback('trend','trend_'+r.date.replace(/-/g,'')))}</span></div>
+      <div class="trend"><span class="ico">${trendSVG}</span><span>${esc(d.trend_analysis)}</span></div>
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">亮点</span></div>
+      ${d.highlights && d.highlights.length
+        ? `<ul class="hl">${d.highlights.map(h=>`<li>${esc(h)}</li>`).join('')}</ul>`
+        : `<div class="hl empty">—</div>`}
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">资源</span></div>
+      <div class="gtable-wrap">
+        <table class="gtable">
+          <thead><tr>
+            <th style="width:32px">#</th>
+            <th>标题 / 摘要</th>
+            <th>类型</th>
+            <th>链接</th>
+            <th>分享者</th>
+            <th>评分</th>
+            <th>反馈</th>
+          </tr></thead>
+          <tbody>${resourceRows(d)}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">工程问题</span></div>
+      ${d.engineering_issues && d.engineering_issues.length
+        ? `<div class="trace">${d.engineering_issues.map(it=>`<div class="tr"><span class="nm">${esc(it.description||'')}</span><span class="arr">→</span><span class="istat ${it.status||''}">${esc(it.status_desc||it.status||'')}</span></div>`).join('')}</div>`
+        : `<div class="empty-inline">（无）当日未归纳出工程性问题。</div>`}
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">LLM 评估</span></div>
+      ${judgeCard()}
+    </div>
+
+    <div class="dsec">
+      <div class="dsec-label"><span class="bar"></span><span class="nm">整体</span><span class="fb">${fbButton('report',r.report_id,'整体日报',reportFb)}</span></div>
+      <div class="score-row">
+        <span class="score">
+          <span class="lbl">整体评分</span>
+          ${renderStars(reportRating,'report-'+r.report_id,{interactive:true,type:'report',id:r.report_id,label:'整体日报'})}
+          <span class="val">${reportRating>0?reportRating.toFixed(1)+' / 5':'待评分'}</span>
+          ${reportFb ? `<span class="consumed-tag ${reportFb.consumed_at?'on':'off'}">${reportFb.consumed_at?'✓ 已采纳':'⚠ 待采纳'}</span>` : `<span class="consumed-tag none">未反馈</span>`}
+        </span>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <span class="al">该日报操作</span>
+      <button class="btn btn-ghost btn-sm" onclick="regen('${esc(r.date)}', this)">根据反馈重生成</button>
+      <button class="btn btn-cream btn-sm" onclick="exportMd('${esc(r.date)}')">导出 Markdown</button>
+      <button class="btn btn-cream btn-sm" onclick="pushFeishu('${esc(r.report_id)}', this)">推送飞书</button>
+      <button class="btn btn-cream btn-sm" onclick="generateCover('${esc(r.report_id)}', this)" title="生成当日日报配图（信息图风格，本地保存，约 1 分钟）">生成配图</button>
+      <button class="btn btn-cream btn-sm" onclick="runJudge('${esc(r.report_id)}','${esc(r.date)}', this)">LLM 评估</button>
+      <button class="btn btn-cream btn-sm" onclick="openVersions('${esc(r.date)}')">版本历史</button>
+      <button class="btn btn-danger-ghost btn-sm" onclick="deleteReport('${esc(r.report_id)}','${esc(r.date)}', this)" title="删除该日报（含全部版本 + 磁盘 L3 正文，不可撤销）">删除报告</button>
+    </div>
+
+  </div>`;
+}
+
+/* ── render timeline ───────────────────────────────────── */
+function renderReports(){
+  const wrap = document.getElementById('reports');
+  wrap.innerHTML = report_list.map((r,i)=>{
+    const open = r.date === latestDate;
+    return `<article class="rblock ${open?'open':''}" data-date="${r.date}" data-month="${r.date.slice(0,7)}">
+      ${tlHead(r)}
+      <div class="rbody"><div class="inner">${detailBody(r)}</div></div>
+    </article>`;
+  }).join('');
+  syncAria();
+}
+
+/* ── interactions ──────────────────────────────────────── */
+/* 懒加载某天日报 content（envelope.data）→ details[date]，失败回填错误占位 */
+async function loadDetail(r){
+  if(!r || details[r.date]) return details[r.date];
+  try{
+    details[r.date] = envelope(await api('/reports/'+r.report_version_id+'/content'));
+  }catch(e){
+    details[r.date] = { __error:e.message, overview:'加载失败：'+e.message, topics:[], resources:[], engineering_issues:[], highlights:[] };
+  }
+  return details[r.date];
+}
+
+async function toggleBlock(date){
+  const el = document.querySelector(`.rblock[data-date="${date}"]`);
+  if(!el) return;
+  el.classList.toggle('open');
+  syncAriaOne(el);
+  const lbl = el.querySelector('.chev-label');
+  if(lbl) lbl.textContent = el.classList.contains('open') ? '收起 ▴' : '展开 ▾';
+  /* 记录当前展开日报（反馈/评估绑定的 report 上下文，修复原 latestDate 错绑） */
+  if(el.classList.contains('open')){
+    const ar = report_list.find(x=>x.date===date);
+    activeDetail = {date: date, report_id: (ar&&ar.report_id)||''};
+  }
+  /* 展开且 content 未加载 → 懒加载后刷新 */
+  if(el.classList.contains('open') && !details[date]){
+    const r = report_list.find(x=>x.date===date);
+    if(r){ await loadDetail(r); refreshReportDetail(date); }
+  }
+}
+function syncAriaOne(el){
+  const h = el.querySelector('.tl-head');
+  if(h) h.setAttribute('aria-expanded', el.classList.contains('open')?'true':'false');
+}
+function syncAria(){document.querySelectorAll('.rblock').forEach(syncAriaOne);}
+
+function applyMonth(m){
+  document.querySelectorAll('.rblock').forEach(el=>{
+    el.style.display = (m==='all'||el.dataset.month===m) ? '' : 'none';
+  });
+}
+
+/* 点击星 → 以预设评分打开反馈抽屉 */
+function quickRate(type, id, n, label){
+  openFeedback(type, id, label, n);
+}
+
+/* ════════════════════════════════════════════════════════════
+ * 反馈抽屉
+ * ════════════════════════════════════════════════════════════ */
+let fbCtx = null; // {type,id,label, rating, signal, tags[]}
+
+const TYPE_LABEL = {report:"整体日报", topic:"议题", resource:"资源", trend:"趋势分析"};
+
+function openFeedback(type, id, label, preset){
+  const fb = findFeedback(type, id);
+  fbCtx = {
+    type, id, label: label||TYPE_LABEL[type]||type,
+    date: activeDetail.date || latestDate,
+    reportId: activeDetail.report_id || '',
+    rating: preset!=null ? preset : (fb ? parseInt(fb.rating,10)||0 : 0),
+    signal: fb ? fb.signal : 'positive',
+    tags: fb && fb.tags ? fb.tags.split(',').map(s=>s.trim()).filter(Boolean) : []
+  };
+  const title = document.getElementById('drawer-title');
+  const sub = document.getElementById('drawer-sub');
+  const body = document.getElementById('drawer-body');
+  document.getElementById('drawer-hint').textContent = '';
+
+  /* 恢复保存按钮（版本历史抽屉曾隐藏它） */
+  const saveBtn = document.querySelector('.drawer-foot .btn-primary');
+  if(saveBtn) saveBtn.style.display = '';
+
+  title.textContent = '评分反馈';
+  sub.textContent = `${TYPE_LABEL[type]||type} · ${id}`;
+
+  body.innerHTML = `
+    <div class="fb-field">
+      <span class="fl">目标</span>
+      <div class="status-box">
+        <span class="l">${esc(TYPE_LABEL[type]||type)}</span>
+        <span class="r ${fb && fb.consumed_at ? 'on' : (fb?'off':'none')}">${fb ? (fb.consumed_at?'✓ 已采纳':'⚠ 待采纳') : '未反馈'}</span>
+      </div>
+      <span class="meta mono" style="font-size:var(--text-xs)">${esc(type)} · ${esc(id)}${fb?(' · feedback_id '+esc(fb.feedback_id)):''}</span>
+    </div>
+
+    <div class="fb-field">
+      <span class="fl">评分</span>
+      <div class="fb-stars">
+        ${renderStars(fbCtx.rating,'fb-pick',{interactive:true,type:'__pick'})}
+        <span class="hint">${fbCtx.rating>0?fbCtx.rating+' 星':'点星评分'}</span>
+      </div>
+    </div>
+
+    <div class="fb-field">
+      <span class="fl">信号 signal</span>
+      <div class="signal-pick">
+        <button data-sig="positive" class="${fbCtx.signal==='positive'?'active':''}" onclick="setSignal('positive')">👍 正面</button>
+        <button data-sig="negative" class="${fbCtx.signal==='negative'?'active':''}" onclick="setSignal('negative')">👎 负面</button>
+      </div>
+    </div>
+
+    <div class="fb-field">
+      <span class="fl">标签 tags（回车添加）</span>
+      <div class="tag-editor" id="tag-editor">
+        ${fbCtx.tags.map((t,i)=>`<span class="tag">${esc(t)}<button onclick="removeTag(${i})" aria-label="删除">${xSmallSVG}</button></span>`).join('')}
+        <input id="tag-input" placeholder="${fbCtx.tags.length?'':'如：内容不完整、议题遗漏…'}" onkeydown="tagKeydown(event)" />
+      </div>
+      <span class="meta mono" style="font-size:var(--text-xs)">标签会作为 correction_mode=tag_only 写回，影响下次生成。</span>
+    </div>
+  `;
+
+  /* 接管 fb-pick 星的点击 */
+  body.querySelectorAll('.stars[data-key="fb-pick"] .star').forEach((s,i)=>{
+    s.onclick = ()=>{ fbCtx.rating = i+1; refreshFbStars(); };
+    s.onkeydown = (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fbCtx.rating=i+1; refreshFbStars(); } };
+  });
+
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+}
+function refreshFbStars(){
+  const box = document.querySelector('.stars[data-key="fb-pick"]');
+  if(!box) return;
+  [...box.children].forEach((s,i)=>s.classList.toggle('filled', i<fbCtx.rating));
+  box.parentElement.querySelector('.hint').textContent = fbCtx.rating>0 ? fbCtx.rating+' 星' : '点星评分';
+}
+function setSignal(sig){
+  fbCtx.signal = sig;
+  document.querySelectorAll('.signal-pick button').forEach(b=>b.classList.toggle('active', b.dataset.sig===sig));
+}
+function tagKeydown(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const inp = e.target;
+    const v = inp.value.trim();
+    if(v && !fbCtx.tags.includes(v)){
+      fbCtx.tags.push(v);
+      renderTagEditor();
+    }
+    inp.value='';
+  } else if(e.key==='Backspace' && !e.target.value && fbCtx.tags.length){
+    fbCtx.tags.pop(); renderTagEditor();
+  }
+}
+function renderTagEditor(){
+  const ed = document.getElementById('tag-editor');
+  ed.innerHTML = `${fbCtx.tags.map((t,i)=>`<span class="tag">${esc(t)}<button onclick="removeTag(${i})" aria-label="删除">${xSmallSVG}</button></span>`).join('')}<input id="tag-input" placeholder="${fbCtx.tags.length?'':'如：内容不完整、议题遗漏…'}" onkeydown="tagKeydown(event)" />`;
+  const inp = document.getElementById('tag-input'); if(inp) inp.focus();
+}
+function removeTag(i){ fbCtx.tags.splice(i,1); renderTagEditor(); }
+
+async function saveFeedback(){
+  if(!fbCtx){ return; }
+  if(fbCtx.rating<=0){
+    document.getElementById('drawer-hint').textContent = '请先点星给出评分';
+    return;
+  }
+  const fbDate = fbCtx.date || latestDate;
+  const report = report_list.find(r=>r.date===fbDate);
+  const hint = document.getElementById('drawer-hint');
+  const body = {
+    group_id: group.group_id,
+    date: fbDate,
+    report_id: fbCtx.reportId || (report ? report.report_id : ''),
+    target_type: fbCtx.type,
+    target_id: String(fbCtx.id),
+    signal: fbCtx.signal,
+    severity: 'info',
+    rating: String(fbCtx.rating),
+    tags: fbCtx.tags.join(','),
+    correction_mode: fbCtx.tags.length ? 'tag_only' : null,
+  };
+  try{
+    await api('/feedback', { method:'POST', body: JSON.stringify(body) });
+    /* 本地合并（避免重拉） */
+    const existing = findFeedback(fbCtx.type, fbCtx.id);
+    if(existing){ Object.assign(existing, body); }
+    else { feedback_list.push({ feedback_id:'fb_'+Date.now(), ...body, consumed_at:null }); }
+    refreshReportDetail(fbDate);
+    closeDrawer();
+    toast(`已保存「${fbCtx.label}」的 ${fbCtx.rating} 星反馈`);
+  }catch(e){
+    hint.textContent = '保存失败：'+e.message;
+  }
+}
+
+/* 刷新今日展开区块（评分回写后） */
+function refreshReportDetail(date){
+  const d = date || latestDate;
+  const el = document.querySelector(`.rblock[data-date="${d}"]`);
+  if(!el) return;
+  const inner = el.querySelector('.rbody .inner');
+  const r = report_list.find(x=>x.date===d);
+  if(r && inner) inner.innerHTML = detailBody(r);
+}
+
+/* ════════════════════════════════════════════════════════════
+ * 版本历史抽屉（复用 drawer 外壳）
+ * ════════════════════════════════════════════════════════════ */
+async function openVersions(date){
+  const r = report_list.find(x=>x.date===date);
+  if(!r){ toast('未找到该日报版本信息','warn'); return; }
+  const title = document.getElementById('drawer-title');
+  const sub = document.getElementById('drawer-sub');
+  const body = document.getElementById('drawer-body');
+  title.textContent = '版本历史';
+  sub.textContent = `${date} · report_id ${r.report_id}`;
+  /* 隐藏通用保存按钮（版本历史只读） */
+  const saveBtn = document.querySelector('.drawer-foot .btn-primary');
+  if(saveBtn) saveBtn.style.display = 'none';
+  body.innerHTML = `<div class="fb-field"><span class="fl">版本</span><div class="vlist"><div class="empty-inline">加载中…</div></div></div>`;
+  document.getElementById('drawer-hint').textContent = '加载中…';
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawer').setAttribute('aria-hidden','false');
+
+  /* 真实版本列表：GET /reports/{report_id}/versions */
+  let versions = [];
+  try{ versions = itemsOf(await api('/reports/'+r.report_id+'/versions')); }
+  catch(e){ document.getElementById('drawer-hint').textContent = '加载失败：'+e.message; return; }
+  if(!versions.length){
+    body.innerHTML = `<div class="fb-field"><span class="fl">版本</span><div class="vlist"><div class="empty-inline">无历史版本</div></div></div>`;
+    document.getElementById('drawer-hint').textContent = '只读';
+    return;
+  }
+  versions.sort((a,b)=>(b.version_number||0)-(a.version_number||0));
+  const curVer = r.latest_version || versions[0].version_number || 1;
+  body.innerHTML = `
+    <div class="fb-field">
+      <span class="fl">版本（共 ${versions.length} 个）</span>
+      <div class="vlist">
+        ${versions.map(v=>{
+          const isCur = (v.version_number||0)===curVer;
+          return `<div class="vitem ${isCur?'current':''}">
+            <div>
+              <div class="vn">v${v.version_number}</div>
+              <div class="vmeta">${esc(v.version_id)}</div>
+            </div>
+            <div class="vnote">${isCur?'当前版本':'历史版本'}<div class="vmeta">${esc(v.created_at||v.date||'')}</div></div>
+            ${isCur?'<span class="curtag">当前</span>':`<button class="btn btn-cream btn-sm" onclick="loadVersionContent('${esc(v.version_id)}')">查看</button>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <span class="meta mono" style="font-size:var(--text-xs)">数据来源 GET /reports/{report_id}/versions。点击「查看」加载旧版本 content。</span>
+  `;
+  document.getElementById('drawer-hint').textContent = '只读';
+}
+
+/* 版本历史「查看」：加载旧版本 content 渲染到抽屉（只读预览） */
+async function loadVersionContent(vid){
+  if(!vid) return;
+  const body = document.getElementById('drawer-body');
+  document.getElementById('drawer-hint').textContent = '加载版本内容…';
+  body.innerHTML = `<div class="fb-field"><div class="empty-inline">正在加载 ${esc(vid)}…</div></div>`;
+  try{
+    const d = envelope(await api('/reports/'+vid+'/content'));
+    const topics = (d.topics||[]).map(t=>`<div class="topic"><span class="tname">${esc(t.topic_name)}</span></div>`).join('');
+    body.innerHTML = `<div class="fb-field">
+        <span class="fl">${esc(vid)} · 概要</span>
+        <div class="overview-text">${esc(d.overview||'（无概要）')}${d.important_notice?'<br>重要通知：'+esc(d.important_notice):''}</div>
+      </div>
+      <div class="fb-field"><span class="fl">议题（${(d.topics||[]).length}）</span><div>${topics||'<div class="empty-inline">（无）</div>'}</div></div>
+      <span class="meta mono" style="font-size:var(--text-xs)">只读预览。完整数据见 GET /reports/${esc(vid)}/content。</span>`;
+    document.getElementById('drawer-hint').textContent = '只读';
+  }catch(e){
+    body.innerHTML = `<div class="fb-field"><div class="empty-inline">加载失败：${esc(e.message)}</div></div>`;
+    document.getElementById('drawer-hint').textContent = '加载失败';
+  }
+}
+
+function closeDrawer(){
+  document.getElementById('overlay').classList.remove('show');
+  const d = document.getElementById('drawer');
+  d.classList.remove('show');
+  d.setAttribute('aria-hidden','true');
+  fbCtx = null;
+  /* 恢复保存按钮显示 */
+  const saveBtn = document.querySelector('.drawer-foot .btn-primary');
+  if(saveBtn) saveBtn.style.display = '';
+}
+
+/* ── 顶部操作 ─────────────────────────────────────────── */
+/* 日期归一：YYYYMMDD → YYYY-MM-DD（与 boot 一致） */
+function normDate(d){ return (d&&d.length===8) ? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8) : (d||''); }
+/* /reports 返回行 → render 期望的 report_list 项（字段映射 + 同 date 取最新 version） */
+function normalizeReports(raw){
+  let list = raw.map(r=>({
+    ...r,
+    date: normDate(r.date),
+    report_version_id: r.version_id || r.report_version_id || '',
+    latest_version: r.version_number || r.latest_version || 1,
+    lifecycle_counts: r.lifecycle_counts || {user_defined:0,sustained:0,emerging:0},
+    topic_count: r.topic_count || 0,
+    resource_count: r.resource_count || 0,
+    engineering_count: r.engineering_count || 0,
+    overview_preview: r.overview_preview || '',
+    has_unconsumed_feedback: r.has_unconsumed_feedback || false,
+  }));
+  const byDate = {};
+  list.forEach(r => { if(!byDate[r.date] || r.latest_version > byDate[r.date].latest_version) byDate[r.date] = r; });
+  return Object.values(byDate).sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+}
+/* 重拉时间线 + 重载 content + 重渲染（regen 后调用） */
+async function reloadTimeline(){
+  report_list = normalizeReports(itemsOf(await api('/reports?group_id='+group.group_id)));
+  details = {};
+  for(const r of report_list){ await loadDetail(r); }
+  latestDate = (report_list.find(r=>details[r.date] && !details[r.date].__error) || report_list[0] || {}).date || '';
+  { const lr = report_list.find(x=>x.date===latestDate); activeDetail = {date: latestDate, report_id: (lr&&lr.report_id)||''}; }
+  renderHero();
+  renderReports();
+  applyMonth(latestDate ? latestDate.slice(0,7) : 'all');
+}
+/* 异步任务状态词表（runs=completed/failed，judge=done，reports task 等） */
+function isTerminalTask(s){ return s==='completed'||s==='done'||s==='succeeded'||s==='success'||s==='failed'||s==='error'||s==='cancelled'||s==='canceled'; }
+function isOkStatus(s){ return s==='completed'||s==='done'||s==='succeeded'||s==='success'; }
+function taskPath(res){ return (res && res.status_url) ? String(res.status_url).replace(/^\/api\/v1/,'') : ''; }
+/* 轮询 status_url（相对 /api/v1 的路径）直到终态或超时 */
+async function pollTask(statusPath, opts){
+  opts = opts||{};
+  const max = opts.max||180, interval = opts.interval||1500;
+  for(let i=0;i<max;i++){
+    try{ const st = await api(statusPath); if(st && st.status && isTerminalTask(st.status)) return st; }
+    catch(e){ /* 瞬断，继续 */ }
+    await new Promise(r=>setTimeout(r, interval));
+  }
+  return {status:'timeout'};
+}
+
+/* 推送飞书（POST /reports/{report_id}/feishu → 轮询 /reports/{rid}/tasks/{task_id}） */
+async function pushFeishu(rid, btn){
+  if(!rid){ toast('缺少 report_id','warn'); return; }
+  const orig = btn?btn.innerHTML:'';
+  if(btn) btn.disabled = true;
+  toast('正在推送「'+group.display_name+'」日报到飞书…', true);
+  try{
+    const res = await api('/reports/'+rid+'/feishu', {method:'POST'});
+    const p = taskPath(res);
+    const st = p ? await pollTask(p, {max:120, interval:1500}) : {status:'completed'};
+    if(isOkStatus(st.status)) toast('已推送「'+group.display_name+'」日报到飞书');
+    else if(st.status==='failed'||st.status==='error') toast('飞书推送失败：'+(st.error||st.detail||''),'warn');
+    else toast('飞书推送已提交，状态：'+st.status);
+  }catch(e){ toast('飞书推送失败：'+e.message,'warn'); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=orig; } }
+}
+
+/* 生成配图（POST /reports/{rid}/cover → 轮询 → toast）。只落本地，不挂飞书。
+   图片预览/位置的展示样式留 OD 设计，本函数不渲染预览。 */
+async function generateCover(rid, btn){
+  if(!rid){ toast('缺少 report_id','warn'); return; }
+  const orig = btn?btn.innerHTML:'';
+  if(btn) btn.disabled = true;
+  toast('正在生成配图（约 1 分钟）…', true);
+  try{
+    const res = await api('/reports/'+rid+'/cover', {method:'POST'});
+    const p = taskPath(res);
+    const st = p ? await pollTask(p, {max:180, interval:2000}) : {status:'completed'};
+    if(isOkStatus(st.status)) toast('配图已生成（本地，可用"推送飞书"挂到图片字段）');
+    else if(st.status==='failed'||st.status==='error') toast('配图生成失败：'+(st.error||st.detail||''),'warn');
+    else toast('配图生成已提交，状态：'+st.status);
+  }catch(e){ toast('配图生成失败：'+e.message,'warn'); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=orig; } }
+}
+
+/* LLM 评估（POST /judge → 轮询 /judge/{task_id} → 赋值 judge_result → 重渲染当前块） */
+async function runJudge(rid, date, btn){
+  if(!rid){ toast('缺少 report_id','warn'); return; }
+  const orig = btn?btn.innerHTML:'';
+  if(btn) btn.disabled = true;
+  toast('正在提交 LLM 评估…', true);
+  try{
+    const res = await api('/judge', {method:'POST', body: JSON.stringify({report_id: rid})});
+    const p = taskPath(res) || ('/judge/'+(res&&res.task_id||''));
+    const st = await pollTask(p, {max:200, interval:2000});
+    if(isOkStatus(st.status) && st.result!=null){
+      try{ judge_result = typeof st.result==='string' ? JSON.parse(st.result) : st.result; }
+      catch(e){ judge_result = st.result; }
+      toast('LLM 评估完成');
+      if(date) refreshReportDetail(date);
+    } else if(st.status==='failed'||st.status==='error'){
+      toast('LLM 评估失败：'+(st.error||''),'warn');
+    } else {
+      toast('LLM 评估进行中/超时，状态：'+st.status);
+    }
+  }catch(e){ toast('LLM 评估失败：'+e.message,'warn'); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=orig; } }
+}
+
+/* 懒加载占位「加载完整报告」按钮 → 真实拉取 content 并刷新 */
+async function loadMissing(date, btn){
+  const r = report_list.find(x=>x.date===date);
+  if(!r) return;
+  if(btn) btn.disabled = true;
+  toast('正在加载 '+date+' 完整报告…', true);
+  delete details[date];   /* 覆盖之前的错误占位，允许重试 */
+  await loadDetail(r);
+  refreshReportDetail(date);
+}
+
+async function regen(date){
+  const d = date || latestDate;
+  const r = report_list.find(x=>x.date===d);
+  if(!r){ toast('无可重新生成的日报','warn'); return; }
+  toast('正在重新生成「'+group.display_name+'」'+d+' 日报…');
+  try{
+    const res = await api('/reports/'+r.report_version_id+'/regenerate', {method:'POST'});
+    const p = taskPath(res);
+    if(p){
+      toast('重生成任务已入队，等待完成…', true);
+      const st = await pollTask(p, {max:200, interval:2000});
+      if(st.status==='failed'||st.status==='error'){ toast('重新生成失败：'+(st.error||''),'warn'); }
+    }
+    await reloadTimeline();
+    toast('已重新生成「'+group.display_name+'」'+d+' 日报');
+  }catch(e){ toast('重新生成失败：'+e.message,'warn'); }
+}
+async function exportMd(date){
+  const d = date || latestDate;
+  const r = report_list.find(x=>x.date===d);
+  if(!r){ toast('无可导出的日报','warn'); return; }
+  try{
+    const md = await apiText('/reports/'+r.report_version_id+'/export');
+    const blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (group.display_name||group.group_id)+'_'+d+'.md';
+    a.click(); URL.revokeObjectURL(a.href);
+    toast('已导出「'+group.display_name+' '+d+'」Markdown');
+  }catch(e){ toast('导出失败：'+e.message,'warn'); }
+}
+
+/* 删除整份报告：DELETE /reports/{report_id}（删全部版本 + 磁盘 L3 正文；议题摘要/反馈不动） */
+async function deleteReport(rid, date, btn){
+  if(!rid){ toast('缺少 report_id','warn'); return; }
+  const name = group.display_name || group.group_id;
+  if(!confirm(`确定删除「${name}」${date} 的整份报告？\n\n此操作不可撤销：将删除该报告的全部历史版本，以及磁盘上的 L3 正文（data/processed/{group_id}/{date}/）。议题摘要(topic_summaries)与评分反馈不受影响。`)) return;
+  const orig = btn?btn.innerHTML:'';
+  if(btn) btn.disabled = true;
+  try{
+    await api('/reports/'+encodeURIComponent(rid), {method:'DELETE'});
+    /* 本地移除该日期报告 + 其 content 缓存，重算 latestDate / activeDetail 后重渲染 */
+    report_list = report_list.filter(x=>x.date!==date);
+    delete details[date];
+    if(latestDate===date){ latestDate = (report_list[0]||{}).date || ''; }
+    if(activeDetail.date===date){ activeDetail = {date:'', report_id:''}; }
+    renderHero();
+    renderReports();
+    applyMonth(latestDate ? latestDate.slice(0,7) : 'all');
+    toast('已删除「'+name+'」'+date+' 报告');
+  }catch(e){ toast('删除失败：'+e.message,'warn'); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=orig; } }
+}
+
+/* ── toast ─────────────────────────────────────────────── */
+function toast(msg, kind){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind?(' '+kind):'');
+  const ico = kind==='warn' ? warnSVG : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  el.innerHTML = ico + `<span>${esc(msg)}</span>`;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),220); }, 2600);
+}
+
+/* ── 键盘：Esc 关抽屉 ──────────────────────────────────── */
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('drawer').classList.contains('show')) closeDrawer();
+});
+
+/* ── boot ──────────────────────────────────────────────── */
+document.getElementById('month-pick').addEventListener('change', e=>applyMonth(e.target.value));
+(async()=>{
+  try{
+    const ov = await api('/overview');
+    const g = (ov.groups||[]).find(x=>x.group_id===group.group_id) || (ov.groups||[])[0];
+    if(g){ group.group_id = g.group_id; group.display_name = g.display_name; }
+    /* /reports 返回的字段（version_id / version_number / date=YYYYMMDD）映射为 render 期望的
+       report_version_id / latest_version / date=YYYY-MM-DD；topic_count/lifecycle_counts 等后端
+       未返回 → 默认 0（detailBody 的生命周期分布改从 content.topics 实时算，见下） */
+    const normDate = d => (d&&d.length===8) ? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8) : (d||'');
+    report_list = itemsOf(await api('/reports?group_id='+group.group_id)).map(r=>({
+      ...r,
+      date: normDate(r.date),
+      report_version_id: r.version_id || r.report_version_id || '',
+      latest_version: r.version_number || r.latest_version || 1,
+      lifecycle_counts: r.lifecycle_counts || {user_defined:0,sustained:0,emerging:0},
+      topic_count: r.topic_count || 0,
+      resource_count: r.resource_count || 0,
+      engineering_count: r.engineering_count || 0,
+      overview_preview: r.overview_preview || '',
+      has_unconsumed_feedback: r.has_unconsumed_feedback || false,
+    }));
+    /* 按 date 去重，保留最新 version（/reports 返回每 version 一行，同 date 取 version_number 最大） */
+    const _byDate = {};
+    report_list.forEach(r => { if(!_byDate[r.date] || r.latest_version > _byDate[r.date].latest_version) _byDate[r.date] = r; });
+    report_list = Object.values(_byDate).sort((a,b)=> a.date<b.date?1:a.date>b.date?-1:0);
+    latestDate = report_list[0] ? report_list[0].date : '';
+    try{ feedback_list = itemsOf(await api('/feedback?group_id='+group.group_id+(latestDate?'&date='+latestDate:''))); }catch(e){}
+    /* 预载所有 content（disk 缺失日期 loadDetail 回填错误占位，不阻塞渲染） */
+    for(const r of report_list){ await loadDetail(r); }
+    /* latestDate 优先选有 content 的最新（跳过 disk 缺失日期，如 0520/0519 daily.json 丢失） */
+    latestDate = (report_list.find(r=>details[r.date] && !details[r.date].__error) || report_list[0] || {}).date || '';
+    { const lr = report_list.find(x=>x.date===latestDate); activeDetail = {date: latestDate, report_id: (lr&&lr.report_id)||''}; }
+  }catch(e){
+    document.getElementById('reports').insertAdjacentHTML('afterbegin',
+      '<div class="pad" style="color:var(--danger)">加载失败：'+esc(e.message)+'</div>');
+  }
+  renderHero();
+  renderReports();
+  applyMonth(latestDate ? latestDate.slice(0,7) : 'all');
+})();
+</script>
+</body>
+</html>

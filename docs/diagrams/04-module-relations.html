@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>源码模块关系图 — z-winnow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c-bg: #f8fafc;
+      --c-canvas: #ffffff;
+      --c-border: #cbd5e1;
+      --c-text-main: #0f172a;
+      --c-text-sub: #64748b;
+      --c-accent: #dc2626;
+      --font-ui: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--c-bg);
+      padding: 40px;
+      min-height: 100vh;
+    }
+    .diagram-container { max-width: 1100px; margin: 0 auto; }
+    .diagram-canvas {
+      background: var(--c-canvas);
+      border: 1px solid var(--c-border);
+      padding: 32px;
+    }
+    .diagram-header {
+      border-bottom: 1px solid var(--c-border);
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+    .diagram-title {
+      font-size: 20px; font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+    .diagram-subtitle {
+      font-size: 11px; font-weight: 500;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Module grid */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .module-card {
+      border: 1px solid var(--c-border);
+      padding: 12px;
+      background: var(--c-canvas);
+    }
+    .module-card.core {
+      border-color: var(--c-text-main);
+      border-width: 2px;
+    }
+    .module-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-text-main);
+      margin-bottom: 4px;
+    }
+    .module-desc {
+      font-size: 10px;
+      color: var(--c-text-sub);
+      line-height: 1.5;
+    }
+    .module-files {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+    .module-file {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 1px 4px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      padding: 2px 6px;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-sub);
+    }
+    .badge-solid {
+      background: var(--c-text-main);
+      color: var(--c-canvas);
+      border-color: var(--c-text-main);
+    }
+
+    /* Dependency arrows */
+    .dep-section {
+      margin-top: 24px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--c-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--c-border);
+    }
+
+    .dep-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--c-bg);
+    }
+    .dep-row:last-child { border-bottom: none; }
+    .dep-from, .dep-to {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--c-text-main);
+      padding: 3px 8px;
+      border: 1px solid var(--c-border);
+      min-width: 120px;
+      text-align: center;
+    }
+    .dep-from { background: var(--c-canvas); }
+    .dep-to { background: var(--c-bg); }
+    .dep-arrow {
+      color: var(--c-text-sub);
+      display: flex;
+      align-items: center;
+    }
+    .dep-label {
+      font-size: 9px;
+      color: var(--c-text-sub);
+      margin-left: 4px;
+    }
+
+    /* Dependency matrix */
+    .dep-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      margin-top: 8px;
+    }
+    .dep-matrix th {
+      font-weight: 500;
+      color: var(--c-text-sub);
+      text-align: center;
+      padding: 6px 4px;
+      border-bottom: 1px solid var(--c-border);
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+    .dep-matrix th.row-header {
+      text-align: right;
+      padding-right: 8px;
+    }
+    .dep-matrix td {
+      text-align: center;
+      padding: 4px;
+      border-bottom: 1px solid var(--c-bg);
+      color: var(--c-text-sub);
+    }
+    .dep-matrix td.self { color: var(--c-border); }
+    .dep-matrix td.dep {
+      color: var(--c-text-main);
+      font-weight: 600;
+    }
+    .dep-matrix td.dep-weak {
+      color: var(--c-text-sub);
+    }
+
+    .note {
+      font-size: 10px;
+      color: var(--c-text-sub);
+      border-left: 2px solid var(--c-border);
+      padding-left: 8px;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-container">
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <div class="diagram-title">源码模块关系图</div>
+        <div class="diagram-subtitle">z-winnow / src/ 目录结构与依赖关系 / v2.0</div>
+      </div>
+
+      <!-- 模块卡片 -->
+      <div class="section-title">模块一览 — src/z_winnow/</div>
+      <div class="module-grid">
+        <div class="module-card core">
+          <div class="module-name">graph/</div>
+          <div class="module-desc">LangGraph StateGraph 构建器<br/>主图入口 + 节点定义</div>
+          <div class="module-files">
+            <span class="module-file">builder.py</span>
+            <span class="module-file">state.py</span>
+            <span class="module-file">error_handling.py</span>
+            <span class="module-file">nodes/</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">subagents/</div>
+          <div class="module-desc">子 Agent 实现<br/>统一日报 + 输出合成 + 周报</div>
+          <div class="module-files">
+            <span class="module-file">unified_reporter/</span>
+            <span class="module-file">output_composer/</span>
+            <span class="module-file">weekly_aggregator/</span>
+            <span class="module-file">contracts/</span>
+            <span class="module-file">incremental_prompt/</span>
+          </div>
+        </div>
+        <div class="module-card core">
+          <div class="module-name">pipeline/</div>
+          <div class="module-desc">数据管道基础设施<br/>API 客户端 + 存储层 + 上下文</div>
+          <div class="module-files">
+            <span class="module-file">database.py</span>
+            <span class="module-file">weflow_client.py</span>
+            <span class="module-file">context.py</span>
+            <span class="module-file">group_config.py</span>
+            <span class="module-file">report_version.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">content_enrich/</div>
+          <div class="module-desc">内容增强管线<br/>XML 解析 + Vision + 链接预览</div>
+          <div class="module-files">
+            <span class="module-file">xml_parsers.py</span>
+            <span class="module-file">__init__.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">outputs/</div>
+          <div class="module-desc">输出层<br/>飞书上传 + 配图 + 报告写出</div>
+          <div class="module-files">
+            <span class="module-file">feishu.py</span>
+            <span class="module-file">report_writer.py</span>
+            <span class="module-file">image_gen.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">config/</div>
+          <div class="module-desc">配置管理<br/>pydantic-settings 单例</div>
+          <div class="module-files">
+            <span class="module-file">settings.py</span>
+            <span class="module-file">models.py</span>
+            <span class="module-file">defaults.yaml</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">templates/</div>
+          <div class="module-desc">Jinja2 模板<br/>44 个模板 (22 页面 + 17 组件)</div>
+          <div class="module-files">
+            <span class="module-file">renderer.py</span>
+            <span class="module-file">pages/</span>
+            <span class="module-file">components/</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">web/</div>
+          <div class="module-desc">Web 控制面板<br/>FastAPI + HTMX</div>
+          <div class="module-files">
+            <span class="module-file">app.py</span>
+            <span class="module-file">routes/</span>
+            <span class="module-file">10+ 页面</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">memory/</div>
+          <div class="module-desc">MemOS 适配器<br/>3 模式 + 同步队列 + 反馈</div>
+          <div class="module-files">
+            <span class="module-file">factory.py</span>
+            <span class="module-file">adapter.py</span>
+            <span class="module-file">sync_worker.py</span>
+            <span class="module-file">feedback_sync.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">observability/</div>
+          <div class="module-desc">可观测性<br/>LangSmith 追踪 + structlog</div>
+          <div class="module-files">
+            <span class="module-file">tracing.py</span>
+            <span class="module-file">logging.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">rl/</div>
+          <div class="module-desc">RL 训练数据<br/>reward 计算 + 校验</div>
+          <div class="module-files">
+            <span class="module-file">correction_loader.py</span>
+          </div>
+        </div>
+        <div class="module-card">
+          <div class="module-name">orchestrator/</div>
+          <div class="module-desc">任务拆解循环<br/>DeepAgent (1 文件)</div>
+          <div class="module-files">
+            <span class="module-file">orchestrator_loop.py</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 依赖关系 -->
+      <div class="dep-section">
+        <div class="section-title">核心依赖链（import 方向 →）</div>
+        <div class="dep-row">
+          <div class="dep-from">graph/builder</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">state</div>
+          <div class="dep-label">OverallState schema</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">graph/builder</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">content_enrich</div>
+          <div class="dep-label">node_content_enrich</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">graph/builder</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">pipeline</div>
+          <div class="dep-label">weflow_client, database, context</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">graph/builder</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">subagents/*</div>
+          <div class="dep-label">unified_reporter, output_composer, weekly</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">graph/builder</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">memory</div>
+          <div class="dep-label">MemOS adapter (orchestrator node)</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">subagents/*</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">config</div>
+          <div class="dep-label">Settings 单例, models factory</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">subagents/output_composer</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">templates</div>
+          <div class="dep-label">Jinja2 渲染 (Phase H)</div>
+        </div>
+        <div class="dep-row">
+          <div class="dep-from">web</div>
+          <div class="dep-arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="dep-to">graph/builder</div>
+          <div class="dep-label">get_graph() 独立调用</div>
+        </div>
+      </div>
+
+      <!-- 依赖矩阵 -->
+      <div class="dep-section">
+        <div class="section-title">依赖矩阵 — 行 import 列 (●=强依赖 ○=弱/惰性 import)</div>
+        <table class="dep-matrix">
+          <thead>
+            <tr>
+              <th class="row-header"></th>
+              <th>graph</th>
+              <th>subagents</th>
+              <th>pipeline</th>
+              <th>config</th>
+              <th>memory</th>
+              <th>enrich</th>
+              <th>outputs</th>
+              <th>templates</th>
+              <th>web</th>
+              <th>rl</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th class="row-header">graph</th>
+              <td class="self">—</td>
+              <td class="dep">●</td>
+              <td class="dep">●</td>
+              <td class="dep">●</td>
+              <td class="dep">○</td>
+              <td class="dep">●</td>
+              <td class="dep-weak">○</td>
+              <td class="dep-weak">○</td>
+              <td></td>
+              <td class="dep-weak">○</td>
+            </tr>
+            <tr>
+              <th class="row-header">subagents</th>
+              <td></td>
+              <td class="self">—</td>
+              <td class="dep-weak">○</td>
+              <td class="dep">●</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td class="dep">●</td>
+              <td></td>
+              <td class="dep-weak">○</td>
+            </tr>
+            <tr>
+              <th class="row-header">pipeline</th>
+              <td></td>
+              <td></td>
+              <td class="self">—</td>
+              <td class="dep">●</td>
+              <td class="dep-weak">○</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th class="row-header">content_enrich</th>
+              <td></td>
+              <td></td>
+              <td class="dep-weak">○</td>
+              <td class="dep">●</td>
+              <td></td>
+              <td class="self">—</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th class="row-header">web</th>
+              <td class="dep">●</td>
+              <td></td>
+              <td class="dep">●</td>
+              <td class="dep">●</td>
+              <td class="dep-weak">○</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td class="self">—</td>
+              <td></td>
+            </tr>
+            <tr>
+              <th class="row-header">memory</th>
+              <td></td>
+              <td></td>
+              <td class="dep-weak">○</td>
+              <td class="dep">●</td>
+              <td class="self">—</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th class="row-header">outputs</th>
+              <td></td>
+              <td></td>
+              <td class="dep-weak">○</td>
+              <td class="dep">●</td>
+              <td></td>
+              <td></td>
+              <td class="self">—</td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        P016 惰性导入: graph/builder 中对 memory、outputs、rl 的 import 均在函数体内，不在模块顶层。减少启动耦合。<br/>
+        config/ 为所有模块的共同依赖 (Settings 单例 + models 工厂)。S7 设计标准: 配置单源。<br/>
+        graph/ 是唯一入口 — 所有数据流经由 builder.py 的节点函数编排。web/ 通过 get_graph() 独立调用。
+      </div>
+    </div>
+  </div>
+</body>
+</html>

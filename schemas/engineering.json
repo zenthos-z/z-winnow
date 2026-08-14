@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://z-winnow/schemas/engineering.json",
+  "title": "Engineering Issues Report v2",
+  "description": "工程问题与解决方案输出 JSON Schema (v2, no topic fields — T-W8-4). 与 layer3_storage.py 的 write_layer3_json() engineering 段对齐: 仅含 issues + group_summary + model_used, 不含 new_topics/updated_topics.",
+  "type": "object",
+  "required": ["date", "issues", "model_used"],
+  "properties": {
+    "date": {
+      "type": "string",
+      "description": "报告日期 YYYYMMDD",
+      "pattern": "^\\d{8}$"
+    },
+    "issues": {
+      "type": "array",
+      "description": "工程问题列表",
+      "items": {
+        "$ref": "#/$defs/EngineeringIssue"
+      }
+    },
+    "group_summary": {
+      "type": "object",
+      "description": "按分组的摘要。key 为分组名，value 为该分组的概括描述",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "model_used": {
+      "type": "string",
+      "description": "使用的模型标识"
+    }
+  },
+  "$defs": {
+    "EngineeringIssue": {
+      "type": "object",
+      "description": "单条工程问题记录",
+      "required": ["datetime", "group", "description", "solution", "key_operations", "status", "status_desc", "source_members"],
+      "properties": {
+        "datetime": {
+          "type": "string",
+          "description": "日期时间，格式 YYYY-MM-DD HH:MM"
+        },
+        "group": {
+          "type": "string",
+          "description": "问题分组",
+          "enum": [
+            "部署与基础设施",
+            "开发与调试工具",
+            "记忆与进化机制",
+            "生态与工具链",
+            "成本控制与性能优化",
+            "安全与合规"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "description": "问题描述"
+        },
+        "solution": {
+          "type": "string",
+          "description": "解决方案或当前进展"
+        },
+        "key_operations": {
+          "type": "string",
+          "description": "关键操作 / 工具提及"
+        },
+        "status": {
+          "type": "string",
+          "description": "状态符号",
+          "enum": ["✅", "📝", "🔄", "⚠️"]
+        },
+        "status_desc": {
+          "type": "string",
+          "description": "状态描述（3-6 字）",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "source_members": {
+          "type": "string",
+          "description": "信息来源成员，逗号分隔"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

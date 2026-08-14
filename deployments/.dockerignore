@@ -1,0 +1,71 @@
+# ============================================================
+# .dockerignore — z-winnow
+# Prevents sensitive files and dev artifacts from entering Docker images.
+# EXP-013: This is the FIRST line of defense against credential leaks.
+# ============================================================
+
+# --- Secrets & environment (CRITICAL: R6 mitigation) ---
+.env
+.env.*
+!.env.example
+
+# --- Python bytecode & caches ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# --- Git ---
+.git/
+.gitignore
+.gitattributes
+
+# --- Tool caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Development ---
+tests/
+.python-version
+.venv/
+venv/
+env/
+
+# --- Data & outputs (mounted as volumes, not baked into image) ---
+data/
+memory/topic_tracker_*.md
+reports/
+outputs/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- IDE & editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Claude Code ---
+.claude/
+!.claude/agents/
+!.claude/skills/
+
+# --- CI/CD ---
+.github/
+.pre-commit-config.yaml
+
+# --- Docs (not needed at runtime) ---
+docs/
+plans/
+
+# --- Temporary files ---
+*.tmp.*
+*.tmp

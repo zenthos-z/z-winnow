@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://z-winnow/schemas/resource_extraction_v1.json",
+  "title": "Resource Extraction Report v1",
+  "description": "资源提取输出 JSON Schema，对齐旧系统 docs/资源筛选提示词.md",
+  "type": "object",
+  "required": ["resources", "count_by_type"],
+  "properties": {
+    "date": {
+      "type": "string",
+      "description": "提取日期 YYYY-MM-DD",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "resources": {
+      "type": "array",
+      "description": "提取的资源列表",
+      "items": {
+        "$ref": "#/$defs/ResourceItem"
+      }
+    },
+    "count_by_type": {
+      "type": "object",
+      "description": "按资源类型统计数量",
+      "properties": {
+        "link":    { "type": "integer", "minimum": 0 },
+        "paper":   { "type": "integer", "minimum": 0 },
+        "article": { "type": "integer", "minimum": 0 },
+        "repo":    { "type": "integer", "minimum": 0 },
+        "site":    { "type": "integer", "minimum": 0 },
+        "doc":     { "type": "integer", "minimum": 0 },
+        "other":   { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "model_used": {
+      "type": "string",
+      "description": "使用的模型标识"
+    }
+  },
+  "$defs": {
+    "ResourceItem": {
+      "type": "object",
+      "description": "单条资源记录",
+      "required": ["time_range", "resource_type", "summary", "content"],
+      "properties": {
+        "time_range": {
+          "type": "string",
+          "description": "时间段 HH:MM-HH:MM",
+          "pattern": "^\\d{2}:\\d{2}(-\\d{2}:\\d{2})?$"
+        },
+        "resource_type": {
+          "type": "string",
+          "description": "资源类型",
+          "enum": ["link", "paper", "article", "repo", "site", "doc", "other"]
+        },
+        "resource_title": {
+          "type": "string",
+          "description": "资源标题/名称"
+        },
+        "summary": {
+          "type": "string",
+          "description": "根据上下文和讨论综合描述资源作用"
+        },
+        "content": {
+          "type": "string",
+          "description": "资源链接，多链接用 / 分隔，无链接填 手动上传"
+        },
+        "shared_by": {
+          "type": "string",
+          "description": "分享人"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

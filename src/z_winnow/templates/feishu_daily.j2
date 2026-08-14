@@ -1,0 +1,88 @@
+{# feishu_daily.j2 — 飞书 Markdown 兼容日报模板 (T-W13: unified topics) #}
+{# 飞书文档对 Markdown 表格渲染支持良好，此模板确保飞书导入后格式美观 #}
+{# P022: 存储与格式化分离 — 模板仅负责 Markdown 渲染 #}
+{% if important_notice %}
+> **❗️ 重要提醒**
+>
+> {{ important_notice }}
+
+{% endif %}
+# 群日报 · {{ date }}
+
+## 日报概览
+
+{{ overview }}
+
+---
+
+## 价值议题
+
+{% if topics %}
+**议题图例：** 👑 用户定义 / 🔄 持续议题 / 🆕 新增议题
+
+| 议题 | 生命周期 | 状态 | 关键结论 | 参与群成员 |
+| --- | --- | --- | --- | --- |
+{% for t in topics %}
+| {{ t.topic_name }} | {% if t.lifecycle == 'user_defined' %}👑{% elif t.lifecycle == 'sustained' %}🔄{% else %}🆕{% endif %} {{ t.lifecycle }} | {{ t.status }} | {{ (t.conclusion or '')[:80] }}{{ '...' if (t.conclusion or '') | length > 80 else '' }} | {{ t.participants | join('、') if t.participants is iterable else '' }} |
+{% endfor %}
+
+### 议题详情
+
+{% for t in topics %}
+{% if t.background or t.process or t.trend %}
+**{{ t.topic_name }}**
+
+{% if t.background %}- **背景**：{{ t.background }}
+{% endif %}
+{% if t.process %}- **进展**：{{ t.process }}
+{% endif %}
+{% if t.trend %}- **趋势**：{{ t.trend }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% else %}
+*本日无价值议题*
+{% endif %}
+
+---
+
+## 讨论趋势
+
+{% if trend_summary %}
+**议题汇总：** {{ trend_summary }}
+
+{% endif %}
+{% if trend_analysis is string %}
+{{ trend_analysis }}
+{% elif trend_analysis is mapping %}
+**当前阶段特征**
+
+{{ trend_analysis.current_phase }}
+
+**待解决问题**
+
+{{ trend_analysis.pending_issues }}
+{% endif %}
+
+---
+
+{% if highlights %}
+## 亮点/金句
+
+{% for h in highlights %}
+- {{ h }}
+{%- endfor %}
+
+---
+{% endif %}
+{% if active_members %}
+## 活跃成员
+
+{{ active_members | join('、') }}
+
+---
+{% endif %}
+> 📅 日报生成时间：{{ generation_time | default(date) }}
+{% if model_used %}
+> 🤖 模型：{{ model_used }}
+{% endif %}
