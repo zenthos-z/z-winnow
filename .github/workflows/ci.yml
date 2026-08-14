@@ -67,7 +67,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 60  # 全量测试 ~20min+（CI runner 慢于本地），10min 会中途 cancel
     needs: lint
 
     steps:
