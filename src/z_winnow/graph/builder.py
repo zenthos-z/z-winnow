@@ -93,8 +93,8 @@ def _format_custom_record_memory(kind: str, rec: dict, display_date: str) -> str
 #   - P95 ≈ 200s → × 1.5 → GRAPH_NODE_TIMEOUT 默认 300s
 # L020: 区分派发超时 (harness 等待) 与执行超时 (node 内部完成).
 #   - 执行超时: GRAPH_NODE_TIMEOUT 控制, 按 P008 校准
-#   - 派发超时: Box0 cfg.timeout_s 控制, 轻型 300s / 复杂 600-900s
-# A009: Box0 daemon 300s 硬超时直接 SIGKILL. 所有节点执行超时 ≤ 300s.
+#   - 派发超时: 调度器 cfg.timeout_s 控制, 轻型 300s / 复杂 600-900s
+# A009: 外部调度器 300s 硬超时直接 SIGKILL. 所有节点执行超时 ≤ 300s.
 
 
 def _get_graph_node_timeout() -> int:

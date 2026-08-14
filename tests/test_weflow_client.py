@@ -49,9 +49,9 @@ def _image_msg() -> dict:
         "createTime": 1783587519,
         "sortSeq": 1783587519000,
         "isSend": 0,
-        "senderUsername": "wxid_uuv5mel15pwe1",
+        "senderUsername": "wxid_ttttttttttttt",
         "content": "[图片]",
-        "rawContent": 'wxid_uuv5mel15pwe1:\n<?xml version="1.0"?>\n<msg><img aeskey="abc" /></msg>',
+        "rawContent": 'wxid_ttttttttttttt:\n<?xml version="1.0"?>\n<msg><img aeskey="abc" /></msg>',
         "parsedContent": "[图片]",
         "mediaType": "image",
         "mediaFileName": "x.jpg",
@@ -68,10 +68,10 @@ def _reply_msg() -> dict:
         "createTime": 1783569145,
         "sortSeq": 1783569145000,
         "isSend": 0,
-        "senderUsername": "wxid_eqkwu5w6n1io22",
+        "senderUsername": "wxid_tttttttttttttt",
         "content": "每一张图只能有一个零标高",
         "rawContent": (
-            'wxid_eqkwu5w6n1io22:\n<?xml version="1.0"?>\n<msg>'
+            'wxid_tttttttttttttt:\n<?xml version="1.0"?>\n<msg>'
             "<appmsg><title>每一张图只能有一个零标高</title></appmsg>"
             "<refermsg><svrid>5633956792435836630</svrid></refermsg></msg>"
         ),

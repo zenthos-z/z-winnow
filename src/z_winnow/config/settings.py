@@ -240,9 +240,9 @@ class Settings(BaseSettings):
     # ================================================================
     #
     # 两类超时区分 (L020):
-    #   - 派发超时 (dispatch timeout): Box0/harness 等待 agent 返回的最长时限.
+    #   - 派发超时 (dispatch timeout): 编排 harness 等待 agent 返回的最长时限.
     #     轻型任务 300s, 复杂任务 (>=3 文件 + >=15 tests) 600-900s.
-    #     Box0 daemon 300s 硬超时直接 SIGKILL (A009 风险).
+    #     外部调度器 300s 硬超时直接 SIGKILL (A009 风险).
     #   - 执行超时 (execution timeout): agent/node 内部完成操作的时限.
     #     按 P008 模型校准: 历史 P95 耗时 × 1.5.
     #
@@ -250,7 +250,7 @@ class Settings(BaseSettings):
     #   - data_fetch ~10s, content_enrich ~180s, subagents ~30-60s each
     #   - P95 ≈ 200s → × 1.5 = 300s (GRAPH_NODE_TIMEOUT 默认值)
     #
-    # A009 风险: 所有节点执行超时 ≤ 300s (Box0 daemon 硬杀阈值).
+    # A009 风险: 所有节点执行超时 ≤ 300s (调度器硬杀阈值).
     # 复杂任务 (content_enrich) 建议 180s 执行超时 < 300s 硬杀阈值.
 
     graph_node_timeout: int = Field(

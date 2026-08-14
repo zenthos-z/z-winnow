@@ -1519,7 +1519,6 @@ class _ApiKeyAuth(Middleware):
 
 - **经验系统**：模式（`P###`）、反模式（`A###`）、教训（`L###`），位于 `docs/experiences/`
 - **Sprint 契约**：`plans/active/cards/` 中的任务卡片，含 spec + 验收标准 + 经验上下文
-- **Box0 DAG**：5 Agent 工作流（planner → dispatcher → builder → evaluator → curator），用于结构化开发
 
 ### 16.3 文档实践
 
