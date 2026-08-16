@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/cover.png" alt="winnow cover" width="100%">
+</p>
+
 # z-winnow
 
 *把微信群聊噪声压缩为可消费的结构化知识——带长期群记忆、深度媒体解析、细粒度反馈，并通过 定制 MCP 、skill，链接汇聚群体智慧。*
