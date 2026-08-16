@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/cover.png" alt="winnow cover" width="100%">
+  <img src="docs/cover.webp" alt="winnow cover" width="100%">
 </p>
 
 # z-winnow
